@@ -1,5 +1,25 @@
-# Vue 3 + Vite
+# Sports Reservation Frontend
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## 运行环境要求
+- Node.js (建议 v16 及以上)
+- npm (或 yarn/pnpm)
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## 快速运行
+
+1. 克隆仓库并进入前端目录：
+   ```bash
+   git clone <your-repo-url>
+   cd Sports-reservation-frontend
+   ```
+
+2. 安装依赖：
+   ```bash
+   npm install
+   ```
+
+3. 启动开发服务器：
+   ```bash
+   npm run dev
+   ```
+
+4. 打开浏览器访问控制台提示的地址。
