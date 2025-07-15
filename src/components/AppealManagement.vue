@@ -25,9 +25,8 @@
               <span v-else style="color:red;">已拒绝</span>
             </td>
             <td>
-              <a v-if="appeal.status === 'pending'" href="#" class="action-link" @click.prevent="approveAppeal(appeal)">审核通过</a>
-              <a v-if="appeal.status === 'pending'" href="#" class="action-link" @click.prevent="rejectAppeal(appeal)">拒绝</a>
-              <span v-else>-</span>
+              <a href="#" class="action-link" @click.prevent="approveAppeal(appeal)">审核通过</a>
+              <a href="#" class="action-link" @click.prevent="rejectAppeal(appeal)">拒绝</a>
             </td>
           </tr>
         </tbody>
@@ -37,6 +36,8 @@
 </template>
 
 <script>
+import '../styles/appeal-management.css';
+
 export default {
   name: "AppealManagement",
   data() {
@@ -76,51 +77,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-.header-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 24px;
-  margin-top: 10px;
-}
-.title {
-  font-size: 28px;
-  font-weight: bold;
-  flex: 1;
-  text-align: left;
-  padding-bottom: 10px;
-}
-.table-wrapper {
-  display: flex;
-  justify-content: center;
-}
-.main-table {
-  min-width: 900px;
-  max-width: 1200px;
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-}
-.main-table th,
-.main-table td {
-  border: 1px solid #eee;
-  padding: 16px 10px;
-  text-align: center;
-  font-size: 18px;
-}
-.main-table th {
-  background: #fafafa;
-  font-weight: bold;
-}
-.action-link {
-  color: #3b6cff;
-  margin-right: 16px;
-  cursor: pointer;
-  text-decoration: none;
-  font-size: 16px;
-}
-.action-link:hover {
-  text-decoration: underline;
-}
-</style>

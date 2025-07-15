@@ -91,4 +91,34 @@
 .tab-menu span:not(.active):hover {
   background: #f2f6ff;
   color: #3b6cff;
+}
+
+.violation-main {
+  display: flex;
+  gap: 32px;
+  margin: 40px 0 0 0;
+  justify-content: flex-start;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 32px 24px;
+}
+
+.violation-card {
+  flex: 2;
+  min-width: 600px;
+}
+
+.blacklist-card {
+  flex: 1;
+  min-width: 320px;
+}
+
+.card-title {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 18px;
 } 
