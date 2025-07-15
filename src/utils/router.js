@@ -1,13 +1,51 @@
-import { createRouter, createWebHistory } from 'vue-router'
+
+import { createRouter, createWebHistory } from 'vue-router';
+import App from '../App.vue';
+import OrderDetail from '../views/OrderDetail.vue';
+import VenueManagement from '../views/VenueManagement.vue';
+import ViolationManagement from '../views/ViolationManagement.vue';
+import PostManagement from '../views/PostManagement.vue';
+import AppealManagement from '../views/AppealManagement.vue';
+import ViolationHistory from '../views/ViolationHistory.vue';
 import Reservation from '../views/Reservation.vue'
 import VenueDetail from '../views/VenueDetail.vue'
 
 
+const Dummy = { template: '<div style="padding:20px;"><h2>Ò³ï¿½æ½¨ï¿½ï¿½ï¿½ï¿½...</h2></div>' }
 
-const Dummy = { template: '<div style="padding:20px;"><h2>Ò³Ãæ½¨ÉèÖÐ...</h2></div>' }
 
 const routes = [
     {
+        path: '/',
+        component: App
+    },
+    {
+        path: '/venue',
+        component: VenueManagement
+    },
+  
+    {
+        path: '/violation',
+        component: ViolationManagement
+    },
+    {
+        path: '/violation/history',
+        component: ViolationHistory
+    },
+    {
+        path: '/post',
+        component: PostManagement
+    },
+    {
+        path: '/appeal',
+        component: AppealManagement
+    },
+    {
+        path: '/orderdetail',
+        name: 'OrderDetail',
+        component: OrderDetail
+    }ï¼Œ
+  {
         path: '/reservation',
         name: 'Reservation',
         component: Reservation
@@ -22,16 +60,15 @@ const routes = [
         name: 'News',
         component: Dummy
     },
-    {
-        path: '/',
-        redirect: '/reservation'  // Ä¬ÈÏÖØ¶¨Ïòµ½Ô¤Ô¼Ò³
-    },
     { path: '/venue/:id', component: VenueDetail }
-]
+];
+
 
 const router = createRouter({
     history: createWebHistory(),
     routes
-})
 
-export default router
+});
+
+export default router;
+

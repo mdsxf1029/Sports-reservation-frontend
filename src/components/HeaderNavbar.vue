@@ -134,12 +134,12 @@ const toggleDarkMode = () => {
   background-color: var(--header-background-transparent-color);
 }
 
-h1{
+h1 {
   font-size: 24px;
-  margin : 10px 10px;
+  margin : 10px 20px;
 }
 
-.flex-grow{
+.flex-grow {
   flex-grow: 1;
 }
 
