@@ -76,19 +76,19 @@ const showFeedback = ref(false);
 </script>
 
 <style scoped>
-.footer-navbar{
+.footer-navbar {
   position: relative;
   width: 100%;
   height: 70px;
   justify-content: center;
 }
 
-.footer-logo{
+.footer-logo {
   margin-right: 10px;
   margin-top: 10px;
 }
 
-.footer-content{
+.footer-content {
   font-size:16px;
 }
 
@@ -99,7 +99,7 @@ const showFeedback = ref(false);
   margin-right: 10px
 }
 
-.footer-link{
+.footer-link {
   font-size:16px;
 }
 </style>
