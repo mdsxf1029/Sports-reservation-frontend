@@ -37,6 +37,8 @@
 </template>
 
 <script>
+import { getViolations, addToBlacklist } from '../utils/api';
+
 export default {
   name: "ViolationManagement",
   data() {
@@ -53,24 +55,23 @@ export default {
     },
     // 加入黑名单操作
     addToBlacklist(user) {
-      // 这里需要调用后端接口，假设接口为 /api/blacklist/add
-      fetch('/api/blacklist/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.userId })
-      })
-      .then(res => res.json())
-      .then(data => {
-        alert('已加入黑名单');
-        this.fetchUsers(); // 重新拉取数据
-      });
+      addToBlacklist(user.userId)
+        .then(() => {
+          alert('已加入黑名单');
+          this.fetchUsers();
+        })
+        .catch(() => {
+          alert('操作失败');
+        });
     },
     // 拉取用户违约数据
     fetchUsers() {
-      fetch('/api/violations')
-        .then(res => res.json())
-        .then(data => {
-          this.users = data;
+      getViolations()
+        .then(res => {
+          this.users = res.data;
+        })
+        .catch(() => {
+          alert('获取数据失败');
         });
     }
   },
