@@ -1,6 +1,6 @@
 
 <template>
-  <div id="app">
+  <div>
     <HeaderNavbar class="header-navbar"/>
     <div class="route-view-container">
       <ViolationManagement />
@@ -9,11 +9,18 @@
   </div>
 </template>
 
-<script setup>
+<script>
 import HeaderNavbar from './components/HeaderNavbar.vue'
 import FooterNavbar from './components/FooterNavbar.vue'
 import ViolationManagement from './components/ViolationManagement.vue';
 
+export default {
+  components: {
+    HeaderNavbar,
+    FooterNavbar,
+    ViolationManagement
+  }
+};
 </script>
 
 <style scoped>
