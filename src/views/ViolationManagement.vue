@@ -113,11 +113,6 @@ export default {
   name: "ViolationManagement",
   data() {
     return {
-      users: [] // 这里存放用户违约数据
-    };
-  },
-  methods: {
-    // 格式化时间
       currentTab: 'violation',
       users: [
         {
@@ -171,10 +166,6 @@ export default {
   },
   mounted() {
     this.fetchUsers();
-    addToBlacklist(user) {
-      user.isBlacklisted = true;
-      user.blacklistTimestamp = new Date().toISOString();
-    }
   }
 };
 </script>
