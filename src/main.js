@@ -1,11 +1,8 @@
 import { createApp } from 'vue'
 import 'element-plus/dist/index.css'
 import App from './App.vue'
-
-import router from './utils/router'
+import router from './utils/router.js'
 
 const app = createApp(App)
-
-app.use(router)   // 这行非常重要！必须加上
-
+app.use(router)
 app.mount('#app')
