@@ -9,40 +9,40 @@ import ViolationHistory from '../views/ViolationHistory.vue';
 
 
 const routes = [
-  {
-    path: '/',
-    redirect: '/violation'
-  },
-  {
-    path: '/venue',
-    component: VenueManagement
-  },
-  {
-    path: '/violation',
-    component: ViolationManagement
-  },
-  {
-    path: '/violation/history',
-    component: ViolationHistory
-  },
-  {
-    path: '/post',
-    component: PostManagement
-  },
-  {
-    path: '/appeal',
-    component: AppealManagement
-  },
-  {
-    path: '/orderdetail',
-    name: 'OrderDetail',
-    component: OrderDetail
-  }
+    {
+        path: '/',
+        component: App
+    },
+    {
+        path: '/venue',
+        component: VenueManagement
+    },
+    {
+        path: '/violation',
+        component: ViolationManagement
+    },
+    {
+        path: '/violation/history',
+        component: ViolationHistory
+    },
+    {
+        path: '/post',
+        component: PostManagement
+    },
+    {
+        path: '/appeal',
+        component: AppealManagement
+    },
+    {
+        path: '/orderdetail',
+        name: 'OrderDetail',
+        component: OrderDetail
+    }
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes
+    history: createWebHistory(),
+    routes
 });
 
 export default router;
