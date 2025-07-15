@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Reservation from '../components/Reservation.vue'
-import VenueDetail from '../components/VenueDetail.vue'
+import Reservation from '../views/Reservation.vue'
+import VenueDetail from '../views/VenueDetail.vue'
 
 
 
