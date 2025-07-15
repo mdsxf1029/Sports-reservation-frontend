@@ -1,34 +1,38 @@
 <template>
-  <div class="appeal-container">
-    <h2>申诉管理</h2>
-    <table class="appeal-table">
-      <thead>
-        <tr>
-          <th>用户名</th>
-          <th>用户ID</th>
-          <th>申诉原因</th>
-          <th>申诉状态</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="appeal in appeals" :key="appeal.id">
-          <td>{{ appeal.userName }}</td>
-          <td>{{ appeal.userId }}</td>
-          <td>{{ appeal.reason }}</td>
-          <td>
-            <span v-if="appeal.status === 'pending'">待审核</span>
-            <span v-else-if="appeal.status === 'approved'" style="color:green;">已通过</span>
-            <span v-else style="color:red;">已拒绝</span>
-          </td>
-          <td>
-            <button v-if="appeal.status === 'pending'" @click="approveAppeal(appeal)">审核通过</button>
-            <button v-if="appeal.status === 'pending'" @click="rejectAppeal(appeal)">拒绝</button>
-            <span v-else>-</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div>
+    <div class="header-row">
+      <div class="title">申诉管理</div>
+    </div>
+    <div class="table-wrapper">
+      <table class="main-table">
+        <thead>
+          <tr>
+            <th>用户名</th>
+            <th>用户ID</th>
+            <th>申诉原因</th>
+            <th>申诉状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="appeal in appeals" :key="appeal.id">
+            <td>{{ appeal.userName }}</td>
+            <td>{{ appeal.userId }}</td>
+            <td>{{ appeal.reason }}</td>
+            <td>
+              <span v-if="appeal.status === 'pending'">待审核</span>
+              <span v-else-if="appeal.status === 'approved'" style="color:green;">已通过</span>
+              <span v-else style="color:red;">已拒绝</span>
+            </td>
+            <td>
+              <a v-if="appeal.status === 'pending'" href="#" class="action-link" @click.prevent="approveAppeal(appeal)">审核通过</a>
+              <a v-if="appeal.status === 'pending'" href="#" class="action-link" @click.prevent="rejectAppeal(appeal)">拒绝</a>
+              <span v-else>-</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -74,30 +78,49 @@ export default {
 </script>
 
 <style scoped>
-.appeal-container {
-  padding: 40px;
+.header-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  margin-top: 10px;
 }
-.appeal-table {
+.title {
+  font-size: 28px;
+  font-weight: bold;
+  flex: 1;
+  text-align: left;
+  padding-bottom: 10px;
+}
+.table-wrapper {
+  display: flex;
+  justify-content: center;
+}
+.main-table {
+  min-width: 900px;
+  max-width: 1200px;
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
   background: #fff;
 }
-.appeal-table th,
-.appeal-table td {
+.main-table th,
+.main-table td {
   border: 1px solid #eee;
-  padding: 14px 10px;
+  padding: 16px 10px;
   text-align: center;
   font-size: 18px;
 }
-.appeal-table th {
+.main-table th {
   background: #fafafa;
   font-weight: bold;
 }
-button {
-  margin: 0 6px;
-  padding: 4px 12px;
-  font-size: 16px;
+.action-link {
+  color: #3b6cff;
+  margin-right: 16px;
   cursor: pointer;
+  text-decoration: none;
+  font-size: 16px;
+}
+.action-link:hover {
+  text-decoration: underline;
 }
 </style>

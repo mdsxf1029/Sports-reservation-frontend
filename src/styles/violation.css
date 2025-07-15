@@ -1,0 +1,94 @@
+/* 违约管理页面样式 */
+.header-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+  margin-top: 10px;
+  padding-left: 0;
+}
+.title {
+  font-size: 28px;
+  font-weight: bold;
+  flex: 1;
+  text-align: left;
+  padding-bottom: 10px;
+  margin-left: 0;
+}
+.blacklist-title {
+  font-size: 28px;
+  font-weight: bold;
+  flex: 1;
+  text-align: left;
+  padding-bottom: 10px;
+  margin-left: 0;
+}
+.table-wrapper {
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 0;
+}
+.main-table {
+  min-width: 900px;
+  max-width: 1200px;
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+.main-table th,
+.main-table td {
+  border: 1px solid #eee;
+  padding: 16px 10px;
+  text-align: center;
+  font-size: 18px;
+}
+.main-table th {
+  background: #fafafa;
+  font-weight: bold;
+}
+.action-link {
+  color: #3b6cff;
+  margin-right: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 16px;
+}
+.action-link:hover {
+  text-decoration: underline;
+}
+.blacklist-time {
+  color: #888;
+  font-size: 15px;
+}
+.tab-menu {
+  margin-bottom: 20px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.tab-menu span {
+  margin-right: 0;
+  cursor: pointer;
+  padding: 8px 32px;
+  border-radius: 6px 6px 0 0;
+  color: #222;
+  font-weight: 500;
+  background: #fff;
+  border: 1.5px solid #e0e0e0;
+  border-bottom: none;
+  margin-left: 0;
+  margin-right: 2px;
+  transition: background 0.2s, color 0.2s;
+  position: relative;
+  top: 2px;
+}
+.tab-menu .active {
+  background: #3b6cff;
+  color: #fff;
+  border-color: #3b6cff #3b6cff #fff #3b6cff;
+  z-index: 2;
+}
+.tab-menu span:not(.active):hover {
+  background: #f2f6ff;
+  color: #3b6cff;
+} 
