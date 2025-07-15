@@ -1,19 +1,17 @@
-﻿<template>
-  <div class="login-page">
+<template>
+  <div class="register-page">
     <div class="top-left-text">
         运动场馆预约平台
-        <hr style="margin: 8px 0; width: 200px;">
-        <!--margin 是元素外边距的意思，这里上下各8px，左右各0-->
-      <!--<p>为用户提供便捷的场馆预约服务</p>-->
+        <hr style="margin: 8px 0; width: 200px;"> 
     </div>
-    <div class="login-container">
+    <div class="register-container">
       <!-- 左侧：图片 -->
-      <div class="login-left">
-        <img :src="Humans1" alt="login-background" class="login-image" />
+      <div class="register-left">
+        <img :src="Humans1" alt="register-background" class="register-image" />
       </div>
-      <!-- 右侧：登录表单 -->
-      <div class="login-right">
-        <LoginForm />
+      <!-- 右侧：注册表单 -->
+      <div class="register-right">
+        <RegisterForm/>
       </div>
     </div>
     <footer>
@@ -23,14 +21,14 @@
   </div>
 </template>
 
-<script setup>
-import LoginForm from '../../components/LoginForm.vue'
+<script setup> 
+import RegisterForm from '../../components/RegisterForm.vue'
 import Humans1 from '@/assets/Backgrounds/Humans1.jpg?url'
 </script>
 
 <style scoped>
 /* 页面整体布局，footer吸底 */
-.login-page {
+.register-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -44,7 +42,7 @@ import Humans1 from '@/assets/Backgrounds/Humans1.jpg?url'
     color: #333; 
 }
 /* 主体容器左右分栏 */
-.login-container {
+.register-container {
   flex: 1;
   display: flex;
   align-items: center;
@@ -55,8 +53,8 @@ import Humans1 from '@/assets/Backgrounds/Humans1.jpg?url'
 }
 
 /* 左侧表单区域 */
-.login-left,
-.login-right {
+.register-left,
+.register-right {
   flex: 1;
   min-width: 0;      /* 关键！允许收缩 */
   display: flex;
@@ -66,7 +64,7 @@ import Humans1 from '@/assets/Backgrounds/Humans1.jpg?url'
   box-sizing: border-box;
 }
 
-.login-image {
+.register-image {
   width: 100%;
   max-width: 700px;
   height: auto;
@@ -88,10 +86,10 @@ footer {
 
 /* 响应式设计 */
 @media (max-width: 1200px) {
-  .login-container {
+  .register-container {
     padding: 0 2vw;
   }
-  .login-image {
+  .register-image {
     width: 95%;
     max-width: 420px;
     max-height: 320px;
@@ -99,19 +97,19 @@ footer {
 }
 
 @media (max-width: 900px) {
-  .login-container {
+  .register-container {
     flex-direction: column;
     padding: 0 4vw;
     gap: 32px;
   }
-  .login-left,
-  .login-right {
+  .register-left,
+  .register-right {
     flex: unset;
     justify-content: center;
     min-width: 0;
     padding-left: 0;
   }
-  .login-image {
+  .register-image {
     width: 100%;
     max-width: 320px;
     max-height: 180px;

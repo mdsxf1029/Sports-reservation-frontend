@@ -24,16 +24,17 @@
 	```
 	📁 views/
 	├── 📁 auth/
-	│   ├── 📄 AuthPage.vue          # 合并的登录注册页面
-	│   └── 📁 components/
-	│       ├── 📄 LoginForm.vue     # 登录表单组件
-	│       └── 📄 RegisterForm.vue  # 注册表单组件
+	│   ├── 📄 Login.vue          # 登录页面
+	│   ├── 📄 Register.vue       # 注册页面
 	├── 📁 bookings/
 	│   └── 📄 Bookings.vue
 	├── 📁 points/
 	│   └── 📄 Points.vue
-	└── 📁 profile/
-	    └── 📄 Profile.vue
+	├── 📁 profile/
+    │   └── 📄 Profile.vue
+	📁 components/
+	├── 📄 LoginForm.vue     # 登录表单组件
+	└── 📄 RegisterForm.vue  # 注册表单组件
 
 	```
 	- 先做 登录注册页面	
@@ -51,3 +52,5 @@
   一些疑问：
   什么时候进行登录？
   换句话是： 进入页面的时候是 登录注册页面还是 主页面，然后由用户自己选自是否登录？
+
+  最终将注册和登录页面分开写
