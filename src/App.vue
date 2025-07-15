@@ -3,7 +3,7 @@
   <div id="app">
     <HeaderNavbar class="header-navbar"/>
     <div class="route-view-container">
-
+      <ViolationManagement />
     </div>
     <FooterNavbar class="footer-navbar"/>
   </div>
@@ -12,6 +12,7 @@
 <script setup>
 import HeaderNavbar from './components/HeaderNavbar.vue'
 import FooterNavbar from './components/FooterNavbar.vue'
+import ViolationManagement from './components/ViolationManagement.vue';
 
 </script>
 
