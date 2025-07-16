@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import LoginForm from '../../components/LoginForm.vue'
+import LoginForm from '../../components/auth/LoginForm.vue'
 import Humans1 from '@/assets/Backgrounds/Humans1.jpg?url'
 </script>
 

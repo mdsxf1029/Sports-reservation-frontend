@@ -33,8 +33,12 @@
 	├── 📁 profile/
     │   └── 📄 Profile.vue
 	📁 components/
-	├── 📄 LoginForm.vue     # 登录表单组件
-	└── 📄 RegisterForm.vue  # 注册表单组件
+	├── 📁 auth/             # 认证相关组件文件夹
+	│   ├── �📄 LoginForm.vue     # 登录表单组件
+	│   ├── 📄 RegisterForm.vue  # 注册表单组件
+	│	└── 📄 EmailForm.vue
+	├── 📄 FooterNavbar.vue
+	└── 📄 HeaderNavbar.vue
 
 	```
 	- 先做 登录注册页面	
@@ -61,3 +65,6 @@
   - login（登录）表面上看像是“查数据”，但在RESTful API 设计中，登录通常用的是POST而不是GET
   - 登录和注册页面添加了API 目前提交后会显示 网络问题， （应该是没问题的吧，毕竟没有 后端
   - 对输入框细节进行了调整
+  - 添加了记住账号 和 忘记密码（只是一个弹窗）。
+  - 个人感觉 注册 和 忘记密码加一个 邮箱验证的比较好？（因为短信花钱） 不过目前计划先搭框架，初步完成下别的页面。 
+  

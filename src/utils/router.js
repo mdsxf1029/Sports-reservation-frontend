@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import App from '../App.vue'; 
 import Login from '../views/auth/Login.vue';
 import Register from '../views/auth/Register.vue';
-import component from 'element-plus/es/components/tree-select/src/tree-select-option.mjs';
+import Profile from '../views/profile/Profile.vue';
 
 const routes = [
     {
@@ -16,6 +16,10 @@ const routes = [
     {
         path: '/register',
         component: Register
+    },
+    {
+        path: '/profile',
+        component: Profile
     }
 ];
 

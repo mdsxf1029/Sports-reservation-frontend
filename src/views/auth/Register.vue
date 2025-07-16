@@ -22,7 +22,7 @@
 </template>
 
 <script setup> 
-import RegisterForm from '../../components/RegisterForm.vue'
+import RegisterForm from '../../components/auth/RegisterForm.vue'
 import Humans1 from '@/assets/Backgrounds/Humans1.jpg?url'
 </script>
 

@@ -3,6 +3,7 @@
     <h1>欢迎注册</h1>
     <h2>运动场地预约系统</h2>
     <p>请填写以下信息进行注册:</p>
+    <p>已有账号？<router-link to="/login">去登录</router-link></p>
     <el-form
       :model="form"
       :rules="rules"
@@ -23,7 +24,20 @@
           v-model="form.username"
           placeholder="请输入用户名"
         ></el-input>
+      </el-form-item> 
+      <el-form-item label="电　话" prop="telephone">
+        <el-input
+          v-model="form.telephone"
+          placeholder="请输入电话号码"
+        ></el-input>
       </el-form-item>
+      <el-form-item label="邮　箱" prop="email">
+        <el-input
+          v-model="form.email"
+          placeholder="请输入邮箱"
+        ></el-input>
+      </el-form-item> 
+
       <el-form-item label="密　码" prop="password">
         <el-input
           v-model="form.password"
@@ -40,7 +54,6 @@
           show-password
         ></el-input>
       </el-form-item> 
-      <p>已有账号？<router-link to="/login">去登录</router-link></p>
       <el-form-item>
         <el-button type="primary" size="large" native-type="submit" class="register-btn" style="width: 100%; background-color: #000; color: white;">
             注册
@@ -52,7 +65,7 @@
 
 <script setup>
 import { ref } from 'vue' 
-import { registerUser } from '../utils/api'
+import { registerUser } from '@/utils/api'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()  // 路由实例
@@ -60,6 +73,8 @@ const registerFormRef = ref()  // 引用表单实例
 
 const form = ref({
   identity: 'user',
+  telephone: '',
+  email: '',
   username: '',
   password: '',
   confirmPassword: ''
@@ -79,6 +94,12 @@ const validateConfirmPassword = (rule, value, callback) => {
 const rules = { 
   username: [
     { required: true, message: '用户名不能为空', trigger: 'blur' }
+  ],
+  telephone: [
+    { required: true, message: '电话号码不能为空', trigger: 'blur' }
+  ],
+  email: [
+    { required: true, message: '邮箱不能为空', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '密码不能为空', trigger: 'blur' }
@@ -149,7 +170,7 @@ const register = async () => {
     color: #222;
 }
 .register-form p {
-    margin-bottom: 20px;
+    margin-bottom: 4px;
     color: #666;
     font-size: 20px;
 }

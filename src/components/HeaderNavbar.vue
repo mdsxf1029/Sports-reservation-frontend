@@ -52,7 +52,7 @@
       <template #dropdown>
         <el-dropdown-menu>
           <el-dropdown-item>
-            个人空间
+            <el-link to="/profile">个人空间</el-link>
           </el-dropdown-item>
           <el-dropdown-item>
             退出账号
