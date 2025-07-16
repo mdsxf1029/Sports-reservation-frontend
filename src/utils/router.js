@@ -11,7 +11,7 @@ import Reservation from '../views/Reservation.vue'
 import VenueDetail from '../views/VenueDetail.vue'
 
 
-const Dummy = { template: '<div style="padding:20px;"><h2>ҳ�潨����...</h2></div>' }
+ const Dummy = { template: '<div style="padding:20px;"><h2>ҳ页面建设中...</h2></div>' }
 
 
 const routes = [
@@ -53,7 +53,7 @@ const routes = [
     {
         path: '/community',
         name: 'Community',
-        component: Dummy
+        component: () => import('../views/CommunityHome.vue')
     },
     {
         path: '/news',

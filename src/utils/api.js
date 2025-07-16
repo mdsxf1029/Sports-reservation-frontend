@@ -1,9 +1,10 @@
 // src/utils/api.js
+
 import axios from 'axios';
 
 // 创建 axios 实例
 const instance = axios.create({
-  baseURL: '/', // 这里可以写你的后端基础路径，比如 http://localhost:5000/
+  baseURL: '/',
   timeout: 5000
 });
 
@@ -17,4 +18,36 @@ export function addToBlacklist(userId) {
   return instance.post('/api/blacklist/add', { userId });
 }
 
-// 你可以根据需要继续添加其他接口方法
+// 获取社区帖子列表
+export const fetchCommunityPosts = (params) => {
+  return instance.get('/api/community/posts', {
+    params: params,
+  });
+};
+
+// 点赞社区帖子
+export const likeCommunityPost = (postId) => {
+  return instance.post(`/api/community/posts/${postId}/like`);
+};
+
+// 取消点赞社区帖子
+export const unlikeCommunityPost = (postId) => {
+  return instance.delete(`/api/community/posts/${postId}/like`);
+};
+
+// 收藏社区帖子
+export const collectCommunityPost = (postId) => {
+  return instance.post(`/api/community/posts/${postId}/collect`);
+};
+
+// 取消收藏社区帖子
+export const uncollectCommunityPost = (postId) => {
+  return instance.delete(`/api/community/posts/${postId}/collect`);
+};
+
+// 获取我收藏的帖子列表
+export const fetchMyCollectedPosts = (params) => {
+  return instance.get('/api/community/posts/collections', {
+    params: params,
+  });
+};
