@@ -1,36 +1,39 @@
 <template>
   <div class="login-form">
-    
     <h1>欢迎登录</h1>
     <h2>运动场地预约系统</h2>
     <p>请填写以下信息进行登录:</p>
-    <el-form @submit.native.prevent="onSubmit" label-width="60px">
-        <el-form-item label="身　份">
+    <el-form
+      :model="form"
+      :rules="rules"
+      ref="loginFormRef"
+      label-width="100px"
+      size="large"
+      @submit.prevent="login"
+      hide-required-asterisk
+    >
+      <el-form-item label="身　份" prop="identity">
         <el-select v-model="form.identity" placeholder="请选择身份">
           <el-option label="用户" value="user"></el-option>
           <el-option label="管理员" value="admin"></el-option>
         </el-select>
       </el-form-item>
-      
-      <el-form-item label="用户名">
-        <el-input
-          v-model="form.username"
-          placeholder="请输入用户名"
-          required
-        ></el-input>
+      <el-form-item label="用户名" prop="username">
+        <el-input v-model="form.username" placeholder="请输入用户名"></el-input>
       </el-form-item>
-      <el-form-item label="密　码">
-        <el-input
-          v-model="form.password"
-          type="password"
-          placeholder="请输入密码"
-          required
-        ></el-input>
+      <el-form-item label="密　码" prop="password">
+        <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password></el-input>
       </el-form-item>
       <p>没有账号吗？<router-link to="/register">去注册</router-link></p>
       <el-form-item>
-        <el-button type="primary" size="large" native-type="submit" class="login-btn" style="width: 100%; background-color: #000; color: white;">
-            登录
+        <el-button
+          type="primary"
+          size="large"
+          native-type="submit"
+          class="login-btn"
+          style="width: 100%; background-color: #000; color: white;"
+        >
+          登录
         </el-button>
       </el-form-item>
     </el-form>
@@ -38,19 +41,55 @@
 </template>
 
 <script setup>
-    import { reactive } from 'vue'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { loginUser } from '@/utils/api'
 
-    const form = reactive({
-    username: '',
-    password: ''
-    })
+const router = useRouter()  // 路由实例
+const loginFormRef = ref()  // 引用表单实例
+const form = ref({
+  identity: '',  
+  username: '',
+  password: ''
+})
+const rules = {
+  identity: [
+    { required: true, message: '请选择身份', trigger: 'change' }
+  ],
+  username: [
+    { required: true, message: '用户名不能为空', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '密码不能为空', trigger: 'blur' }
+  ]
+}
+const login = () => {
+  console.log('登录请求开始...')
+  loginFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    console.log('表单校验通过，开始登录请求...')
+    try {
 
-    function onSubmit() {
-    // 这里可以发起登录请求
-    console.log('提交表单:', form)
-    // 可以在这里调用API，或者用emit把数据传给父组件
+      const res = await loginUser({
+        username: form.value.username,
+        password: form.value.password,
+        identity: form.value.identity
+      })
+      if (res.data.token) {
+        alert('登录成功')
+        localStorage.setItem('token', res.data.token)
+        router.push('/home')
+      } else {
+        alert(res.data.message || '登录失败')
+      }
+    } catch (err) {
+      alert('网络请求出错！')
     }
+  })
+}
 </script>
+ 
+
 
 <style scoped>
      
@@ -84,16 +123,25 @@
         color: #666;
         font-size: 20px;
     }
-    /* 表单项和按钮样式 */
-    .el-form-item {
-        margin-bottom: 22px; /* 增加间距 */
+    /* 针对 Element Plus 输入框、下拉框、按钮的字体大小 */
+
+    .login-form :deep(.el-form-item__label) {
+      font-size: 20px !important;
     }
-    /* 按钮样式 */
+    .login-form :deep(.el-input__inner) {
+      font-size: 20px !important;
+    }
+    .login-form :deep(.el-select__selected-item) {
+      font-size: 20px !important;
+    }
+    .login-form :deep(.el-select-dropdown__item) {
+      font-size: 20px !important;
+    }
+    .login-form :deep(.el-button) {
+      font-size: 20px !important;
+    }
     .login-btn {
-        font-size: 18px;
-        height: 48px;
-        border-radius: 6px;
-        font-weight: 500;
+      font-size: 20px !important;
     }
 
 </style>

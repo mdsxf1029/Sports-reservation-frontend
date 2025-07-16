@@ -81,7 +81,7 @@ footer {
   margin-top: auto;
   width: 100%;
   text-align: center;
-  padding: 14px 0 8px 0;
+  padding: 10px 0 8px 0; /* 上下各10px和8px的内边距 */
   background: #f8f8f8;
   font-size: 14px;
 }
