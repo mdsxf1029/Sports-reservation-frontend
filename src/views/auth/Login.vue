@@ -45,7 +45,7 @@ import '@/styles/responsive.css'
 }
 
 .responsive-image {
-  width: 100%;
+  width: 80%;
   max-width: 700px;
   height: auto;
   max-height: 800px;

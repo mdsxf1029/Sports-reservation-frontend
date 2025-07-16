@@ -11,9 +11,18 @@
 }
 
 /* 左右分栏布局 */
-.responsive-left,
+.responsive-left {
+  flex: 1.2; /* 左侧图片区域稍大一些 */
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px 24px;
+  box-sizing: border-box;
+}
+
 .responsive-right {
-  flex: 1;
+  flex: 0.8; /* 右侧表单区域稍小一些 */
   min-width: 0;
   display: flex;
   align-items: flex-start;
@@ -25,9 +34,9 @@
 /* 响应式图片 */
 .responsive-image {
   width: 100%;
-  max-width: 700px;
+  max-width: 700px; /* 减小最大宽度 */
   height: auto;
-  max-height: 800px;
+  max-height: 800px; /* 减小最大高度 */
   object-fit: cover;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.10);
