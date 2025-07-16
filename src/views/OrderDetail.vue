@@ -83,6 +83,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { ArrowLeft, Location } from '@element-plus/icons-vue'
 import { useRoute } from 'vue-router'
+import { fetchOrderDetail } from '../utils/api'
 import HeaderNavbar from '../components/HeaderNavbar.vue'
 import axios from 'axios'
 
@@ -90,15 +91,13 @@ const activeIndex = ref('0')
 const route = useRoute()
 const orderDetail = ref(null)
 
-const fetchOrderDetail = async () => {
-  const id = route.params.id
-  console.log('详情页获取的预约 id 是：', id)  // 获取的是之前预约的id，根据预约id生成订单之后才有订单id
+const loadDetail = async () => {
+  const id = route.params.id;
   try {
-    const res = await axios.get(`http://127.0.0.1:4523/m1/6319279-6014567-default/api/appointments/${id}`)
-    console.log('接口返回的数据:', res.data)
-    orderDetail.value = res.data
+    const res = await fetchOrderDetail(id);
+    orderDetail.value = res.data;
   } catch (err) {
-    console.error('请求失败：', err)
+    console.error('加载订单详情失败：', err);
   }
 };
 
@@ -138,7 +137,7 @@ const goBackToReservation = () => {
 }
 
 onMounted(() => {
-  fetchOrderDetail();
+  loadDetail();
 })
 
 </script>
