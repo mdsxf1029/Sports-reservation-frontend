@@ -23,7 +23,7 @@ const routes = [
         path: '/venue',
         component: VenueManagement
     },
-  
+
     {
         path: '/violation',
         component: ViolationManagement
@@ -45,7 +45,7 @@ const routes = [
         name: 'OrderDetail',
         component: OrderDetail
     },
-  {
+    {
         path: '/reservation',
         name: 'Reservation',
         component: Reservation
@@ -60,7 +60,10 @@ const routes = [
         name: 'News',
         component: Dummy
     },
-    { path: '/venue/:id', component: VenueDetail }
+    {
+        path: '/venue/:id',
+        component: VenueDetail
+    }
 ];
 
 
