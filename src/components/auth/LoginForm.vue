@@ -3,7 +3,7 @@
     <h1>欢迎登录</h1>
     <h2>运动场地预约系统</h2>
 
-    <p>请填写以下信息进行登录:</p>
+    <p>请使用邮箱进行登录:</p>
     <p>没有账号吗？<router-link to="/register">去注册</router-link></p>
 
     <el-form
@@ -15,14 +15,14 @@
       @submit.prevent="login"
       hide-required-asterisk
     >
-      <el-form-item label="身　份" prop="identity">
-        <el-select v-model="form.identity" placeholder="请选择身份">
-          <el-option label="用户" value="user"></el-option>
-          <el-option label="管理员" value="admin"></el-option>
+      <el-form-item label="身　份" prop="role">
+        <el-select v-model="form.role" placeholder="请选择身份">
+          <el-option label="用户" value="normal"></el-option>
+          <el-option label="管理员" value="manager"></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="用户名" prop="username">
-        <el-input v-model="form.username" placeholder="请输入用户名"></el-input>
+      <el-form-item label="邮　箱" prop="email">
+        <el-input v-model="form.email" placeholder="请输入邮箱"></el-input>
       </el-form-item>
       <el-form-item label="密　码" prop="password">
         <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password></el-input>
@@ -76,35 +76,40 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { loginUser } from '@/utils/api'
+import { ElMessage } from 'element-plus' 
+
 const dialogVisible = ref(false)
 const router = useRouter()  // 路由实例
 const loginFormRef = ref()  // 引用表单实例
 
 const form = ref({
-  identity: '',  
-  username: '',
+  role: '',      // 改为role，与数据库字段一致
+  email: '',     // 改为email，仅支持邮箱登录
   password: ''
 })
 // 记住用户名的复选框
 const rememberMe = ref(false)  // 记住
-// 页面加载时自动读取本地保存的用户名
+// 页面加载时自动读取本地保存的账号信息
 onMounted(() => {
-  const savedUsername = localStorage.getItem('saved_username')
-  const savedIdentity = localStorage.getItem('saved_identity')
-  const savedPassword = localStorage.getItem('saved_password')
-  if (savedUsername) {
-    form.value.username = savedUsername
-    form.value.identity = savedIdentity || 'user'  // 默认身份为用户
-    form.value.password = savedPassword || ''
+  const savedEmail = localStorage.getItem('saved_email')  // 改为email
+  const savedRole = localStorage.getItem('saved_role')
+  if (savedEmail) {
+    form.value.email = savedEmail    // 改为email
+    form.value.role = savedRole || 'normal'
     rememberMe.value = true
   }
 })
 const rules = {
-  identity: [
+  role: [
     { required: true, message: '请选择身份', trigger: 'change' }
   ],
-  username: [
-    { required: true, message: '用户名不能为空', trigger: 'blur' }
+  email: [
+    { required: true, message: '邮箱不能为空', trigger: 'blur' },
+    { 
+      type: 'email', 
+      message: '请输入正确的邮箱格式', 
+      trigger: ['blur', 'change'] 
+    }
   ],
   password: [
     { required: true, message: '密码不能为空', trigger: 'blur' }
@@ -118,29 +123,32 @@ const login = () => {
     try {
 
       const res = await loginUser({
-        username: form.value.username,
+        email: form.value.email,        // 改为email，仅支持邮箱登录
         password: form.value.password,
-        identity: form.value.identity
+        role: form.value.role
       })
       if (res.data.token) {
-        alert('登录成功')
+        ElMessage.success('登录成功！')
         localStorage.setItem('token', res.data.token)
         // 记住账号逻辑
         if (rememberMe.value) {
-          localStorage.setItem('saved_username', form.value.username)
-          localStorage.setItem('saved_identity', form.value.identity)
-          localStorage.setItem('saved_password', form.value.password)
+          localStorage.setItem('saved_email', form.value.email)    // 改为email
+          localStorage.setItem('saved_role', form.value.role)
         } else {
-          localStorage.removeItem('saved_username')
-          localStorage.removeItem('saved_identity')
-          localStorage.removeItem('saved_password')
+          localStorage.removeItem('saved_email')     // 改为email
+          localStorage.removeItem('saved_role')
         }
-        router.push('/home')
+        router.push('/profile')
       } else {
         alert(res.data.message || '登录失败')
       }
     } catch (err) {
-      alert('网络请求出错！')
+      console.error('登录错误:', err)
+      if (err.response?.status === 401) {
+        ElMessage.error('账号或密码错误')
+      } else {
+        ElMessage.error('网络请求出错，请稍后重试')
+      }
     }
   })
 }
@@ -175,7 +183,7 @@ const openDialog = () => {
   .login-form h2 {
       font-size: 1.75rem;
       font-weight: 500;
-      margin-bottom: px;
+      margin-bottom: 8px;
       color: #222;
   }
   /* 段落样式 */

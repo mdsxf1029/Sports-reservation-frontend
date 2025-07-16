@@ -1,0 +1,189 @@
+/* 响应式设计通用样式 */
+
+/* 通用响应式容器 */
+.responsive-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px 5vw;
+  gap: 0;
+  background: #fff;
+}
+
+/* 左右分栏布局 */
+.responsive-left,
+.responsive-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px 24px;
+  box-sizing: border-box;
+}
+
+/* 响应式图片 */
+.responsive-image {
+  width: 100%;
+  max-width: 700px;
+  height: auto;
+  max-height: 800px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+}
+
+/* 响应式表单容器 */
+.responsive-form-container {
+  width: 90%;
+  max-width: 500px;
+  padding: 48px 40px 36px 40px;
+  margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  background: #fff;
+}
+
+/* 页面布局 - Flexbox 贴底Footer */
+.page-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-content {
+  flex: 1;
+}
+
+.page-footer {
+  margin-top: auto;
+  width: 100%;
+  background: #f8f8f8;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* 响应式断点设计 */
+
+/* 中等屏幕 (1200px 以下) */
+@media (max-width: 1200px) {
+  .responsive-container {
+    padding: 20px 2vw;
+  }
+  
+  .responsive-image {
+    width: 95%;
+    max-width: 420px;
+    max-height: 320px;
+  }
+  
+  .responsive-form-container {
+    max-width: 450px;
+  }
+}
+
+/* 小屏幕 (900px 以下) */
+@media (max-width: 900px) {
+  .responsive-container {
+    flex-direction: column;
+    padding: 20px 4vw;
+    gap: 32px;
+    flex: 1;
+  }
+  
+  .responsive-left,
+  .responsive-right {
+    flex: unset;
+    justify-content: center;
+    min-width: 0;
+    padding: 10px 0;
+  }
+  
+  .responsive-image {
+    width: 100%;
+    max-width: 320px;
+    max-height: 180px;
+  }
+  
+  .responsive-form-container {
+    max-width: 400px;
+    padding: 32px 24px;
+  }
+}
+
+/* 移动设备 (600px 以下) */
+@media (max-width: 600px) {
+  .responsive-container {
+    padding: 15px 2vw;
+    gap: 20px;
+  }
+  
+  .responsive-left,
+  .responsive-right {
+    padding: 5px 0;
+  }
+  
+  .responsive-image {
+    max-width: 280px;
+    max-height: 150px;
+  }
+  
+  .responsive-form-container {
+    max-width: 350px;
+    padding: 24px 20px;
+  }
+}
+
+/* 超小屏幕 (400px 以下) */
+@media (max-width: 400px) {
+  .responsive-container {
+    padding: 10px 1vw;
+  }
+  
+  .responsive-form-container {
+    max-width: 320px;
+    padding: 20px 16px;
+  }
+  
+  .responsive-image {
+    max-width: 250px;
+    max-height: 120px;
+  }
+}
+
+/* 工具类 */
+.text-center {
+  text-align: center;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.auto-margin {
+  margin: 0 auto;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-start {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* 间距工具类 */
+.p-sm { padding: 10px; }
+.p-md { padding: 20px; }
+.p-lg { padding: 30px; }
+
+.m-sm { margin: 10px; }
+.m-md { margin: 20px; }
+.m-lg { margin: 30px; }
+
+.mt-auto { margin-top: auto; }
+.mb-auto { margin-bottom: auto; }

@@ -51,10 +51,16 @@
       </el-avatar>
       <template #dropdown>
         <el-dropdown-menu>
-          <el-dropdown-item>
-            <el-link to="/profile">个人空间</el-link>
+          <el-dropdown-item @click="$router.push('/profile')">
+            个人空间
           </el-dropdown-item>
-          <el-dropdown-item>
+          <el-dropdown-item @click="$router.push('/login')">
+            登录
+          </el-dropdown-item>
+          <el-dropdown-item @click="$router.push('/register')">
+            注册
+          </el-dropdown-item>
+          <el-dropdown-item @click="logout">
             退出账号
           </el-dropdown-item>
         </el-dropdown-menu>
@@ -65,9 +71,27 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Operation, Avatar, Sunny, Moon, Edit, } from '@element-plus/icons-vue'
+
+const router = useRouter()
 const activeIndex = ref('0')
 const isDarkMode = ref(false)
+
+// 退出登录方法
+const logout = () => {
+  // 清除本地存储的token和用户信息
+  localStorage.removeItem('token')
+  localStorage.removeItem('saved_email')
+  localStorage.removeItem('saved_role')
+  localStorage.removeItem('saved_password')
+  
+  // 跳转到登录页面
+  router.push('/login')
+  
+  // 可以添加提示消息
+  alert('已退出登录')
+}
 
 const handleScroll = () => {
   const header = document.querySelector('.header-navbar')
