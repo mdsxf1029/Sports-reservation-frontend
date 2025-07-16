@@ -1,0 +1,54 @@
+.venue-management-container {
+  padding: 25px;
+  background-color: #fff;
+  min-height: 100vh;
+}
+
+.header-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.search-input {
+  width: 350px;
+}
+
+.button-group .el-button {
+  margin-left: 12px;
+}
+
+.table-wrapper {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.el-table,
+.el-table th,
+.el-table td,
+.el-table--border::after,
+.el-table--group::after,
+.el-table::before {
+  border: none;
+}
+
+.el-table th {
+  background-color: #f8f8f9 !important;
+  font-weight: 500;
+  color: #515a6e;
+  border-top: 1px solid #e8eaec;
+  border-bottom: 1px solid #e8eaec;
+}
+
+.el-table td {
+  border-bottom: 1px solid #e8eaec;
+}
+
+.el-table .el-table__row--striped td {
+  background-color: #f8f8f9 !important;
+}
+
+.el-table .el-table__row:hover > td {
+  background-color: #f0faff !important;
+}
