@@ -44,7 +44,7 @@ const routes = [
         path: '/orderdetail',
         name: 'OrderDetail',
         component: OrderDetail
-    }，
+    },
   {
         path: '/reservation',
         name: 'Reservation',
