@@ -1,5 +1,4 @@
 // src/utils/api.js
-
 import axios from 'axios';
 
 // 创建 axios 实例
@@ -17,6 +16,21 @@ export function getViolations() {
 export function addToBlacklist(userId) {
   return instance.post('/api/blacklist/add', { userId });
 }
+
+/* 用户相关 */
+
+// 注册（创建用户）
+export function registerUser(userData) {
+  return instance.post('/api/users', userData);
+}
+
+// 登录（创建会话/令牌）
+export function loginUser(credentials) {
+  return instance.post('/api/sessions', credentials);
+}
+
+
+/* 用户相关结束 */
 
 // 获取社区帖子列表
 export const fetchCommunityPosts = (params) => {
