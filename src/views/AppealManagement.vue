@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import AdminSidebarMenu from './AdminSidebarMenu.vue'
+import AdminSidebarMenu from '../components/AdminSidebarMenu.vue'
 import '../styles/appeal-management.css';
 
 export default {
