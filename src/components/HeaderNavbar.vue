@@ -4,13 +4,13 @@
     <el-container>
       <h1>运动场地预约系统</h1>
     </el-container>
-    <el-menu-item class="navbar-item" index="1">
+    <el-menu-item class="navbar-item" index="1"@click="$router.push('/news')">
       运动社区
     </el-menu-item>
-    <el-menu-item class="navbar-item" index="2">
+    <el-menu-item class="navbar-item" index="2"@click="$router.push('/community')">
       运动新闻
     </el-menu-item>
-    <el-menu-item class="navbar-item" index="3">
+    <el-menu-item class="navbar-item" index="3"@click="$router.push('/reservation')">
       运动场地预约
     </el-menu-item>
 
@@ -158,12 +158,12 @@ const toggleDarkMode = () => {
   background-color: var(--header-background-transparent-color);
 }
 
-h1{
+h1 {
   font-size: 24px;
-  margin : 10px 10px;
+  margin : 10px 20px;
 }
 
-.flex-grow{
+.flex-grow {
   flex-grow: 1;
 }
 
