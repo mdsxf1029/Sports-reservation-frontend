@@ -20,7 +20,7 @@
                 />
                 <h2>{{ orderDetail.venue.venue_name }}</h2>
                 <div class="venue-location">
-                  <el-link :underline='false' class='location-link' @click="showVenueLocation = true">
+                  <el-link underline="never" class='location-link' @click="showVenueLocation = true">
                     <el-icon class="location-icon"><Location/></el-icon>
                     {{ orderDetail.venue.venue_location }}
                   </el-link>
@@ -67,8 +67,8 @@
                 </div>
 
                 <div class="btn">
-                  <el-button class="cancel">取消预约</el-button>
-                  <el-button class="confirm">确认预约</el-button>
+                  <el-button class="cancel" @click="goBackToReservation">取消预约</el-button>
+                  <el-button class="confirm" @click="confirmReservation">确认预约</el-button>
                 </div>
 
                 <div class="notice">确认预约默认同意遵守各场馆管理规定，在现场管理人员的指导下开展活动。</div>
@@ -77,19 +77,42 @@
         </div>
     </div>
   </div>
+  <div>
+    <el-dialog
+      v-model="visible"
+      title="预约成功"
+      width="30%"
+      :center="true" 
+      :close-on-click-modal="false"
+      :show-close="false"
+    >
+      <div style="display: flex; justify-content: center; margin-bottom: 10px;">
+        <el-icon style="font-size: 72px; color: #2C7BE5;">
+          <SuccessFilled />
+        </el-icon>
+      </div>
+      <p style="text-align: center;font-size: 16px;">页面将在 {{ countdown }} 秒后跳转...</p>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { ArrowLeft, Location } from '@element-plus/icons-vue'
-import { useRoute } from 'vue-router'
-import { fetchOrderDetail } from '../utils/api'
+import { ArrowLeft, Location, SuccessFilled } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { useRoute, useRouter } from 'vue-router'
+import { fetchOrderDetail, fetchConfirmInfo } from '../utils/api'
 import HeaderNavbar from '../components/HeaderNavbar.vue'
-import axios from 'axios'
+
+const route = useRoute()
+const router = useRouter()
 
 const activeIndex = ref('0')
-const route = useRoute()
 const orderDetail = ref(null)
+const successDialogVisible = ref(false)
+const visible = ref(false)
+const countdown = ref(5)
+let timer = null
 
 const loadDetail = async () => {
   const id = route.params.id;
@@ -133,7 +156,31 @@ const reservationInfo = computed(() => {
 })
 
 const goBackToReservation = () => {
+  router.back();
+}
 
+const confirmReservation = async () => {
+  const id = route.params.id;
+  try {
+    const res = await fetchConfirmInfo(id)
+
+    if (res.data.success) {
+      visible.value = true
+      countdown.value = 5
+
+      timer = setInterval(() => {
+        countdown.value--
+        if (countdown.value == 0) {
+          clearInterval(timer)
+          router.push('/profile')
+        }
+      }, 1000)
+    } else {
+      ElMessage.error('预约失败：' + (res.data.message || '请重试'));
+    } 
+  } catch (err) {
+    ElMessage.error('预约失败，网络异常');
+  }
 }
 
 onMounted(() => {
@@ -361,5 +408,11 @@ h4 {
   font-weight: normal;  
   color: grey;      
   margin: 25px 0;
+}
+
+/* 预约成功弹窗 */
+::v-deep(.el-dialog__header) {
+  font-size: 32px !important;
+  font-weight: bold;
 }
 </style>
