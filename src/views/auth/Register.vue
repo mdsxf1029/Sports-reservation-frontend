@@ -33,7 +33,7 @@ import '@/styles/responsive.css'
 
 .header-section {
   background: white;
-  padding: 2rem 0;
+  padding: 0.5rem 0; /* 稍微增加一点内边距，但不会太大 */
   text-align: center;
   border-bottom: 1px solid #e0e0e0;
 }
@@ -42,7 +42,7 @@ import '@/styles/responsive.css'
   font-size: 2rem;
   font-weight: 600;
   color: #333;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.3rem 0; /* 取消上外边距，只保留下外边距 */
 }
 
 .site-description {
@@ -54,8 +54,8 @@ import '@/styles/responsive.css'
   flex: 1;
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 2rem 1rem;
+  align-items: flex-start; /* 改为顶部对齐 */
+  padding: 1.5rem 1rem; 
 }
 
 .register-container {

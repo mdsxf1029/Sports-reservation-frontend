@@ -2,8 +2,8 @@
   <div class="page-layout">
     <div class="top-left-text">
         运动场馆预约平台
-        <hr style="margin: 8px 0; width: 200px;">
-        <!--margin 是元素外边距的意思，这里上下各8px，左右各0-->
+        <hr style="margin: 4px 0; width: 200px;">
+        <!--margin 是元素外边距的意思，这里上下各4px，左右各0-->
       <!--<p>为用户提供便捷的场馆预约服务</p>-->
     </div>
     <div class="responsive-container page-content">
@@ -33,6 +33,10 @@ import '@/styles/responsive.css'
 <style scoped>
 .page-layout {
   background: #fff;
+  margin-top: -18px; /* 负边距使页面内容上移 */
+  min-height: 100vh;
+  overflow-x: hidden; /* 防止水平溢出 */
+  overflow-y: hidden; /* 防止垂直溢出 */
 }
 
 .top-left-text {     
@@ -45,10 +49,10 @@ import '@/styles/responsive.css'
 }
 
 .responsive-image {
-  width: 80%;
-  max-width: 700px;
+  width: 100%;
+  max-width: 550px;
   height: auto;
-  max-height: 800px;
+  max-height: 650px;
   object-fit: cover;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.10);
