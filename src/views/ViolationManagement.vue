@@ -77,7 +77,7 @@
 </template>
 
 <script>
-import AdminSidebarMenu from './AdminSidebarMenu.vue'
+import AdminSidebarMenu from '../components/AdminSidebarMenu.vue'
 export default {
   name: "ViolationManagement",
   components: { AdminSidebarMenu },

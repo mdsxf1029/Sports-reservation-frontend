@@ -7,7 +7,7 @@
   </div>
 </template>
 <script>
-import AdminSidebarMenu from './AdminSidebarMenu.vue'
+import AdminSidebarMenu from '../components/AdminSidebarMenu.vue'
 export default { name: "VenueManagement", components: { AdminSidebarMenu } }
 </script>
 <style src="../styles/admin-sidebar.css"></style>
