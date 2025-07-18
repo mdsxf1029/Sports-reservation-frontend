@@ -33,22 +33,46 @@
   border: none;
 }
 
+
 .el-table th {
-  background-color: #f8f8f9 !important;
-  font-weight: 500;
-  color: #515a6e;
+  background-color: #fafafa !important; 
+  font-weight: bold;
+  color: #121313;   
   border-top: 1px solid #e8eaec;
   border-bottom: 1px solid #e8eaec;
+  font-size: 15px;
 }
 
 .el-table td {
   border-bottom: 1px solid #e8eaec;
+  font-weight: 400; 
+  color: #2b2c2e; 
+  font-size: 15px;
 }
 
+
 .el-table .el-table__row--striped td {
-  background-color: #f8f8f9 !important;
+  background-color: #fdfdfd !important; 
 }
 
 .el-table .el-table__row:hover > td {
   background-color: #f0faff !important;
+}
+
+.el-dialog .el-form-item__label {
+  font-size: 15px;
+  font-weight: 600;
+}
+.el-dialog .el-input__inner, .el-dialog .el-select .el-input__inner {
+    font-size: 15px;
+}
+
+.aligned-form-item .el-form-item__content {
+  align-items: center;
+}
+
+.el-table .status-column-cell .cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
