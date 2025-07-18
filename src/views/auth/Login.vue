@@ -33,10 +33,9 @@ import '@/styles/responsive.css'
 <style scoped>
 .page-layout {
   background: #fff;
-  margin-top: -18px; /* 负边距使页面内容上移 */
-  min-height: 100vh;
+  min-height: calc(100vh - 60px); /* 减去导航栏高度 */
   overflow-x: hidden; /* 防止水平溢出 */
-  overflow-y: hidden; /* 防止垂直溢出 */
+  overflow-y: auto; /* 允许垂直滚动 */
 }
 
 .top-left-text {     

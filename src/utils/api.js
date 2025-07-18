@@ -17,20 +17,33 @@ export function addToBlacklist(userId) {
   return instance.post('/api/blacklist/add', { userId });
 }
 
-/* 用户相关 */
+/* 用户账户与信息相关 */
 
 // 注册（创建用户）
 export function registerUser(userData) {
-  return instance.post('/api/users', userData);
+  return instance.post('/api/auth/register', userData);
 }
 
 // 登录（创建会话/令牌）
 export function loginUser(credentials) {
-  return instance.post('/api/sessions', credentials);
+  return instance.post('/api/auth/login', credentials);
 }
 
+// 获取用户信息
+export function getUserInfo(userId) {
+  return instance.get(`/api/user/${userId}`);
+}
 
-/* 用户相关结束 */
+// 上传头像
+export function uploadAvatar(formData) {
+  return instance.post('/api/upload/avatar', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+}
+
+/* 用户账户与信息相关结束 */
 
 // 获取社区帖子列表
 export const fetchCommunityPosts = (params) => {

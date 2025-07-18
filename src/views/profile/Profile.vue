@@ -9,8 +9,8 @@
         <div class="profile-card">
             <img class="avatar" src="@/assets/Backgrounds/Flower2.jpg" alt="头像"/>
                 <div class="profile-info">
-                <div class="name">洗衣粉</div>
-                <div class="desc">2354264 软件工程</div>
+                <div class="name">{{ userProfile.name }}</div>
+                <div class="desc">{{ userProfile.id }} {{ userProfile.department }}</div>
             </div>
             <button class="edit-btn">编辑个人资料</button>
         </div>
@@ -18,7 +18,7 @@
     <!-- Tab栏 -->
     <div class="tab-card">
         <div class="tabs">
-        <span class="tab" :class="{active: activeTab === 'dynamic'}" @click="activeTab = 'dynamic'">动态</span>
+        <span class="tab" :class="{active: activeTab === 'profile'}" @click="activeTab = 'profile'">个人资料</span>
         <span class="tab" :class="{active: activeTab === 'favorite'}" @click="activeTab = 'favorite'">收藏</span>
         <span class="tab" :class="{active: activeTab === 'reservation'}" @click="activeTab = 'reservation'">预约</span>
         <span class="tab" :class="{active: activeTab === 'points'}" @click="activeTab = 'points'">积分</span>
@@ -26,19 +26,75 @@
         
     </div>
         <div class="tab-content">
-        <!-- 动态内容 -->
+        <!-- 个人资料内容 -->
         <TabContent 
-          v-if="activeTab === 'dynamic'" 
-          title="我的动态" 
-          :showAddButton="true"
-          @add="addDynamic"
+          v-if="activeTab === 'profile'" 
+          title="个人资料" 
+          :showAddButton="false"
         >
-          <DynamicItem 
-            v-for="(item, index) in dynamicList" 
-            :key="index"
-            :content="item.content"
-            :time="item.time"
-          />
+          <div class="profile-details">
+            <div class="profile-section">
+              <h3>基本信息</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <label>姓名：</label>
+                  <span>{{ userProfile.name }}</span>
+                </div>
+                <div class="info-item">
+                  <label>学号/工号：</label>
+                  <span>{{ userProfile.id }}</span>
+                </div>
+                <div class="info-item">
+                  <label>专业/部门：</label>
+                  <span>{{ userProfile.department }}</span>
+                </div>
+                <div class="info-item">
+                  <label>身份：</label>
+                  <span>{{ userProfile.role }}</span>
+                </div>
+                <div class="info-item">
+                  <label>邮箱：</label>
+                  <span>{{ userProfile.email }}</span>
+                </div>
+                <div class="info-item">
+                  <label>手机号：</label>
+                  <span>{{ userProfile.phone }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="profile-section">
+              <h3>运动偏好</h3>
+              <div class="preference-tags">
+                <span v-for="sport in userProfile.sportsPreferences" :key="sport" class="preference-tag">
+                  {{ sport }}
+                </span>
+              </div>
+            </div>
+            
+            <div class="profile-section">
+              <h3>个人简介</h3>
+              <p class="bio">{{ userProfile.bio }}</p>
+            </div>
+            
+            <div class="profile-section">
+              <h3>统计信息</h3>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div class="stat-number">{{ userProfile.stats.totalReservations }}</div>
+                  <div class="stat-label">总预约次数</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">{{ userProfile.stats.totalHours }}</div>
+                  <div class="stat-label">运动总时长</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">{{ userProfile.stats.favoriteVenues }}</div>
+                  <div class="stat-label">收藏场馆</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </TabContent>
         
         <!-- 收藏内容 -->
@@ -109,44 +165,58 @@
         </div>
     </div>
     </div>
-
+    <BackToTop/>
     <footer>
         <FooterNavbar/>
     </footer>
-        
-    </div> 
+    </div>
 </template>
 
 <script>
+import {ref} from 'vue'
 import HeaderNavbar from '@/components/HeaderNavbar.vue'
 import FooterNavbar from '@/components/FooterNavbar.vue'
-import DynamicItem from '@/components/profile/DynamicItem.vue'
 import FavoriteItem from '@/components/profile/FavoriteItem.vue'
 import ReservationItem from '@/components/profile/ReservationItem.vue'
 import NotificationItem from '@/components/profile/NotificationItem.vue'
 import PointsItem from '@/components/profile/PointsItem.vue'
 import TabContent from '@/components/profile/TabContent.vue'
+import BackToTop from '../../components/BackToTop.vue'
+
         
 export default {
   components: { 
     HeaderNavbar, 
     FooterNavbar,
-    DynamicItem,
     FavoriteItem,
     ReservationItem,
     NotificationItem,
     PointsItem,
-    TabContent
+    TabContent,
+    BackToTop
   },
   data() {
     return {
-      activeTab: 'dynamic', // 默认显示动态选项卡
+      activeTab: 'profile', // 默认显示个人资料选项卡
       currentPoints: 1250, // 当前积分总数
-      // 动态数据
-      dynamicList: [
-        { content: '🏃‍♂️ 今天完成了5公里跑步训练', time: '2小时前' },
-        { content: '🏀 预约了篮球场地，明天下午3点', time: '1天前' }
-      ],
+      
+      // 用户个人资料数据
+      userProfile: {
+        name: '洗衣粉',
+        id: '2354264',
+        department: '软件工程',
+        role: '学生',
+        email: 'washingpowder@tongji.edu.cn',
+        phone: '138****8888',
+        sportsPreferences: ['篮球', '羽毛球', '跑步', '游泳'],
+        bio: '热爱运动，享受健康生活。喜欢团队合作运动，也享受独自跑步的时光。希望通过运动结识更多志同道合的朋友。',
+        stats: {
+          totalReservations: 156,
+          totalHours: '280小时',
+          favoriteVenues: 8
+        }
+      },
+      
       // 收藏数据
       favoriteList: [
         { content: '⭐ 羽毛球馆A - 环境优美，设施齐全' },
@@ -172,14 +242,6 @@ export default {
     }
   },
   methods: {
-    // 添加动态
-    addDynamic() {
-      const newDynamic = {
-        content: `🎯 新的运动记录 - ${new Date().toLocaleString()}`,
-        time: '刚刚'
-      }
-      this.dynamicList.unshift(newDynamic)
-    },
     // 添加收藏
     addFavorite() {
       const newFavorite = {
@@ -200,15 +262,18 @@ export default {
 .all-page {
   display: flex; 
   min-height: 100vh;
-  min-width: 100vw;     
+  width: 100%; /* 改为100%而不是100vw */
+  max-width: 100vw; /* 确保不超出视口 */
   margin: 0 auto;
   background: #F5F5F5;
   flex-direction: column;
   padding-top: 90px;   /* 顶栏高度+适当间距 */
+  overflow-x: hidden; /* 防止水平溢出 */
+  box-sizing: border-box; /* 确保padding计算在宽度内 */
 } 
 /* 顶栏导航 */
 .navbar {
-  width: 99vw;
+  width: 100%; /* 改为100%而不是99vw */
   position: fixed;
   margin: 0 auto;
   top: 0; 
@@ -216,13 +281,16 @@ export default {
 }
 /* 主内容区域 */
 .main-content {
+  
   padding-top: 4px; /* 顶栏高度 */
 }
 /* 顶部工具栏 */
 .top-bar {
   padding: 4px 24px;  
-  max-width: 90vw;
+  max-width: 100%; /* 改为100%确保不超出容器 */
+  width: 100%;
   margin: 0 auto;
+  box-sizing: border-box; /* 确保padding计算在宽度内 */
 }
 /* 背景图区域 */
 .profile-bg { 
@@ -349,6 +417,117 @@ export default {
 .points-value {
   font-size: 32px;
   font-weight: bold;
+}
+
+/* 个人资料详情样式 */
+.profile-details {
+  padding: 0;
+}
+
+.profile-section {
+  margin-bottom: 32px;
+  padding: 20px;
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1px solid #e8e8e8;
+}
+
+.profile-section h3 {
+  color: #2062ea;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e8f4ff;
+}
+
+/* 信息网格布局 */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+}
+
+.info-item label {
+  font-weight: 600;
+  color: #555;
+  min-width: 100px;
+  margin-right: 12px;
+}
+
+.info-item span {
+  color: #333;
+  font-size: 15px;
+}
+
+/* 运动偏好标签 */
+.preference-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.preference-tag {
+  background: linear-gradient(135deg, #2062ea, #4b82f6);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(32, 98, 234, 0.3);
+}
+
+/* 个人简介 */
+.bio {
+  color: #666;
+  line-height: 1.6;
+  font-size: 15px;
+  margin: 0;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border-left: 4px solid #2062ea;
+}
+
+/* 统计信息网格 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8e8e8;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: bold;
+  color: #2062ea;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
 }
 /* 底部footer */
 footer {

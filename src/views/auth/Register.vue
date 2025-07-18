@@ -25,7 +25,7 @@ import '@/styles/responsive.css'
 
 <style scoped>
 .page-layout {
-  min-height: 100vh;
+  min-height: calc(100vh - 60px); /* 减去导航栏高度 */
   background-color: #f5f5f5;
   display: flex;
   flex-direction: column;

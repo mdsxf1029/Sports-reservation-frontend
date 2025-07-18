@@ -35,12 +35,17 @@
             :before-upload="handleBeforeUpload"
             :on-change="handleFileChange"
             :auto-upload="false"
+            :disabled="loading"
             accept="image/*"
             drag
           >
-            <el-icon class="uploader-icon"><Plus /></el-icon>
+            <el-icon class="uploader-icon" v-if="!loading"><Plus /></el-icon>
+            <el-icon class="uploader-icon is-loading" v-else>
+              <Loading />
+            </el-icon>
             <div class="el-upload__text">
-              拖拽头像到此处或<em>点击上传</em>
+              <span v-if="!loading">拖拽头像到此处或<em>点击上传</em></span>
+              <span v-else>正在上传中...</span>
             </div>
             <template #tip>
               <div class="el-upload__tip">
@@ -96,7 +101,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Plus, Link, Delete } from '@element-plus/icons-vue'
+import { Plus, Link, Delete, Loading } from '@element-plus/icons-vue'
+import { uploadAvatar } from '@/utils/api'
 
 // 定义组件的 props 和 emits
 const props = defineProps({
@@ -107,6 +113,7 @@ const props = defineProps({
   gender: {
     type: String,
     default: 'O'
+    // 注意: gender 参数现在不再影响默认头像选择
   }
 })
 
@@ -115,32 +122,17 @@ const emit = defineEmits(['update:modelValue'])
 // 响应式数据
 const activeTab = ref('upload')
 const urlInput = ref('')
+const loading = ref(false)
+const lastUploadedFile = ref(null) // 记录上次上传的文件信息
 
 // 根据性别计算默认头像
 const avatarDefaults = computed(() => {
-  const allDefaults = [
+  return [
     {
-      label: '男性默认',
-      url: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
-    },
-    {
-      label: '女性默认', 
-      url: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
-    },
-    {
-      label: '通用默认',
+      label: '默认头像',
       url: 'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
     }
   ]
-  
-  // 根据性别调整默认头像顺序
-  if (props.gender === 'M') {
-    return [allDefaults[0], allDefaults[2], allDefaults[1]]
-  } else if (props.gender === 'F') {
-    return [allDefaults[1], allDefaults[2], allDefaults[0]]
-  } else {
-    return allDefaults
-  }
 })
 
 // 文件上传前的验证
@@ -156,23 +148,76 @@ const handleBeforeUpload = (file) => {
     ElMessage.error('上传头像大小不能超过 2MB!')
     return false
   }
-  return false // 阻止自动上传，我们手动处理
+  return false // 继续阻止自动上传，使用我们的自定义上传逻辑
 }
 
-// 处理文件选择
-const handleFileChange = (file) => {
+// 处理文件选择 - 最佳方案：直接上传到服务器
+const handleFileChange = async (file) => {
   if (!file.raw) return
+  ElMessage.info('开始上传头像...')
+  // 文件去重检查
+  const currentFileInfo = {
+    name: file.raw.name,
+    size: file.raw.size,
+    lastModified: file.raw.lastModified,
+    type: file.raw.type
+  }
   
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    const base64 = e.target.result
-    emit('update:modelValue', base64)
-    ElMessage.success('头像上传成功!')
+  // 检查是否是同一个文件
+  if (lastUploadedFile.value && 
+      lastUploadedFile.value.name === currentFileInfo.name &&
+      lastUploadedFile.value.size === currentFileInfo.size &&
+      lastUploadedFile.value.lastModified === currentFileInfo.lastModified &&
+      lastUploadedFile.value.type === currentFileInfo.type) {
+    ElMessage.info('检测到相同文件，无需重复上传')
+    return
   }
-  reader.onerror = () => {
-    ElMessage.error('文件读取失败!')
+  
+  try {
+    loading.value = true
+    
+    // 创建FormData对象
+    const formData = new FormData()
+    formData.append('avatar', file.raw)
+    
+    // 上传文件到服务器
+    const response = await uploadAvatar(formData)
+    
+    if (response && response.success === true) {
+      // 服务器返回图片URL
+      const avatarUrl = response.avatarUrl 
+      emit('update:modelValue', avatarUrl)
+      
+      // 记录上传成功的文件信息
+      lastUploadedFile.value = currentFileInfo
+      
+      ElMessage.success('头像上传成功!')
+    } else {
+      ElMessage.error('头像上传失败')
+    }
+  } catch (error) {
+    console.error('头像上传错误:', error)
+    if (error.response) {
+      const status = error.response.status
+      switch (status) {
+        case 413:
+          ElMessage.error('文件太大，请选择小于2MB的图片')
+          break
+        case 415:
+          ElMessage.error('不支持的文件格式')
+          break
+        case 500:
+          ElMessage.error('服务器错误，请稍后重试')
+          break
+        default:
+          ElMessage.error('上传失败，请重试')
+      }
+    } else {
+      ElMessage.error('网络错误，请检查网络连接')
+    }
+  } finally {
+    loading.value = false
   }
-  reader.readAsDataURL(file.raw)
 }
 
 // 处理URL输入
@@ -180,6 +225,12 @@ const handleUrlChange = () => {
   const url = urlInput.value.trim()
   if (!url) {
     clearAvatar()
+    return
+  }
+  
+  // URL去重检查
+  if (lastUploadedFile.value && lastUploadedFile.value.url === url) {
+    ElMessage.info('检测到相同URL，无需重复设置')
     return
   }
   
@@ -193,6 +244,10 @@ const handleUrlChange = () => {
   const img = new Image()
   img.onload = () => {
     emit('update:modelValue', url)
+    
+    // 记录成功设置的URL信息
+    lastUploadedFile.value = { url: url }
+    
     ElMessage.success('头像链接设置成功!')
   }
   img.onerror = () => {
@@ -203,7 +258,17 @@ const handleUrlChange = () => {
 
 // 选择默认头像
 const selectDefaultAvatar = (avatarUrl) => {
+  // 默认头像去重检查
+  if (lastUploadedFile.value && lastUploadedFile.value.defaultAvatar === avatarUrl) {
+    ElMessage.info('已选择此默认头像，无需重复设置')
+    return
+  }
+  
   emit('update:modelValue', avatarUrl)
+  
+  // 记录选择的默认头像信息
+  lastUploadedFile.value = { defaultAvatar: avatarUrl }
+  
   ElMessage.success('头像选择成功!')
 }
 
@@ -211,13 +276,13 @@ const selectDefaultAvatar = (avatarUrl) => {
 const clearAvatar = () => {
   emit('update:modelValue', '')
   urlInput.value = ''
+  
+  // 清除去重记录
+  lastUploadedFile.value = null
+  
   ElMessage.info('头像已清除')
 }
-
-// 如果没有头像且有性别信息，设置默认头像
-if (!props.modelValue && props.gender && avatarDefaults.value.length > 0) {
-  emit('update:modelValue', avatarDefaults.value[0].url)
-}
+ 
 </script>
 
 <style scoped>
@@ -323,8 +388,8 @@ if (!props.modelValue && props.gender && avatarDefaults.value.length > 0) {
 }
 
 .avatar-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  justify-content: center;
   gap: 16px;
   max-width: 400px;
 }
