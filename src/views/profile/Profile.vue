@@ -235,8 +235,6 @@
 </template>
 
 <script>
-import {ref} from 'vue'
-import { getUserInfo, fetchMyOrderSummary, fetchUserPoints, fetchPointsHistory, fetchUserNotifications } from '@/utils/api'
 import { ElMessage } from 'element-plus'
 import HeaderNavbar from '@/components/HeaderNavbar.vue'
 import FooterNavbar from '@/components/FooterNavbar.vue'
@@ -246,6 +244,11 @@ import PointsItem from '@/components/profile/PointsItem.vue'
 import TabContent from '@/components/profile/TabContent.vue'
 import BackToTop from '../../components/BackToTop.vue'
 import EditProfileDialog from '@/components/profile/EditProfileDialog.vue'
+
+// 导入服务和工具类
+import { UserProfileService, ReservationService, PointsService, NotificationService } from '@/services/profileService'
+import { AuthService } from '@/utils/auth'
+import { formatDate, getGenderText, getRoleText } from '@/utils/formatters'
 
         
 export default {
@@ -313,26 +316,21 @@ export default {
   async mounted() {
     console.log('Profile页面已加载，开始检查登录状态...')
     
-    // 为了测试，临时设置一些登录信息（如果没有的话）
-    if (!localStorage.getItem('token')) {
-      localStorage.setItem('token', 'test-token-123')
-      localStorage.setItem('userId', '1')
-      localStorage.setItem('userName', 'testUser')
-      console.log('设置了测试用的登录信息')
-    }
+    // 设置测试登录信息（开发用）
+    AuthService.setTestLoginInfo()
     
     await this.checkLoginAndLoadProfile()
     
     // 根据当前活跃标签页加载相应数据
     switch(this.activeTab) {
-      case 'reservations':
+      case 'reservation':
         this.loadReservationData()
         break
       case 'points':
         await this.loadUserPoints()
         this.loadPointsData()
         break
-      case 'notifications':
+      case 'notification':
         this.loadNotificationData()
         break
     }
@@ -341,8 +339,8 @@ export default {
     // 监听tab切换，当切换到不同tab时加载相应数据
     activeTab(newTab) {
       switch(newTab) {
-        case 'reservations':
-          if (!this.reservations || this.reservations.length === 0) {
+        case 'reservation':
+          if (!this.reservationList || this.reservationList.length === 0) {
             this.loadReservationData()
           }
           break
@@ -352,8 +350,8 @@ export default {
             this.loadPointsData()
           }
           break
-        case 'notifications':
-          if (!this.notifications || this.notifications.length === 0) {
+        case 'notification':
+          if (!this.notificationList || this.notificationList.length === 0) {
             this.loadNotificationData()
           }
           break
@@ -361,156 +359,39 @@ export default {
     }
   },
   methods: {
+    // 格式化工具方法（直接引用工具函数）
+    formatDate,
+    getGenderText,
+    getRoleText,
+
     // 检查登录状态并加载用户资料
     async checkLoginAndLoadProfile() {
-      const token = localStorage.getItem('token')
-      const userId = localStorage.getItem('userId')
+      const authResult = AuthService.checkLoginStatus()
       
-      console.log('登录检查:', { token: !!token, userId: userId })
-      
-      if (!token || !userId) {
-        ElMessage.warning('请先登录后再访问个人中心')
-        setTimeout(() => {
-          this.$router.push('/login')
-        }, 3000)
-        return
-      }
-      
-      // 检查token是否过期
-      const expires = localStorage.getItem('expires')
-      if (expires && new Date(expires) < new Date()) {
-        ElMessage.warning('登录已过期，请重新登录')
-        this.clearLoginData()
-        setTimeout(() => {
-          this.$router.push('/login')
-        }, 3000)
+      if (!authResult.isValid) {
+        AuthService.handleAuthFailure(authResult.reason, this.$router)
         return
       }
       
       // 如果登录状态正常，加载用户资料
-      await this.loadUserProfile(userId)
+      await this.loadUserProfile(authResult.userId)
     },
 
     // 加载用户资料
     async loadUserProfile(userId) {
       this.isLoading = true
       try {
-        console.log('开始获取用户信息，用户ID:', userId)
-        const response = await getUserInfo(userId)
-        console.log('API响应:', response)
-        
-        if (response && response.code === 0 && response.data) {
-          let userData
-          
-          // 处理不同的API响应格式 - 统一处理逻辑
-          if (response.code === 0 || response.code === 200) {
-            userData = response.data
-          } else if (response.data && !response.data.code) {
-            // 直接返回数据的格式
-            userData = response.data
-          } else {
-            throw new Error(response.data.msg || response.data.message || '获取用户信息失败')
-          }
-          
-          // 更新用户资料数据
-          this.updateUserProfile(userData)
-          this.currentPoints = userData.points || 0
-          
-          console.log('用户信息更新成功:', this.userProfile)
-          ElMessage.success('用户信息加载成功')
-        } else {
-          throw new Error('API响应格式错误')
-        }
+        const userProfile = await UserProfileService.loadUserProfile(userId)
+        this.userProfile = userProfile
+        this.currentPoints = userProfile.points || 0
+        console.log('用户信息更新成功:', this.userProfile)
+        ElMessage.success('用户信息加载成功')
       } catch (error) {
         console.error('获取用户信息失败:', error)
-        ElMessage.error('获取用户信息失败，请稍后重试')
-        
-        // 在API调用失败时，使用一些默认的示例数据
-        this.useDefaultUserProfile()
+        this.userProfile = UserProfileService.getDefaultUserProfile()
+        this.currentPoints = 1250
       } finally {
         this.isLoading = false
-      }
-    },
-
-    // 使用默认用户资料（API调用失败时的后备方案）
-    useDefaultUserProfile() {
-      this.userProfile = {
-        userName: '示例用户',
-        userId: '20240001',
-        telephone: '138****8888',
-        email: 'example@university.edu.cn',
-        password: '',
-        gender: 'male',
-        birthday: '1995-06-15',
-        avatarUrl: '',
-        region: '上海市',
-        profile: '热爱运动的大学生',
-        role: 'normal',
-        register_time: '2024-01-01T00:00:00Z',
-        points: 1250
-      }
-      this.currentPoints = 1250
-      console.log('使用默认用户资料')
-    },
-
-    // 更新用户资料数据
-    updateUserProfile(userData) {
-      this.userProfile = {
-        userName: userData.userName || userData.name || '未设置',
-        userId: userData.userId || userData.id || userData.studentId || userData.workId || '未设置',
-        telephone: userData.telephone || userData.phone || userData.mobile || '未设置',
-        email: userData.email || '未设置',
-        password: '', // 密码不显示
-        gender: userData.gender || 'unknown',
-        birthday: userData.birthday || userData.birthDate || '',
-        avatarUrl: userData.avatarUrl || userData.avatar || userData.profilePicture || '',
-        region: userData.region || userData.location || userData.city || '未设置',
-        profile: userData.profile || userData.bio || userData.description || userData.introduction || '这个人很懒，什么都没有留下...',
-        role: userData.role || 'normal',
-        register_time: userData.register_time || userData.registerTime || userData.createdAt || '',
-        points: userData.points || 0
-      }
-    },
-
-    // 清除登录数据
-    clearLoginData() {
-      localStorage.removeItem('token')
-      localStorage.removeItem('userId')
-      localStorage.removeItem('userName')
-      localStorage.removeItem('expires')
-      localStorage.removeItem('userAvatar')
-    },
-
-    // 格式化日期
-    formatDate(dateString) {
-      if (!dateString) return '未设置'
-      const date = new Date(dateString)
-      return date.toLocaleDateString('zh-CN')
-    },
-
-    // 获取性别文本
-    getGenderText(gender) {
-      switch (gender) {
-        case 'male':
-          return '男'
-        case 'female':
-          return '女'
-        case 'unknown':
-        default:
-          return '未设置'
-      }
-    },
-
-    // 获取角色文本
-    getRoleText(role) {
-      switch (role) {
-        case 'normal':
-          return '普通用户'
-        case 'manager':
-        case 'manager':
-          return '管理员'
-        default:
-          return role || '未设置'
       }
     },
 
@@ -541,189 +422,15 @@ export default {
 
       this.reservationLoading = true
       try {
-        console.log('开始获取用户订单，用户ID:', userId, '页码:', page)
+        const pagination = { ...this.reservationPagination, page }
+        const result = await ReservationService.loadReservationData(userId, pagination)
         
-        // 传递分页参数
-        const response = await fetchMyOrderSummary(userId, {
-          page: page,
-          pageSize: this.reservationPagination.pageSize
-        })
-        console.log('订单API响应:', response)
-
-        if (response && response.code === 0 && response.data) {
-          let orderData = []
-          const responseData = response.data.data
-          
-          // 根据你提供的API格式处理数据
-          if (responseData && responseData.list) {
-            // 如果list是数组
-            if (Array.isArray(responseData.list)) {
-              orderData = responseData.list
-            } 
-            // 如果list是单个对象，转换为数组
-            else if (typeof responseData.list === 'object') {
-              orderData = [responseData.list]
-            }
-          }
-          
-          console.log('解析出的订单数据:', orderData)
-
-          // 更新分页信息
-          this.reservationPagination = {
-            total: responseData.total || 0,
-            page: responseData.page || page,
-            pageSize: this.reservationPagination.pageSize
-          }
-
-          // 转换订单数据格式
-          this.reservationList = orderData.map(order => this.formatOrderData(order))
-          
-          console.log('订单数据加载成功:', this.reservationList)
-          console.log('分页信息:', this.reservationPagination)
-        } else {
-          throw new Error(`API返回错误: ${response.data?.msg || '未知错误'}`)
-        }
+        this.reservationList = result.reservationList
+        this.reservationPagination = result.paginationInfo
       } catch (error) {
-        console.error('获取订单数据失败:', error)
-        ElMessage.error('获取订单数据失败，请稍后重试')
-        
-        // 使用示例数据作为后备方案
-        this.reservationList = [
-          { 
-            appointmentId: 'demo1',
-            content: '🏀 篮球场地 - 明天 15:00-17:00', 
-            status: '已确认', 
-            statusType: 'active',
-            facilityName: '篮球场A',
-            appointmentDate: '2024-01-20',
-            startTime: '15:00',
-            endTime: '17:00'
-          },
-          { 
-            appointmentId: 'demo2',
-            content: '🏊‍♂️ 游泳池 - 本周六 09:00-11:00', 
-            status: '待确认', 
-            statusType: 'pending',
-            facilityName: '游泳池B',
-            appointmentDate: '2024-01-22',
-            startTime: '09:00',
-            endTime: '11:00'
-          }
-        ]
-        
-        // 设置默认分页信息
-        this.reservationPagination = {
-          total: 2,
-          page: 1,
-          pageSize: 10
-        }
+        console.error('加载预约数据失败:', error)
       } finally {
         this.reservationLoading = false
-      }
-    },
-
-    // 格式化订单数据
-    formatOrderData(order) {
-      // 根据你提供的API响应字段进行映射
-      const facilityName = order.venueName || order.facilityName || order.venue_name || '未知场地'
-      const appointmentStatus = order.appointmentStatus || order.status || 'unknown'
-      const applyTime = order.applyTime || order.apply_time || ''
-      const beginTime = order.beginTime || order.begin_time || order.startTime || ''
-      const endTime = order.endTime || order.end_time || ''
-      
-      // 生成显示内容
-      let icon = '📅' // 默认图标
-      if (facilityName.includes('篮球')) icon = '🏀'
-      else if (facilityName.includes('游泳')) icon = '🏊‍♂️'
-      else if (facilityName.includes('网球')) icon = '🎾'
-      else if (facilityName.includes('羽毛球')) icon = '🏸'
-      else if (facilityName.includes('足球')) icon = '⚽'
-      
-      // 格式化时间显示
-      const timeDisplay = this.formatTimeRange(beginTime, endTime)
-      const content = `${icon} ${facilityName} - ${timeDisplay}`
-      
-      // 状态映射 - 根据API返回的appointmentStatus进行映射
-      let statusText = '未知'
-      let statusType = 'info'
-      
-      switch (appointmentStatus.toLowerCase()) {
-        case 'upcoming':
-        case 'confirmed':
-        case 'active':
-          statusText = '已确认'
-          statusType = 'active'
-          break
-        case 'pending':
-        case 'waiting':
-          statusText = '待确认'
-          statusType = 'pending'
-          break
-        case 'canceled':
-        case 'cancelled':
-          statusText = '已取消'
-          statusType = 'cancelled'
-          break
-        case 'completed':
-        case 'finished':
-          statusText = '已完成'
-          statusType = 'completed'
-          break
-        case 'ongoing':
-          statusText = '进行中'
-          statusType = 'active'
-          break
-        default:
-          statusText = appointmentStatus || '未知'
-          statusType = 'info'
-      }
-
-      return {
-        appointmentId: order.appointmentId || order.id,
-        content: content,
-        status: statusText,
-        statusType: statusType,
-        facilityName: facilityName,
-        appointmentStatus: appointmentStatus,
-        applyTime: applyTime,
-        beginTime: beginTime,
-        endTime: endTime,
-        originalData: order // 保存原始数据以备需要
-      }
-    },
-
-    // 格式化时间范围显示
-    formatTimeRange(beginTime, endTime) {
-      if (!beginTime) return '时间待定'
-      
-      try {
-        const beginDate = new Date(beginTime)
-        const endDate = endTime ? new Date(endTime) : null
-        
-        const today = new Date()
-        const tomorrow = new Date(today)
-        tomorrow.setDate(tomorrow.getDate() + 1)
-        
-        let dateStr = ''
-        if (beginDate.toDateString() === today.toDateString()) {
-          dateStr = '今天'
-        } else if (beginDate.toDateString() === tomorrow.toDateString()) {
-          dateStr = '明天'
-        } else {
-          dateStr = beginDate.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })
-        }
-        
-        const beginTimeStr = beginDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-        
-        if (endDate) {
-          const endTimeStr = endDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-          return `${dateStr} ${beginTimeStr}-${endTimeStr}`
-        } else {
-          return `${dateStr} ${beginTimeStr}`
-        }
-      } catch (error) {
-        console.error('时间格式化错误:', error)
-        return beginTime + (endTime ? ` - ${endTime}` : '')
       }
     },
 
@@ -736,19 +443,10 @@ export default {
       }
 
       try {
-        console.log('开始获取用户当前积分，用户ID:', userId)
-        const response = await fetchUserPoints(userId)
-        console.log('用户积分API响应:', response)
-
-        if (response && response.code === 0 && response.data) {
-          this.currentPoints = response.data.points || response.data.currentPoints || 0
-          console.log('用户当前积分:', this.currentPoints)
-        } else {
-          throw new Error(`API返回错误: ${response.data?.msg || '未知错误'}`)
-        }
+        this.currentPoints = await PointsService.loadUserPoints(userId)
+        console.log('用户当前积分:', this.currentPoints)
       } catch (error) {
         console.error('获取用户积分失败:', error)
-        // 不显示错误消息，使用默认值
         this.currentPoints = this.userProfile.points || 0
       }
     },
@@ -763,105 +461,20 @@ export default {
 
       this.pointsLoading = true
       try {
-        console.log('开始获取用户积分记录，用户ID:', userId, '页码:', page)
-        const response = await fetchPointsHistory(userId, {
-          page: page,
-          pageSize: this.pointsPagination.pageSize
-        })
-        console.log('积分API响应:', response)
-
-        if (response && response.code === 0 && response.data) {
-          let pointsData = []
-          
-          // 处理不同的API响应格式
-          if (response.data.list && Array.isArray(response.data.list)) {
-            pointsData = response.data.list
-            this.pointsPagination.total = response.data.total || 0
-          } else if (Array.isArray(response.data)) {
-            pointsData = response.data
-          }
-
-          // 转换积分数据格式
-          this.pointsList = pointsData.map(point => this.formatPointsData(point))
-          this.pointsPagination.page = page
-          
-          console.log('积分数据加载成功:', this.pointsList)
-          console.log('分页信息:', this.pointsPagination)
-        } else {
-          throw new Error(`API返回错误: ${response.data?.msg || '未知错误'}`)
-        }
-      } catch (error) {
-        console.error('获取积分数据失败:', error)
-        ElMessage.error('获取积分数据失败，请稍后重试')
+        const pagination = { ...this.pointsPagination, page }
+        const result = await PointsService.loadPointsData(userId, pagination)
         
-        // 使用示例数据作为后备方案
-        this.pointsList = [
-          { 
-            changeId: 'demo1',
-            content: '完成篮球场预约', 
-            pointsChange: '+50', 
-            changeType: 'increase', 
-            time: '2小时前' 
-          },
-          { 
-            changeId: 'demo2',
-            content: '取消羽毛球预约', 
-            pointsChange: '-20', 
-            changeType: 'decrease', 
-            time: '1天前' 
-          },
-          { 
-            changeId: 'demo3',
-            content: '首次注册奖励', 
-            pointsChange: '+100', 
-            changeType: 'increase', 
-            time: '3天前' 
-          },
-          { 
-            changeId: 'demo4',
-            content: '连续签到奖励', 
-            pointsChange: '+30', 
-            changeType: 'increase', 
-            time: '5天前' 
-          }
-        ]
-
-        // 设置默认分页信息
-        this.pointsPagination = {
-          total: 4,
-          page: page,
-          pageSize: this.pointsPagination.pageSize
-        }
+        this.pointsList = result.pointsList
+        this.pointsPagination = result.paginationInfo
+      } catch (error) {
+        console.error('加载积分数据失败:', error)
       } finally {
         this.pointsLoading = false
       }
     },
 
-    // 格式化积分数据
-    formatPointsData(point) {
-      const changeAmount = point.changeAmount || point.change_amount || point.points || 0
-      const changeReason = point.changeReason || point.change_reason || point.reason || point.description || '积分变化'
-      const changeTime = point.changeTime || point.change_time || point.time || point.createTime || ''
-      
-      // 格式化积分变化显示
-      const pointsChange = changeAmount > 0 ? `+${changeAmount}` : `${changeAmount}`
-      const changeType = changeAmount > 0 ? 'increase' : 'decrease'
-      
-      // 格式化时间显示
-      const timeDisplay = this.formatRelativeTime(changeTime)
-
-      return {
-        changeId: point.changeId || point.id || Math.random().toString(),
-        content: changeReason,
-        pointsChange: pointsChange,
-        changeType: changeType,
-        time: timeDisplay,
-        originalData: point
-      }
-    },
-
     // 加载通知数据
-    async loadNotificationData() {
+    async loadNotificationData(page = 1) {
       const userId = localStorage.getItem('userId')
       if (!userId) {
         console.error('用户ID不存在，无法加载通知数据')
@@ -870,97 +483,15 @@ export default {
 
       this.notificationLoading = true
       try {
-        console.log('开始获取用户通知，用户ID:', userId)
-        const response = await fetchUserNotifications(userId, {
-          page: 1,
-          pageSize: 50 // 获取更多通知
-        })
-        console.log('通知API响应:', response)
-
-        if (response && response.code === 0 && response.data) {
-          let notificationData = []
-          
-          // 处理不同的API响应格式
-          if (response.data.list && Array.isArray(response.data.list)) {
-            notificationData = response.data.list
-          } else if (Array.isArray(response.data)) {
-            notificationData = response.data
-          }
-
-          // 转换通知数据格式
-          this.notificationList = notificationData.map(notification => this.formatNotificationData(notification))
-          
-          console.log('通知数据加载成功:', this.notificationList)
-        } else {
-          throw new Error(`API返回错误: ${response.data?.msg || '未知错误'}`)
-        }
-      } catch (error) {
-        console.error('获取通知数据失败:', error)
-        ElMessage.error('获取通知数据失败，请稍后重试')
+        const pagination = { ...this.notificationPagination, page }
+        const result = await NotificationService.loadNotificationData(userId, pagination)
         
-        // 使用示例数据作为后备方案
-        this.notificationList = [
-          { 
-            notificationId: 'demo1',
-            content: '📢 您的篮球场预约已确认', 
-            time: '30分钟前', 
-            isRead: false 
-          },
-          { 
-            notificationId: 'demo2',
-            content: '💰 会员积分+50，继续加油！', 
-            time: '2小时前', 
-            isRead: true 
-          }
-        ]
+        this.notificationList = result.notificationList
+        this.notificationPagination = result.paginationInfo
+      } catch (error) {
+        console.error('加载通知数据失败:', error)
       } finally {
         this.notificationLoading = false
-      }
-    },
-
-    // 格式化通知数据
-    formatNotificationData(notification) {
-      const content = notification.content || notification.message || notification.title || '系统通知'
-      const isRead = notification.isRead || notification.is_read || false
-      const createTime = notification.createTime || notification.create_time || notification.time || ''
-      
-      // 格式化时间显示
-      const timeDisplay = this.formatRelativeTime(createTime)
-
-      return {
-        notificationId: notification.notificationId || notification.id || Math.random().toString(),
-        content: content,
-        time: timeDisplay,
-        isRead: isRead,
-        originalData: notification
-      }
-    },
-
-    // 格式化相对时间显示
-    formatRelativeTime(timeString) {
-      if (!timeString) return '刚刚'
-      
-      try {
-        const time = new Date(timeString)
-        const now = new Date()
-        const diffInSeconds = Math.floor((now - time) / 1000)
-        
-        if (diffInSeconds < 60) {
-          return '刚刚'
-        } else if (diffInSeconds < 3600) {
-          const minutes = Math.floor(diffInSeconds / 60)
-          return `${minutes}分钟前`
-        } else if (diffInSeconds < 86400) {
-          const hours = Math.floor(diffInSeconds / 3600)
-          return `${hours}小时前`
-        } else if (diffInSeconds < 604800) {
-          const days = Math.floor(diffInSeconds / 86400)
-          return `${days}天前`
-        } else {
-          return time.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })
-        }
-      } catch (error) {
-        return timeString
       }
     },
 
@@ -1000,59 +531,8 @@ export default {
     
     handleNotificationPageSizeChange(pageSize) {
       console.log('通知每页数量改变:', pageSize)
-      this.notificationPagination.pageSize = pageSize
       this.notificationPagination.page = 1
       this.loadNotificationData(1)
-    },
-
-    // 加载预约数据
-    async loadReservationData(page = 1) {
-      this.reservationsLoading = true
-      try {
-        // 这里调用实际的API，目前使用模拟数据
-        console.log(`加载预约数据 - 页码: ${page}, 每页数量: ${this.reservationPagination.pageSize}`)
-        
-        // TODO: 替换为实际的API调用
-        // const response = await fetchUserReservations({
-        //   page: page,
-        //   pageSize: this.reservationPagination.pageSize
-        // })
-        // this.reservations = response.data
-        // this.reservationPagination.total = response.total
-        
-        // 模拟延迟
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
-        this.reservationPagination.page = page
-      } catch (error) {
-        console.error('加载预约数据失败:', error)
-        this.$message.error('加载预约数据失败')
-      } finally {
-        this.reservationsLoading = false
-      }
-    },
-
-    // 加载通知数据
-    async loadNotificationData(page = 1) {
-      this.notificationsLoading = true
-      try {
-        const params = {
-          page: page,
-          pageSize: this.notificationPagination.pageSize
-        }
-        
-        const notificationsResponse = await fetchUserNotifications(params)
-        if (notificationsResponse && notificationsResponse.data) {
-          this.notifications = notificationsResponse.data
-          this.notificationPagination.total = notificationsResponse.total || 0
-          this.notificationPagination.page = page
-        }
-      } catch (error) {
-        console.error('加载通知数据失败:', error)
-        this.$message.error('加载通知数据失败')
-      } finally {
-        this.notificationsLoading = false
-      }
     }
   }
 }
@@ -1260,23 +740,12 @@ export default {
   font-weight: 600;
   color: #555;
   min-width: 100px;
-  margin-right: 2px; /* 从12px减少到10px */
+  margin-right: 10px;
 }
 
 .info-item span {
   color: #333;
   font-size: 15px;
-}
-
-
-.preference-tag {
-  background: linear-gradient(135deg, #2062ea, #4b82f6);
-  color: white;
-  padding: 6px 12px; /* 从8px 16px减少到6px 12px */
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: 0 2px 8px rgba(32, 98, 234, 0.3);
 }
 
 /* 个人简介 */
@@ -1291,50 +760,11 @@ export default {
   border-left: 4px solid #2062ea;
 }
 
-/* 统计信息网格 */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e8e8e8;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.stat-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-}
-
-.stat-number {
-  font-size: 28px;
-  font-weight: bold;
-  color: #2062ea;
-  margin-bottom: 8px;
-}
-
-.stat-label {
-  color: #666;
-  font-size: 14px;
-  font-weight: 500;
-}
-
 /* 积分高亮样式 */
 .points-highlight {
   color: #ff6b35;
   font-weight: bold;
   font-size: 18px;
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 /* 加载状态 */

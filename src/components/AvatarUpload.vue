@@ -112,8 +112,7 @@ const props = defineProps({
   },
   gender: {
     type: String,
-    default: 'O'
-    // 注意: gender 参数现在不再影响默认头像选择
+    default: 'unknown' 
   }
 })
 
