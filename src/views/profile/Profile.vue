@@ -7,12 +7,12 @@
         <div class="profile-bg"></div>
         <!-- 个人信息卡片 -->
         <div class="profile-card">
-            <img class="avatar" src="@/assets/Backgrounds/Flower2.jpg" alt="头像"/>
+            <img class="avatar" :src="userProfile.avatarUrl || '@/assets/Backgrounds/Flower2.jpg'" alt="头像"/>
                 <div class="profile-info">
-                <div class="name">{{ userProfile.name }}</div>
-                <div class="desc">{{ userProfile.id }} {{ userProfile.department }}</div>
+                <div class="name">{{ userProfile.userName || '加载中...' }}</div>
+                <div class="desc">{{ userProfile.email || '加载中...' }} | {{ getRoleText(userProfile.role) || '加载中...' }}</div>
             </div>
-            <button class="edit-btn">编辑个人资料</button>
+            <button class="edit-btn" @click="editProfile">编辑个人资料</button>
         </div>
     </div>
     <!-- Tab栏 -->
@@ -32,67 +32,60 @@
           title="个人资料" 
           :showAddButton="false"
         >
-          <div class="profile-details">
+          <div v-if="isLoading" class="loading-container">
+            <div class="loading-spinner"></div>
+            <span style="margin-left: 10px;">加载中...</span>
+          </div>
+          <div v-else class="profile-details">
             <div class="profile-section">
               <h3>基本信息</h3>
               <div class="info-grid">
                 <div class="info-item">
-                  <label>姓名：</label>
-                  <span>{{ userProfile.name }}</span>
+                  <label>用户名：</label>
+                  <span>{{ userProfile.userName || '未设置' }}</span>
                 </div>
                 <div class="info-item">
-                  <label>学号/工号：</label>
-                  <span>{{ userProfile.id }}</span>
+                  <label>用户ID：</label>
+                  <span>{{ userProfile.userId || '未设置' }}</span>
                 </div>
                 <div class="info-item">
-                  <label>专业/部门：</label>
-                  <span>{{ userProfile.department }}</span>
-                </div>
-                <div class="info-item">
-                  <label>身份：</label>
-                  <span>{{ userProfile.role }}</span>
+                  <label>电话号码：</label>
+                  <span>{{ userProfile.telephone || '未设置' }}</span>
                 </div>
                 <div class="info-item">
                   <label>邮箱：</label>
-                  <span>{{ userProfile.email }}</span>
+                  <span>{{ userProfile.email || '未设置' }}</span>
                 </div>
                 <div class="info-item">
-                  <label>手机号：</label>
-                  <span>{{ userProfile.phone }}</span>
+                  <label>性别：</label>
+                  <span>{{ getGenderText(userProfile.gender) }}</span>
                 </div>
-              </div>
-            </div>
-            
-            <div class="profile-section">
-              <h3>运动偏好</h3>
-              <div class="preference-tags">
-                <span v-for="sport in userProfile.sportsPreferences" :key="sport" class="preference-tag">
-                  {{ sport }}
-                </span>
+                <div class="info-item">
+                  <label>出生日期：</label>
+                  <span>{{ formatDate(userProfile.birthday) || '未设置' }}</span>
+                </div>
+                <div class="info-item">
+                  <label>所在地区：</label>
+                  <span>{{ userProfile.region || '未设置' }}</span>
+                </div>
+                <div class="info-item">
+                  <label>用户角色：</label>
+                  <span>{{ getRoleText(userProfile.role) }}</span>
+                </div>
+                <div class="info-item">
+                  <label>注册时间：</label>
+                  <span>{{ formatDate(userProfile.register_time) || '未知' }}</span>
+                </div>
+                <div class="info-item">
+                  <label>当前积分：</label>
+                  <span class="points-highlight">{{ userProfile.points || 0 }}</span>
+                </div>
               </div>
             </div>
             
             <div class="profile-section">
               <h3>个人简介</h3>
-              <p class="bio">{{ userProfile.bio }}</p>
-            </div>
-            
-            <div class="profile-section">
-              <h3>统计信息</h3>
-              <div class="stats-grid">
-                <div class="stat-item">
-                  <div class="stat-number">{{ userProfile.stats.totalReservations }}</div>
-                  <div class="stat-label">总预约次数</div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-number">{{ userProfile.stats.totalHours }}</div>
-                  <div class="stat-label">运动总时长</div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-number">{{ userProfile.stats.favoriteVenues }}</div>
-                  <div class="stat-label">收藏场馆</div>
-                </div>
-              </div>
+              <p class="bio">{{ userProfile.profile || '这个人很懒，什么都没有留下...' }}</p>
             </div>
           </div>
         </TabContent>
@@ -174,6 +167,8 @@
 
 <script>
 import {ref} from 'vue'
+import { getUserInfo,updateUserInfo } from '@/utils/api'
+import { ElMessage } from 'element-plus'
 import HeaderNavbar from '@/components/HeaderNavbar.vue'
 import FooterNavbar from '@/components/FooterNavbar.vue'
 import FavoriteItem from '@/components/profile/FavoriteItem.vue'
@@ -198,23 +193,24 @@ export default {
   data() {
     return {
       activeTab: 'profile', // 默认显示个人资料选项卡
-      currentPoints: 1250, // 当前积分总数
+      currentPoints: 0, // 当前积分总数
+      isLoading: false, // 加载状态
       
-      // 用户个人资料数据
+      // 用户个人资料数据（初始化为空，将从API获取）
       userProfile: {
-        name: '洗衣粉',
-        id: '2354264',
-        department: '软件工程',
-        role: '学生',
-        email: 'washingpowder@tongji.edu.cn',
-        phone: '138****8888',
-        sportsPreferences: ['篮球', '羽毛球', '跑步', '游泳'],
-        bio: '热爱运动，享受健康生活。喜欢团队合作运动，也享受独自跑步的时光。希望通过运动结识更多志同道合的朋友。',
-        stats: {
-          totalReservations: 156,
-          totalHours: '280小时',
-          favoriteVenues: 8
-        }
+        userName: '',
+        userId: '',
+        telephone: '',
+        email: '',
+        password: '', // 密码通常不显示，仅用于更新操作
+        gender: '',
+        birthday: '',
+        avatarUrl: '',
+        region: '',
+        profile: '',
+        role: '',
+        register_time: '',
+        points: 0
       },
       
       // 收藏数据
@@ -241,7 +237,177 @@ export default {
       ]
     }
   },
+  mounted() {
+    console.log('Profile页面已加载，开始检查登录状态...')
+    
+    // 为了测试，临时设置一些登录信息（如果没有的话）
+    if (!localStorage.getItem('token')) {
+      localStorage.setItem('token', 'test-token-123')
+      localStorage.setItem('userId', '1')
+      localStorage.setItem('userName', 'testUser')
+      console.log('设置了测试用的登录信息')
+    }
+    
+    this.checkLoginAndLoadProfile()
+  },
   methods: {
+    // 检查登录状态并加载用户资料
+    async checkLoginAndLoadProfile() {
+      const token = localStorage.getItem('token')
+      const userId = localStorage.getItem('userId')
+      
+      console.log('登录检查:', { token: !!token, userId: userId })
+      
+      if (!token || !userId) {
+        ElMessage.warning('请先登录后再访问个人中心')
+        setTimeout(() => {
+          this.$router.push('/login')
+        }, 3000)
+        return
+      }
+      
+      // 检查token是否过期
+      const expires = localStorage.getItem('expires')
+      if (expires && new Date(expires) < new Date()) {
+        ElMessage.warning('登录已过期，请重新登录')
+        this.clearLoginData()
+        setTimeout(() => {
+          this.$router.push('/login')
+        }, 3000)
+        return
+      }
+      
+      // 如果登录状态正常，加载用户资料
+      await this.loadUserProfile(userId)
+    },
+
+    // 加载用户资料
+    async loadUserProfile(userId) {
+      this.isLoading = true
+      try {
+        console.log('开始获取用户信息，用户ID:', userId)
+        const response = await getUserInfo(userId)
+        console.log('API响应:', response)
+        
+        if (response && response.code === 0) {
+          let userData
+          
+          // 处理不同的API响应格式  为了兼容
+          if (response.data.code === 0 || response.data.code === 200) {
+            userData = response.data.data
+          } else if (response.data.code) {
+            ElMessage.error(response.data.msg || response.data.message || '获取用户信息失败')
+            return
+          } else { 
+            userData = response.data
+          }
+          
+          // 更新用户资料数据
+          this.updateUserProfile(userData)
+          this.currentPoints = userData.points || 0
+          
+          console.log('用户信息更新成功:', this.userProfile)
+          ElMessage.success('用户信息加载成功')
+        } else {
+          throw new Error('API响应格式错误')
+        }
+      } catch (error) {
+        console.error('获取用户信息失败:', error)
+        ElMessage.error('获取用户信息失败，请稍后重试')
+        
+        // 在API调用失败时，使用一些默认的示例数据
+        this.useDefaultUserProfile()
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    // 使用默认用户资料（API调用失败时的后备方案）
+    useDefaultUserProfile() {
+      this.userProfile = {
+        userName: '示例用户',
+        userId: '20240001',
+        telephone: '138****8888',
+        email: 'example@university.edu.cn',
+        password: '',
+        gender: 'male',
+        birthday: '1995-06-15',
+        avatarUrl: '',
+        region: '上海市',
+        profile: '热爱运动的大学生',
+        role: 'normal',
+        register_time: '2024-01-01T00:00:00Z',
+        points: 1250
+      }
+      this.currentPoints = 1250
+      console.log('使用默认用户资料')
+    },
+
+    // 更新用户资料数据
+    updateUserProfile(userData) {
+      this.userProfile = {
+        userName: userData.userName || userData.name || '未设置',
+        userId: userData.userId || userData.id || userData.studentId || userData.workId || '未设置',
+        telephone: userData.telephone || userData.phone || userData.mobile || '未设置',
+        email: userData.email || '未设置',
+        password: '', // 密码不显示
+        gender: userData.gender || 'unknown',
+        birthday: userData.birthday || userData.birthDate || '',
+        avatarUrl: userData.avatarUrl || userData.avatar || userData.profilePicture || '',
+        region: userData.region || userData.location || userData.city || '未设置',
+        profile: userData.profile || userData.bio || userData.description || userData.introduction || '这个人很懒，什么都没有留下...',
+        role: userData.role || 'normal',
+        register_time: userData.register_time || userData.registerTime || userData.createdAt || '',
+        points: userData.points || 0
+      }
+    },
+
+    // 清除登录数据
+    clearLoginData() {
+      localStorage.removeItem('token')
+      localStorage.removeItem('userId')
+      localStorage.removeItem('userName')
+      localStorage.removeItem('expires')
+      localStorage.removeItem('userAvatar')
+    },
+
+    // 格式化日期
+    formatDate(dateString) {
+      if (!dateString) return '未设置'
+      const date = new Date(dateString)
+      return date.toLocaleDateString('zh-CN')
+    },
+
+    // 获取性别文本
+    getGenderText(gender) {
+      switch (gender) {
+        case 'male':
+          return '男'
+        case 'female':
+          return '女'
+        case 'unknown':
+        default:
+          return '未设置'
+      }
+    },
+
+    // 获取角色文本
+    getRoleText(role) {
+      switch (role) {
+        case 'normal':
+          return '普通用户'
+        case 'manager':
+        case 'manager':
+          return '管理员'
+        default:
+          return role || '未设置'
+      }
+    },
+
+    // 编辑个人资料
+    editProfile() {
+      ElMessage.info('编辑功能开发中...')
+    },
     // 添加收藏
     addFavorite() {
       const newFavorite = {
@@ -369,7 +535,7 @@ export default {
 .tabs {
   display: flex;
   border-bottom: 1.5px solid #ececec;
-  margin-bottom: 12px;
+  margin-bottom: 8px; /* 从12px减少到8px */
 }
 /* Tab按钮样式 */
 .tab {
@@ -377,7 +543,7 @@ export default {
   font-size: 17px;
   color: #222;
   cursor: pointer;
-  padding: 8px 16px 6px 16px;
+  padding: 6px 16px 4px 16px; /* 减少上下padding */
   transition: color .2s, border .2s;
   border-bottom: 2.5px solid transparent;
   border-radius: 4px;
@@ -391,13 +557,14 @@ export default {
 /* Tab内容区 */
 .tab-content {
   min-height: 200px;
+  margin-top: 4px; /* 添加很小的上边距 */
 }
 
 /* 积分摘要样式 */
 .points-summary {
   background: linear-gradient(135deg, #ff9500, #ffad33);
-  padding: 24px;
-  margin-bottom: 20px;
+  padding: 20px; /* 从24px减少到20px */
+  margin-bottom: 16px; /* 从20px减少到16px */
   border-radius: 12px;
   color: white;
   box-shadow: 0 4px 16px rgba(255, 149, 0, 0.3);
@@ -425,8 +592,8 @@ export default {
 }
 
 .profile-section {
-  margin-bottom: 32px;
-  padding: 20px;
+  margin-bottom: 24px; /* 从32px减少到24px */
+  padding: 16px; /* 从20px减少到16px */
   background: #fafafa;
   border-radius: 12px;
   border: 1px solid #e8e8e8;
@@ -436,8 +603,8 @@ export default {
   color: #2062ea;
   font-size: 18px;
   font-weight: 600;
-  margin: 0 0 16px 0;
-  padding-bottom: 8px;
+  margin: 0 0 12px 0; /* 从16px减少到12px */
+  padding-bottom: 6px; /* 从8px减少到6px */
   border-bottom: 2px solid #e8f4ff;
 }
 
@@ -445,20 +612,20 @@ export default {
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 16px;
+  gap: 12px; /* 从16px减少到12px */
 }
 
 .info-item {
   display: flex;
   align-items: center;
-  padding: 12px 0;
+  padding: 8px 0; /* 从12px减少到8px */
 }
 
 .info-item label {
   font-weight: 600;
   color: #555;
   min-width: 100px;
-  margin-right: 12px;
+  margin-right: 2px; /* 从12px减少到10px */
 }
 
 .info-item span {
@@ -466,17 +633,11 @@ export default {
   font-size: 15px;
 }
 
-/* 运动偏好标签 */
-.preference-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
 
 .preference-tag {
   background: linear-gradient(135deg, #2062ea, #4b82f6);
   color: white;
-  padding: 8px 16px;
+  padding: 6px 12px; /* 从8px 16px减少到6px 12px */
   border-radius: 20px;
   font-size: 14px;
   font-weight: 500;
@@ -489,7 +650,7 @@ export default {
   line-height: 1.6;
   font-size: 15px;
   margin: 0;
-  padding: 16px;
+  padding: 12px; /* 从16px减少到12px */
   background: white;
   border-radius: 8px;
   border-left: 4px solid #2062ea;
@@ -529,6 +690,41 @@ export default {
   font-size: 14px;
   font-weight: 500;
 }
+
+/* 积分高亮样式 */
+.points-highlight {
+  color: #ff6b35;
+  font-weight: bold;
+  font-size: 18px;
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #666;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #2062ea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* 底部footer */
 footer {
   margin-top: auto;
