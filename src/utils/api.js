@@ -29,11 +29,6 @@ export function loginUser(credentials) {
   return instance.post('/api/auth/login', credentials);
 }
 
-// 获取用户信息
-export function getUserInfo(userId) {
-  return instance.get(`/api/user/${userId}`);
-}
-
 // 上传头像
 export function uploadAvatar(formData) {
   return instance.post('/api/upload/avatar', formData, {
@@ -42,6 +37,32 @@ export function uploadAvatar(formData) {
     }
   });
 }
+
+// 获取用户头像 用户头像可以公开获取 不用token
+export function getAvatar(userId) { 
+  return instance.get(`/api/user/${userId}/avatar`,userId);
+}
+
+// 获取用户信息 用于个人中心
+export function getUserInfo(userId) {
+  const token = localStorage.getItem('token');
+  return instance.get(`/api/user/${userId}`, {
+    headers: {
+      'token': token
+    }
+  });
+}
+
+// 更新用户信息
+export function updateUserInfo(userId, userData) {
+  const token = localStorage.getItem('token');
+  return instance.put(`/api/user/${userId}`, userData, {
+    headers: {
+      'token': token
+    }
+  });
+}
+
 
 /* 用户账户与信息相关结束 */
 
