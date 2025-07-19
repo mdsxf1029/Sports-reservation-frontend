@@ -7,6 +7,7 @@ const instance = axios.create({
   timeout: 5000
 });
 
+
 // 获取用户违约记录
 export function getViolations() {
   return instance.get('/api/violations');
@@ -16,6 +17,28 @@ export function getViolations() {
 export function addToBlacklist(userId) {
   return instance.post('/api/blacklist/add', { userId });
 }
+
+//获取场地信息
+export const getVenues = () => {
+  return instance.get('/api/venues');
+};
+
+//发布场地
+export const createVenue = (data) => {
+  return instance.post('/api/venues', data);
+};
+
+//更新场地
+export const updateVenue = (id, data) => {
+  return instance.put(`/api/venues/${id}`, data);
+};
+
+//删除场地
+export const deleteVenue = (id) => {
+  return instance.delete(`/api/venues/${id}`);
+};
+
+// 你可以根据需要继续添加其他接口方法
 
 /* 用户相关 */
 
