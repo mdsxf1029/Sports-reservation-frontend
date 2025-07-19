@@ -246,7 +246,7 @@ import BackToTop from '../../components/BackToTop.vue'
 import EditProfileDialog from '@/components/profile/EditProfileDialog.vue'
 
 // 导入服务和工具类
-import { UserProfileService, ReservationService, PointsService, NotificationService } from '@/services/profileService'
+import { UserProfileService, ReservationService, PointsService, NotificationService } from '@/utils/profileService'
 import { AuthService } from '@/utils/auth'
 import { formatDate, getGenderText, getRoleText } from '@/utils/formatters'
 

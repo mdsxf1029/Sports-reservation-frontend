@@ -81,7 +81,7 @@ export class ReservationService {
 
       if (response && response.code === 0 && response.data) {
         let orderData = []
-        const responseData = response.data.data
+        const responseData = response.data
         
         if (responseData && responseData.list) {
           if (Array.isArray(responseData.list)) {
@@ -122,8 +122,11 @@ export class ReservationService {
 
   // 格式化订单数据
   static formatOrderData(order) {
-    const facilityName = order.venueName || order.facilityName || order.venue_name || '未知场地'
+    // 场地名
+    const facilityName = order.venueName || order.facilityName || order.venue_name || '未知场地'  
+    // 预约状态
     const appointmentStatus = order.appointmentStatus || order.status || 'unknown'
+    // 预约开始和结束时间
     const beginTime = order.beginTime || order.begin_time || order.startTime || ''
     const endTime = order.endTime || order.end_time || ''
     
