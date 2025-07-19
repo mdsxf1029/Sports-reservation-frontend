@@ -1,23 +1,36 @@
-
 import { createRouter, createWebHistory } from 'vue-router';
 import App from '../App.vue';
 import OrderDetail from '../views/OrderDetail.vue';
 import VenueManagement from '../views/VenueManagement.vue';
 import ViolationManagement from '../views/ViolationManagement.vue';
 import PostManagement from '../views/PostManagement.vue';
+import PostEditor from '../views/PostEditor.vue';
 import AppealManagement from '../views/AppealManagement.vue';
 import ViolationHistory from '../views/ViolationHistory.vue';
 import Reservation from '../views/Reservation.vue'
 import VenueDetail from '../views/VenueDetail.vue'
+import Login from '../views/auth/Login.vue';
+import Register from '../views/auth/Register.vue';
+import Profile from '../views/profile/Profile.vue';
 
-
-const Dummy = { template: '<div style="padding:20px;"><h2>ҳ�潨����...</h2></div>' }
-
+const Dummy = { template: '<div style="padding:20px;"><h2>ҳ页面建设中...</h2></div>' }
 
 const routes = [
     {
         path: '/',
         component: App
+    },
+    {
+        path: '/login',
+        component: Login
+    },
+    {
+        path: '/register',
+        component: Register
+    },
+    {
+        path: '/profile',
+        component: Profile
     },
     {
         path: '/venue',
@@ -37,6 +50,10 @@ const routes = [
         component: PostManagement
     },
     {
+        path: '/post/posteditor',
+        component: PostEditor
+    },
+    {
         path: '/appeal',
         component: AppealManagement
     },
@@ -53,7 +70,7 @@ const routes = [
     {
         path: '/community',
         name: 'Community',
-        component: Dummy
+        component: () => import('../views/CommunityHome.vue')
     },
     {
         path: '/news',
@@ -74,4 +91,3 @@ const router = createRouter({
 });
 
 export default router;
-
