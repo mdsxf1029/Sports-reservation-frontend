@@ -112,6 +112,22 @@
             :statusType="item.statusType"
             :order-detail="item"
           />
+          
+          <!-- 分页组件 -->
+          <div v-if="reservationList.length > 0" class="pagination-container">
+            <el-pagination
+              v-model:current-page="reservationPagination.page"
+              v-model:page-size="reservationPagination.pageSize"
+              :page-sizes="[5, 10, 20, 50]"
+              :small="false"
+              :disabled="reservationLoading"
+              :background="true"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="reservationPagination.total"
+              @size-change="handleReservationPageSizeChange"
+              @current-change="handleReservationPageChange"
+            />
+          </div>
         </TabContent>
         
         <!-- 通知内容 -->
@@ -119,13 +135,39 @@
           v-if="activeTab === 'notification'" 
           title="信息通知中心"
         >
+          <div v-if="notificationLoading" class="loading-container">
+            <div class="loading-spinner"></div>
+            <span style="margin-left: 10px;">加载通知中...</span>
+          </div>
+          <div v-else-if="notificationList.length === 0" class="empty-state">
+            <div class="empty-icon">🔔</div>
+            <div class="empty-text">暂无通知消息</div>
+            <div class="empty-desc">有新消息时会显示在这里</div>
+          </div>
           <NotificationItem 
+            v-else
             v-for="(item, index) in notificationList" 
-            :key="index"
+            :key="item.notificationId || index"
             :content="item.content"
             :time="item.time"
             :isRead="item.isRead"
           />
+          
+          <!-- 通知分页组件 -->
+          <div v-if="notificationList.length > 0" class="pagination-container">
+            <el-pagination
+              v-model:current-page="notificationPagination.page"
+              v-model:page-size="notificationPagination.pageSize"
+              :page-sizes="[10, 20, 50]"
+              :small="false"
+              :disabled="notificationLoading"
+              :background="true"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="notificationPagination.total"
+              @size-change="handleNotificationPageSizeChange"
+              @current-change="handleNotificationPageChange"
+            />
+          </div>
         </TabContent>
         
         <!-- 积分内容 -->
@@ -140,14 +182,40 @@
               <span class="points-value">{{ currentPoints }}</span>
             </div>
           </div>
+          <div v-if="pointsLoading" class="loading-container">
+            <div class="loading-spinner"></div>
+            <span style="margin-left: 10px;">加载积分记录中...</span>
+          </div>
+          <div v-else-if="pointsList.length === 0" class="empty-state">
+            <div class="empty-icon">🎯</div>
+            <div class="empty-text">暂无积分记录</div>
+            <div class="empty-desc">使用系统获得积分后会显示在这里</div>
+          </div>
           <PointsItem 
+            v-else
             v-for="(item, index) in pointsList" 
-            :key="index"
+            :key="item.changeId || index"
             :content="item.content"
             :pointsChange="item.pointsChange"
             :changeType="item.changeType"
             :time="item.time"
           />
+          
+          <!-- 积分分页组件 -->
+          <div v-if="pointsList.length > 0" class="pagination-container">
+            <el-pagination
+              v-model:current-page="pointsPagination.page"
+              v-model:page-size="pointsPagination.pageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :small="false"
+              :disabled="pointsLoading"
+              :background="true"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="pointsPagination.total"
+              @size-change="handlePointsPageSizeChange"
+              @current-change="handlePointsPageChange"
+            />
+          </div>
         </TabContent>
         </div>
     </div>
@@ -168,7 +236,7 @@
 
 <script>
 import {ref} from 'vue'
-import { getUserInfo, fetchMyOrderSummary} from '@/utils/api'
+import { getUserInfo, fetchMyOrderSummary, fetchUserPoints, fetchPointsHistory, fetchUserNotifications } from '@/utils/api'
 import { ElMessage } from 'element-plus'
 import HeaderNavbar from '@/components/HeaderNavbar.vue'
 import FooterNavbar from '@/components/FooterNavbar.vue'
@@ -197,11 +265,23 @@ export default {
       currentPoints: 0, // 当前积分总数
       isLoading: false, // 加载状态
       reservationLoading: false, // 预约订单加载状态
+      pointsLoading: false, // 积分记录加载状态
+      notificationLoading: false, // 通知加载状态
       reservationPagination: {
         total: 0,
         page: 1,
         pageSize: 10
-      }, // 分页信息
+      }, // 预约分页信息
+      pointsPagination: {
+        total: 0,
+        page: 1,
+        pageSize: 20
+      }, // 积分分页信息
+      notificationPagination: {
+        total: 0,
+        page: 1,
+        pageSize: 20
+      }, // 通知分页信息
       showEditDialog: false, // 控制编辑弹窗显示
       
       // 用户个人资料数据（初始化为空，将从API获取）
@@ -223,21 +303,14 @@ export default {
       
       // 预约数据（初始化为空，将从API获取）
       reservationList: [],
-      // 通知数据
-      notificationList: [
-        { content: '📢 您的篮球场预约已确认', time: '30分钟前', isRead: false },
-        { content: '💰 会员积分+50，继续加油！', time: '2小时前', isRead: true }
-      ],
-      // 积分数据
-      pointsList: [
-        { content: '完成篮球场预约', pointsChange: '+50', changeType: 'increase', time: '2小时前' },
-        { content: '取消羽毛球预约', pointsChange: '-20', changeType: 'decrease', time: '1天前' },
-        { content: '首次注册奖励', pointsChange: '+100', changeType: 'increase', time: '3天前' },
-        { content: '连续签到奖励', pointsChange: '+30', changeType: 'increase', time: '5天前' }
-      ]
+      // 通知数据（初始化为空，将从API获取）
+      notificationList: [],
+      // 积分数据（初始化为空，将从API获取）
+      pointsList: [],
     }
   },
-  mounted() {
+  
+  async mounted() {
     console.log('Profile页面已加载，开始检查登录状态...')
     
     // 为了测试，临时设置一些登录信息（如果没有的话）
@@ -248,13 +321,42 @@ export default {
       console.log('设置了测试用的登录信息')
     }
     
-    this.checkLoginAndLoadProfile()
+    await this.checkLoginAndLoadProfile()
+    
+    // 根据当前活跃标签页加载相应数据
+    switch(this.activeTab) {
+      case 'reservations':
+        this.loadReservationData()
+        break
+      case 'points':
+        await this.loadUserPoints()
+        this.loadPointsData()
+        break
+      case 'notifications':
+        this.loadNotificationData()
+        break
+    }
   },
   watch: {
-    // 监听tab切换，当切换到预约tab时加载订单数据
+    // 监听tab切换，当切换到不同tab时加载相应数据
     activeTab(newTab) {
-      if (newTab === 'reservation' && this.reservationList.length === 0) {
-        this.loadReservationData()
+      switch(newTab) {
+        case 'reservations':
+          if (!this.reservations || this.reservations.length === 0) {
+            this.loadReservationData()
+          }
+          break
+        case 'points':
+          if (!this.pointsList || this.pointsList.length === 0) {
+            this.loadUserPoints()
+            this.loadPointsData()
+          }
+          break
+        case 'notifications':
+          if (!this.notifications || this.notifications.length === 0) {
+            this.loadNotificationData()
+          }
+          break
       }
     }
   },
@@ -623,6 +725,334 @@ export default {
         console.error('时间格式化错误:', error)
         return beginTime + (endTime ? ` - ${endTime}` : '')
       }
+    },
+
+    // 加载用户当前积分
+    async loadUserPoints() {
+      const userId = localStorage.getItem('userId')
+      if (!userId) {
+        console.error('用户ID不存在，无法加载用户积分')
+        return
+      }
+
+      try {
+        console.log('开始获取用户当前积分，用户ID:', userId)
+        const response = await fetchUserPoints(userId)
+        console.log('用户积分API响应:', response)
+
+        if (response && response.code === 0 && response.data) {
+          this.currentPoints = response.data.points || response.data.currentPoints || 0
+          console.log('用户当前积分:', this.currentPoints)
+        } else {
+          throw new Error(`API返回错误: ${response.data?.msg || '未知错误'}`)
+        }
+      } catch (error) {
+        console.error('获取用户积分失败:', error)
+        // 不显示错误消息，使用默认值
+        this.currentPoints = this.userProfile.points || 0
+      }
+    },
+
+    // 加载积分数据
+    async loadPointsData(page = 1) {
+      const userId = localStorage.getItem('userId')
+      if (!userId) {
+        console.error('用户ID不存在，无法加载积分数据')
+        return
+      }
+
+      this.pointsLoading = true
+      try {
+        console.log('开始获取用户积分记录，用户ID:', userId, '页码:', page)
+        const response = await fetchPointsHistory(userId, {
+          page: page,
+          pageSize: this.pointsPagination.pageSize
+        })
+        console.log('积分API响应:', response)
+
+        if (response && response.code === 0 && response.data) {
+          let pointsData = []
+          
+          // 处理不同的API响应格式
+          if (response.data.list && Array.isArray(response.data.list)) {
+            pointsData = response.data.list
+            this.pointsPagination.total = response.data.total || 0
+          } else if (Array.isArray(response.data)) {
+            pointsData = response.data
+          }
+
+          // 转换积分数据格式
+          this.pointsList = pointsData.map(point => this.formatPointsData(point))
+          this.pointsPagination.page = page
+          
+          console.log('积分数据加载成功:', this.pointsList)
+          console.log('分页信息:', this.pointsPagination)
+        } else {
+          throw new Error(`API返回错误: ${response.data?.msg || '未知错误'}`)
+        }
+      } catch (error) {
+        console.error('获取积分数据失败:', error)
+        ElMessage.error('获取积分数据失败，请稍后重试')
+        
+        // 使用示例数据作为后备方案
+        this.pointsList = [
+          { 
+            changeId: 'demo1',
+            content: '完成篮球场预约', 
+            pointsChange: '+50', 
+            changeType: 'increase', 
+            time: '2小时前' 
+          },
+          { 
+            changeId: 'demo2',
+            content: '取消羽毛球预约', 
+            pointsChange: '-20', 
+            changeType: 'decrease', 
+            time: '1天前' 
+          },
+          { 
+            changeId: 'demo3',
+            content: '首次注册奖励', 
+            pointsChange: '+100', 
+            changeType: 'increase', 
+            time: '3天前' 
+          },
+          { 
+            changeId: 'demo4',
+            content: '连续签到奖励', 
+            pointsChange: '+30', 
+            changeType: 'increase', 
+            time: '5天前' 
+          }
+        ]
+
+        // 设置默认分页信息
+        this.pointsPagination = {
+          total: 4,
+          page: page,
+          pageSize: this.pointsPagination.pageSize
+        }
+      } finally {
+        this.pointsLoading = false
+      }
+    },
+
+    // 格式化积分数据
+    formatPointsData(point) {
+      const changeAmount = point.changeAmount || point.change_amount || point.points || 0
+      const changeReason = point.changeReason || point.change_reason || point.reason || point.description || '积分变化'
+      const changeTime = point.changeTime || point.change_time || point.time || point.createTime || ''
+      
+      // 格式化积分变化显示
+      const pointsChange = changeAmount > 0 ? `+${changeAmount}` : `${changeAmount}`
+      const changeType = changeAmount > 0 ? 'increase' : 'decrease'
+      
+      // 格式化时间显示
+      const timeDisplay = this.formatRelativeTime(changeTime)
+
+      return {
+        changeId: point.changeId || point.id || Math.random().toString(),
+        content: changeReason,
+        pointsChange: pointsChange,
+        changeType: changeType,
+        time: timeDisplay,
+        originalData: point
+      }
+    },
+
+    // 加载通知数据
+    async loadNotificationData() {
+      const userId = localStorage.getItem('userId')
+      if (!userId) {
+        console.error('用户ID不存在，无法加载通知数据')
+        return
+      }
+
+      this.notificationLoading = true
+      try {
+        console.log('开始获取用户通知，用户ID:', userId)
+        const response = await fetchUserNotifications(userId, {
+          page: 1,
+          pageSize: 50 // 获取更多通知
+        })
+        console.log('通知API响应:', response)
+
+        if (response && response.code === 0 && response.data) {
+          let notificationData = []
+          
+          // 处理不同的API响应格式
+          if (response.data.list && Array.isArray(response.data.list)) {
+            notificationData = response.data.list
+          } else if (Array.isArray(response.data)) {
+            notificationData = response.data
+          }
+
+          // 转换通知数据格式
+          this.notificationList = notificationData.map(notification => this.formatNotificationData(notification))
+          
+          console.log('通知数据加载成功:', this.notificationList)
+        } else {
+          throw new Error(`API返回错误: ${response.data?.msg || '未知错误'}`)
+        }
+      } catch (error) {
+        console.error('获取通知数据失败:', error)
+        ElMessage.error('获取通知数据失败，请稍后重试')
+        
+        // 使用示例数据作为后备方案
+        this.notificationList = [
+          { 
+            notificationId: 'demo1',
+            content: '📢 您的篮球场预约已确认', 
+            time: '30分钟前', 
+            isRead: false 
+          },
+          { 
+            notificationId: 'demo2',
+            content: '💰 会员积分+50，继续加油！', 
+            time: '2小时前', 
+            isRead: true 
+          }
+        ]
+      } finally {
+        this.notificationLoading = false
+      }
+    },
+
+    // 格式化通知数据
+    formatNotificationData(notification) {
+      const content = notification.content || notification.message || notification.title || '系统通知'
+      const isRead = notification.isRead || notification.is_read || false
+      const createTime = notification.createTime || notification.create_time || notification.time || ''
+      
+      // 格式化时间显示
+      const timeDisplay = this.formatRelativeTime(createTime)
+
+      return {
+        notificationId: notification.notificationId || notification.id || Math.random().toString(),
+        content: content,
+        time: timeDisplay,
+        isRead: isRead,
+        originalData: notification
+      }
+    },
+
+    // 格式化相对时间显示
+    formatRelativeTime(timeString) {
+      if (!timeString) return '刚刚'
+      
+      try {
+        const time = new Date(timeString)
+        const now = new Date()
+        const diffInSeconds = Math.floor((now - time) / 1000)
+        
+        if (diffInSeconds < 60) {
+          return '刚刚'
+        } else if (diffInSeconds < 3600) {
+          const minutes = Math.floor(diffInSeconds / 60)
+          return `${minutes}分钟前`
+        } else if (diffInSeconds < 86400) {
+          const hours = Math.floor(diffInSeconds / 3600)
+          return `${hours}小时前`
+        } else if (diffInSeconds < 604800) {
+          const days = Math.floor(diffInSeconds / 86400)
+          return `${days}天前`
+        } else {
+          return time.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })
+        }
+      } catch (error) {
+        return timeString
+      }
+    },
+
+    // 预约分页事件处理
+    handleReservationPageChange(page) {
+      console.log('预约页码改变:', page)
+      this.loadReservationData(page)
+    },
+    
+    handleReservationPageSizeChange(pageSize) {
+      console.log('预约每页数量改变:', pageSize)
+      this.reservationPagination.pageSize = pageSize
+      this.reservationPagination.page = 1 // 重置到第一页
+      this.loadReservationData(1)
+    },
+
+    // 积分分页事件处理
+    handlePointsPageChange(page) {
+      console.log('积分页码改变:', page)
+      this.pointsPagination.page = page
+      this.loadPointsData(page)
+    },
+    
+    handlePointsPageSizeChange(pageSize) {
+      console.log('积分每页数量改变:', pageSize)
+      this.pointsPagination.pageSize = pageSize
+      this.pointsPagination.page = 1
+      this.loadPointsData(1)
+    },
+
+    // 通知分页事件处理
+    handleNotificationPageChange(page) {
+      console.log('通知页码改变:', page)
+      this.notificationPagination.page = page
+      this.loadNotificationData(page)
+    },
+    
+    handleNotificationPageSizeChange(pageSize) {
+      console.log('通知每页数量改变:', pageSize)
+      this.notificationPagination.pageSize = pageSize
+      this.notificationPagination.page = 1
+      this.loadNotificationData(1)
+    },
+
+    // 加载预约数据
+    async loadReservationData(page = 1) {
+      this.reservationsLoading = true
+      try {
+        // 这里调用实际的API，目前使用模拟数据
+        console.log(`加载预约数据 - 页码: ${page}, 每页数量: ${this.reservationPagination.pageSize}`)
+        
+        // TODO: 替换为实际的API调用
+        // const response = await fetchUserReservations({
+        //   page: page,
+        //   pageSize: this.reservationPagination.pageSize
+        // })
+        // this.reservations = response.data
+        // this.reservationPagination.total = response.total
+        
+        // 模拟延迟
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        this.reservationPagination.page = page
+      } catch (error) {
+        console.error('加载预约数据失败:', error)
+        this.$message.error('加载预约数据失败')
+      } finally {
+        this.reservationsLoading = false
+      }
+    },
+
+    // 加载通知数据
+    async loadNotificationData(page = 1) {
+      this.notificationsLoading = true
+      try {
+        const params = {
+          page: page,
+          pageSize: this.notificationPagination.pageSize
+        }
+        
+        const notificationsResponse = await fetchUserNotifications(params)
+        if (notificationsResponse && notificationsResponse.data) {
+          this.notifications = notificationsResponse.data
+          this.notificationPagination.total = notificationsResponse.total || 0
+          this.notificationPagination.page = page
+        }
+      } catch (error) {
+        console.error('加载通知数据失败:', error)
+        this.$message.error('加载通知数据失败')
+      } finally {
+        this.notificationsLoading = false
+      }
     }
   }
 }
@@ -963,6 +1393,50 @@ footer {
   padding: 8px 0 4px 0; /* 上下各10px和8px的内边距 */
   background: #FFF;
   font-size: 14px;
+}
+
+/* 分页容器样式 */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  margin-top: 20px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.pagination-container .el-pagination {
+  --el-pagination-font-size: 14px;
+  --el-pagination-bg-color: #fff;
+  --el-pagination-text-color: #606266;
+  --el-pagination-border-radius: 4px;
+  --el-pagination-button-disabled-color: #c0c4cc;
+  --el-pagination-button-disabled-bg-color: #fff;
+  --el-pagination-hover-color: #2062ea;
+}
+
+/* 修复分页按钮样式 */
+.pagination-container .el-pagination .el-pager li {
+  min-width: 30px;
+  height: 32px;
+  line-height: 30px;
+  margin: 0 2px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #606266;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.pagination-container .el-pagination .el-pager li:hover {
+  color: #2062ea;
+  border-color: #2062ea;
+}
+
+.pagination-container .el-pagination .el-pager li.is-active {
+  background-color: #2062ea;
+  border-color: #2062ea;
+  color: #fff;
 }
 
 </style>

@@ -73,6 +73,35 @@ export const fetchMyOrderSummary = (userId, params = {}) => {
   });
 };
 
+// 获取用户积分记录
+export const fetchUserPoints = (userId, params = {}) => {
+  return instance.get(`/api/user/${userId}/points`, {
+    params: {
+      ...params // 支持传入page、pageSize、type等参数
+    }
+  });
+};
+
+// 获取积分变化记录
+export const fetchPointsHistory = (userId, params = {}) => {
+  return instance.get(`/api/user/${userId}/points/history`, {
+    params: {
+      ...params // 支持传入page、pageSize、beginTime、endTime等参数
+    }
+  });
+};
+
+// 获取用户通知列表
+export const fetchUserNotifications = (userId, params = {}) => {
+  return instance.get(`/api/user/${userId}/notifications`, {
+    params: {
+      ...params // 支持传入page、pageSize、isRead、type等参数
+    }
+  });
+};
+
+
+
 /* 用户账户与信息相关结束 */
 
 // 获取社区帖子列表
@@ -114,3 +143,5 @@ export const fetchOrderDetail = (appointmentId) => {
   return instance.get(`/api/appointments/${appointmentId}`);
   /*return axios.get(`http://127.0.0.1:4523/m1/6319279-6014567-default/api/appointments/1`);*/
 };
+
+
