@@ -162,6 +162,13 @@
     <footer>
         <FooterNavbar/>
     </footer>
+    
+    <!-- 编辑个人资料弹窗 -->
+    <EditProfileDialog
+      v-model="showEditDialog"
+      :user-profile="userProfile"
+      @success="onEditSuccess"
+    />
     </div>
 </template>
 
@@ -177,6 +184,7 @@ import NotificationItem from '@/components/profile/NotificationItem.vue'
 import PointsItem from '@/components/profile/PointsItem.vue'
 import TabContent from '@/components/profile/TabContent.vue'
 import BackToTop from '../../components/BackToTop.vue'
+import EditProfileDialog from '@/components/profile/EditProfileDialog.vue'
 
         
 export default {
@@ -188,13 +196,15 @@ export default {
     NotificationItem,
     PointsItem,
     TabContent,
-    BackToTop
+    BackToTop,
+    EditProfileDialog
   },
   data() {
     return {
       activeTab: 'profile', // 默认显示个人资料选项卡
       currentPoints: 0, // 当前积分总数
       isLoading: false, // 加载状态
+      showEditDialog: false, // 控制编辑弹窗显示
       
       // 用户个人资料数据（初始化为空，将从API获取）
       userProfile: {
@@ -406,7 +416,19 @@ export default {
 
     // 编辑个人资料
     editProfile() {
-      ElMessage.info('编辑功能开发中...')
+      this.showEditDialog = true
+    },
+    
+    // 编辑成功回调
+    onEditSuccess(updatedData) {
+      // 更新本地的用户资料数据
+      this.userProfile = {
+        ...this.userProfile,
+        ...updatedData
+      }
+      this.currentPoints = updatedData.points || this.currentPoints
+      
+      ElMessage.success('个人资料已更新')
     },
     // 添加收藏
     addFavorite() {
