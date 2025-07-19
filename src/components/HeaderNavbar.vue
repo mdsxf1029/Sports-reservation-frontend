@@ -4,10 +4,10 @@
     <el-container>
       <h1>运动场地预约系统</h1>
     </el-container>
-    <el-menu-item class="navbar-item" index="1"@click="$router.push('/news')">
+    <el-menu-item class="navbar-item" index="1" @click="$router.push('/community')">
       运动社区
     </el-menu-item>
-    <el-menu-item class="navbar-item" index="2"@click="$router.push('/community')">
+    <el-menu-item class="navbar-item" index="2" @click="$router.push('/news')">
       运动新闻
     </el-menu-item>
     <el-menu-item class="navbar-item" index="3"@click="$router.push('/reservation')">

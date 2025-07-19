@@ -19,7 +19,6 @@
     <div class="tab-card">
         <div class="tabs">
         <span class="tab" :class="{active: activeTab === 'profile'}" @click="activeTab = 'profile'">个人资料</span>
-        <span class="tab" :class="{active: activeTab === 'favorite'}" @click="activeTab = 'favorite'">收藏</span>
         <span class="tab" :class="{active: activeTab === 'reservation'}" @click="activeTab = 'reservation'">预约</span>
         <span class="tab" :class="{active: activeTab === 'points'}" @click="activeTab = 'points'">积分</span>
         <span class="tab" :class="{active: activeTab === 'notification'}" @click="activeTab = 'notification'">信息通知中心</span>
@@ -90,33 +89,28 @@
           </div>
         </TabContent>
         
-        <!-- 收藏内容 -->
-        <TabContent 
-          v-if="activeTab === 'favorite'" 
-          title="我的收藏"
-          :showAddButton="true"
-          @add="addFavorite"
-        >
-          <FavoriteItem 
-            v-for="(item, index) in favoriteList" 
-            :key="index"
-            :content="item.content"
-            :removable="true"
-            @remove="removeFavorite(index)"
-          />
-        </TabContent>
-        
         <!-- 预约内容 -->
         <TabContent 
           v-if="activeTab === 'reservation'" 
           title="我的预约"
         >
+          <div v-if="reservationLoading" class="loading-container">
+            <div class="loading-spinner"></div>
+            <span style="margin-left: 10px;">加载订单中...</span>
+          </div>
+          <div v-else-if="reservationList.length === 0" class="empty-state">
+            <div class="empty-icon">📅</div>
+            <div class="empty-text">暂无预约记录</div>
+            <div class="empty-desc">去预约一个场地吧！</div>
+          </div>
           <ReservationItem 
+            v-else
             v-for="(item, index) in reservationList" 
-            :key="index"
+            :key="item.appointmentId || index"
             :content="item.content"
             :status="item.status"
             :statusType="item.statusType"
+            :order-detail="item"
           />
         </TabContent>
         
@@ -174,11 +168,10 @@
 
 <script>
 import {ref} from 'vue'
-import { getUserInfo,updateUserInfo } from '@/utils/api'
+import { getUserInfo, fetchMyOrderSummary} from '@/utils/api'
 import { ElMessage } from 'element-plus'
 import HeaderNavbar from '@/components/HeaderNavbar.vue'
 import FooterNavbar from '@/components/FooterNavbar.vue'
-import FavoriteItem from '@/components/profile/FavoriteItem.vue'
 import ReservationItem from '@/components/profile/ReservationItem.vue'
 import NotificationItem from '@/components/profile/NotificationItem.vue'
 import PointsItem from '@/components/profile/PointsItem.vue'
@@ -191,7 +184,6 @@ export default {
   components: { 
     HeaderNavbar, 
     FooterNavbar,
-    FavoriteItem,
     ReservationItem,
     NotificationItem,
     PointsItem,
@@ -204,6 +196,12 @@ export default {
       activeTab: 'profile', // 默认显示个人资料选项卡
       currentPoints: 0, // 当前积分总数
       isLoading: false, // 加载状态
+      reservationLoading: false, // 预约订单加载状态
+      reservationPagination: {
+        total: 0,
+        page: 1,
+        pageSize: 10
+      }, // 分页信息
       showEditDialog: false, // 控制编辑弹窗显示
       
       // 用户个人资料数据（初始化为空，将从API获取）
@@ -223,16 +221,8 @@ export default {
         points: 0
       },
       
-      // 收藏数据
-      favoriteList: [
-        { content: '⭐ 羽毛球馆A - 环境优美，设施齐全' },
-        { content: '⭐ 游泳馆B - 水质清澈，教练专业' }
-      ],
-      // 预约数据
-      reservationList: [
-        { content: '🏀 篮球场地 - 明天 15:00-17:00', status: '已确认', statusType: 'active' },
-        { content: '🏊‍♂️ 游泳池 - 本周六 09:00-11:00', status: '待确认', statusType: 'pending' }
-      ],
+      // 预约数据（初始化为空，将从API获取）
+      reservationList: [],
       // 通知数据
       notificationList: [
         { content: '📢 您的篮球场预约已确认', time: '30分钟前', isRead: false },
@@ -259,6 +249,14 @@ export default {
     }
     
     this.checkLoginAndLoadProfile()
+  },
+  watch: {
+    // 监听tab切换，当切换到预约tab时加载订单数据
+    activeTab(newTab) {
+      if (newTab === 'reservation' && this.reservationList.length === 0) {
+        this.loadReservationData()
+      }
+    }
   },
   methods: {
     // 检查登录状态并加载用户资料
@@ -299,17 +297,17 @@ export default {
         const response = await getUserInfo(userId)
         console.log('API响应:', response)
         
-        if (response && response.code === 0) {
+        if (response && response.code === 0 && response.data) {
           let userData
           
-          // 处理不同的API响应格式  为了兼容
-          if (response.data.code === 0 || response.data.code === 200) {
-            userData = response.data.data
-          } else if (response.data.code) {
-            ElMessage.error(response.data.msg || response.data.message || '获取用户信息失败')
-            return
-          } else { 
+          // 处理不同的API响应格式 - 统一处理逻辑
+          if (response.code === 0 || response.code === 200) {
             userData = response.data
+          } else if (response.data && !response.data.code) {
+            // 直接返回数据的格式
+            userData = response.data
+          } else {
+            throw new Error(response.data.msg || response.data.message || '获取用户信息失败')
           }
           
           // 更新用户资料数据
@@ -430,16 +428,201 @@ export default {
       
       ElMessage.success('个人资料已更新')
     },
-    // 添加收藏
-    addFavorite() {
-      const newFavorite = {
-        content: `⭐ 新收藏场馆 - ${new Date().toLocaleString()}`
+
+    // 加载预约订单数据
+    async loadReservationData(page = 1) {
+      const userId = localStorage.getItem('userId')
+      if (!userId) {
+        console.error('用户ID不存在，无法加载订单数据')
+        return
       }
-      this.favoriteList.unshift(newFavorite)
+
+      this.reservationLoading = true
+      try {
+        console.log('开始获取用户订单，用户ID:', userId, '页码:', page)
+        
+        // 传递分页参数
+        const response = await fetchMyOrderSummary(userId, {
+          page: page,
+          pageSize: this.reservationPagination.pageSize
+        })
+        console.log('订单API响应:', response)
+
+        if (response && response.code === 0 && response.data) {
+          let orderData = []
+          const responseData = response.data.data
+          
+          // 根据你提供的API格式处理数据
+          if (responseData && responseData.list) {
+            // 如果list是数组
+            if (Array.isArray(responseData.list)) {
+              orderData = responseData.list
+            } 
+            // 如果list是单个对象，转换为数组
+            else if (typeof responseData.list === 'object') {
+              orderData = [responseData.list]
+            }
+          }
+          
+          console.log('解析出的订单数据:', orderData)
+
+          // 更新分页信息
+          this.reservationPagination = {
+            total: responseData.total || 0,
+            page: responseData.page || page,
+            pageSize: this.reservationPagination.pageSize
+          }
+
+          // 转换订单数据格式
+          this.reservationList = orderData.map(order => this.formatOrderData(order))
+          
+          console.log('订单数据加载成功:', this.reservationList)
+          console.log('分页信息:', this.reservationPagination)
+        } else {
+          throw new Error(`API返回错误: ${response.data?.msg || '未知错误'}`)
+        }
+      } catch (error) {
+        console.error('获取订单数据失败:', error)
+        ElMessage.error('获取订单数据失败，请稍后重试')
+        
+        // 使用示例数据作为后备方案
+        this.reservationList = [
+          { 
+            appointmentId: 'demo1',
+            content: '🏀 篮球场地 - 明天 15:00-17:00', 
+            status: '已确认', 
+            statusType: 'active',
+            facilityName: '篮球场A',
+            appointmentDate: '2024-01-20',
+            startTime: '15:00',
+            endTime: '17:00'
+          },
+          { 
+            appointmentId: 'demo2',
+            content: '🏊‍♂️ 游泳池 - 本周六 09:00-11:00', 
+            status: '待确认', 
+            statusType: 'pending',
+            facilityName: '游泳池B',
+            appointmentDate: '2024-01-22',
+            startTime: '09:00',
+            endTime: '11:00'
+          }
+        ]
+        
+        // 设置默认分页信息
+        this.reservationPagination = {
+          total: 2,
+          page: 1,
+          pageSize: 10
+        }
+      } finally {
+        this.reservationLoading = false
+      }
     },
-    // 移除收藏
-    removeFavorite(index) {
-      this.favoriteList.splice(index, 1)
+
+    // 格式化订单数据
+    formatOrderData(order) {
+      // 根据你提供的API响应字段进行映射
+      const facilityName = order.venueName || order.facilityName || order.venue_name || '未知场地'
+      const appointmentStatus = order.appointmentStatus || order.status || 'unknown'
+      const applyTime = order.applyTime || order.apply_time || ''
+      const beginTime = order.beginTime || order.begin_time || order.startTime || ''
+      const endTime = order.endTime || order.end_time || ''
+      
+      // 生成显示内容
+      let icon = '📅' // 默认图标
+      if (facilityName.includes('篮球')) icon = '🏀'
+      else if (facilityName.includes('游泳')) icon = '🏊‍♂️'
+      else if (facilityName.includes('网球')) icon = '🎾'
+      else if (facilityName.includes('羽毛球')) icon = '🏸'
+      else if (facilityName.includes('足球')) icon = '⚽'
+      
+      // 格式化时间显示
+      const timeDisplay = this.formatTimeRange(beginTime, endTime)
+      const content = `${icon} ${facilityName} - ${timeDisplay}`
+      
+      // 状态映射 - 根据API返回的appointmentStatus进行映射
+      let statusText = '未知'
+      let statusType = 'info'
+      
+      switch (appointmentStatus.toLowerCase()) {
+        case 'upcoming':
+        case 'confirmed':
+        case 'active':
+          statusText = '已确认'
+          statusType = 'active'
+          break
+        case 'pending':
+        case 'waiting':
+          statusText = '待确认'
+          statusType = 'pending'
+          break
+        case 'canceled':
+        case 'cancelled':
+          statusText = '已取消'
+          statusType = 'cancelled'
+          break
+        case 'completed':
+        case 'finished':
+          statusText = '已完成'
+          statusType = 'completed'
+          break
+        case 'ongoing':
+          statusText = '进行中'
+          statusType = 'active'
+          break
+        default:
+          statusText = appointmentStatus || '未知'
+          statusType = 'info'
+      }
+
+      return {
+        appointmentId: order.appointmentId || order.id,
+        content: content,
+        status: statusText,
+        statusType: statusType,
+        facilityName: facilityName,
+        appointmentStatus: appointmentStatus,
+        applyTime: applyTime,
+        beginTime: beginTime,
+        endTime: endTime,
+        originalData: order // 保存原始数据以备需要
+      }
+    },
+
+    // 格式化时间范围显示
+    formatTimeRange(beginTime, endTime) {
+      if (!beginTime) return '时间待定'
+      
+      try {
+        const beginDate = new Date(beginTime)
+        const endDate = endTime ? new Date(endTime) : null
+        
+        const today = new Date()
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        
+        let dateStr = ''
+        if (beginDate.toDateString() === today.toDateString()) {
+          dateStr = '今天'
+        } else if (beginDate.toDateString() === tomorrow.toDateString()) {
+          dateStr = '明天'
+        } else {
+          dateStr = beginDate.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })
+        }
+        
+        const beginTimeStr = beginDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+        
+        if (endDate) {
+          const endTimeStr = endDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+          return `${dateStr} ${beginTimeStr}-${endTimeStr}`
+        } else {
+          return `${dateStr} ${beginTimeStr}`
+        }
+      } catch (error) {
+        console.error('时间格式化错误:', error)
+        return beginTime + (endTime ? ` - ${endTime}` : '')
+      }
     }
   }
 }
@@ -745,6 +928,31 @@ export default {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* 空状态样式 */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 18px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.empty-desc {
+  font-size: 14px;
+  color: #999;
 }
 
 /* 底部footer */

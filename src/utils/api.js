@@ -63,6 +63,15 @@ export function updateUserInfo(userId, userData) {
   });
 }
 
+// 获取我的订单信息（根据用户ID和其他参数）
+export const fetchMyOrderSummary = (userId, params = {}) => {
+  return instance.get(`/api/appointments`, {
+    params: { 
+      userId,
+      ...params // 支持传入额外的查询参数，如page、appointmentStatus、beginTime、endTime等
+    }
+  });
+};
 
 /* 用户账户与信息相关结束 */
 
