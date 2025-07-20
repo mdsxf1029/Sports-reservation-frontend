@@ -7,6 +7,7 @@ const instance = axios.create({
   timeout: 5000
 });
 
+
 // 获取用户违约记录
 export function getViolations() {
   return instance.get('/api/violations');
@@ -17,7 +18,29 @@ export function addToBlacklist(userId) {
   return instance.post('/api/blacklist/add', { userId });
 }
 
-/* 用户账户与信息相关 */
+//获取场地信息
+export const getVenues = () => {
+  return instance.get('/api/venues');
+};
+
+//发布场地
+export const createVenue = (data) => {
+  return instance.post('/api/venues', data);
+};
+
+//更新场地
+export const updateVenue = (id, data) => {
+  return instance.put(`/api/venues/${id}`, data);
+};
+
+//删除场地
+export const deleteVenue = (id) => {
+  return instance.delete(`/api/venues/${id}`);
+};
+
+// 你可以根据需要继续添加其他接口方法
+
+/* 用户相关 */
 
 // 注册（创建用户）
 export function registerUser(userData) {
@@ -140,8 +163,12 @@ export const fetchMyCollectedPosts = (params) => {
 
 // 获取订单详情（根据预约 ID）
 export const fetchOrderDetail = (appointmentId) => {
-  return instance.get(`/api/appointments/${appointmentId}`);
-  /*return axios.get(`http://127.0.0.1:4523/m1/6319279-6014567-default/api/appointments/1`);*/
+  /*return instance.get(`/api/appointments/${appointmentId}`);*/
+  return axios.get(`http://127.0.0.1:4523/m1/6319279-6014567-default/api/appointments/1`);
 };
 
-
+// 获取预约是否成功信息
+export const fetchConfirmInfo = (appointmentId) => {
+  /*return instance.get(`/api/appointments/{appointmentId}/confirm-info`);*/
+  return axios.get(`http://127.0.0.1:4523/m1/6319279-6014567-default/api/appointments/1/confirm-info`);
+};

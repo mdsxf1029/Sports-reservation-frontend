@@ -1,0 +1,78 @@
+.venue-management-container {
+  padding: 25px;
+  background-color: #fff;
+  min-height: 100vh;
+}
+
+.header-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.search-input {
+  width: 350px;
+}
+
+.button-group .el-button {
+  margin-left: 12px;
+}
+
+.table-wrapper {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.el-table,
+.el-table th,
+.el-table td,
+.el-table--border::after,
+.el-table--group::after,
+.el-table::before {
+  border: none;
+}
+
+
+.el-table th {
+  background-color: #fafafa !important; 
+  font-weight: bold;
+  color: #121313;   
+  border-top: 1px solid #e8eaec;
+  border-bottom: 1px solid #e8eaec;
+  font-size: 15px;
+}
+
+.el-table td {
+  border-bottom: 1px solid #e8eaec;
+  font-weight: 400; 
+  color: #2b2c2e; 
+  font-size: 15px;
+}
+
+
+.el-table .el-table__row--striped td {
+  background-color: #fdfdfd !important; 
+}
+
+.el-table .el-table__row:hover > td {
+  background-color: #f0faff !important;
+}
+
+.el-dialog .el-form-item__label {
+  font-size: 15px;
+  font-weight: 600;
+}
+.el-dialog .el-input__inner, .el-dialog .el-select .el-input__inner {
+    font-size: 15px;
+}
+
+.aligned-form-item .el-form-item__content {
+  align-items: center;
+}
+
+.el-table .status-column-cell .cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
