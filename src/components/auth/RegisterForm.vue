@@ -62,9 +62,9 @@
       <div class="form-row">
         <el-form-item label="性　别" prop="gender" class="half-width">
           <el-select v-model="form.gender" placeholder="请选择性别">
-            <el-option label="男" value="M" />
-            <el-option label="女" value="F" />
-            <el-option label="保密" value="O" />
+            <el-option label="男" value="male" />
+            <el-option label="女" value="female" />
+            <el-option label="保密" value="unknown" />
           </el-select>
         </el-form-item>
         
@@ -88,10 +88,48 @@
       </el-form-item>
 
       <el-form-item label="所在地区" prop="region">
-        <el-input
-          v-model="form.region"
-          placeholder="请输入所在地区"
-        />
+        <el-select 
+          v-model="form.region" 
+          placeholder="请选择所在地区"
+          style="width: 100%"
+          clearable
+        >
+          <el-option label="北京市" value="北京市" />
+          <el-option label="上海市" value="上海市" />
+          <el-option label="天津市" value="天津市" />
+          <el-option label="重庆市" value="重庆市" />
+          <el-option label="河北省" value="河北省" />
+          <el-option label="山西省" value="山西省" />
+          <el-option label="辽宁省" value="辽宁省" />
+          <el-option label="吉林省" value="吉林省" />
+          <el-option label="黑龙江省" value="黑龙江省" />
+          <el-option label="江苏省" value="江苏省" />
+          <el-option label="浙江省" value="浙江省" />
+          <el-option label="安徽省" value="安徽省" />
+          <el-option label="福建省" value="福建省" />
+          <el-option label="江西省" value="江西省" />
+          <el-option label="山东省" value="山东省" />
+          <el-option label="河南省" value="河南省" />
+          <el-option label="湖北省" value="湖北省" />
+          <el-option label="湖南省" value="湖南省" />
+          <el-option label="广东省" value="广东省" />
+          <el-option label="海南省" value="海南省" />
+          <el-option label="四川省" value="四川省" />
+          <el-option label="贵州省" value="贵州省" />
+          <el-option label="云南省" value="云南省" />
+          <el-option label="陕西省" value="陕西省" />
+          <el-option label="甘肃省" value="甘肃省" />
+          <el-option label="青海省" value="青海省" />
+          <el-option label="台湾省" value="台湾省" />
+          <el-option label="内蒙古自治区" value="内蒙古自治区" />
+          <el-option label="广西壮族自治区" value="广西壮族自治区" />
+          <el-option label="西藏自治区" value="西藏自治区" />
+          <el-option label="宁夏回族自治区" value="宁夏回族自治区" />
+          <el-option label="新疆维吾尔自治区" value="新疆维吾尔自治区" />
+          <el-option label="香港特别行政区" value="香港特别行政区" />
+          <el-option label="澳门特别行政区" value="澳门特别行政区" />
+          <el-option label="其他" value="其他" />
+        </el-select>
       </el-form-item>
 
       <el-form-item label="个人简介" prop="profile">
@@ -123,6 +161,7 @@ import { ref } from 'vue'
 import { registerUser } from '@/utils/api'
 import { useRouter } from 'vue-router'
 import AvatarUpload from '@/components/AvatarUpload.vue'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()  // 路由实例
 const registerFormRef = ref()  // 引用表单实例
@@ -212,43 +251,86 @@ const register = async () => {
     // validate 返回 Promise，校验不通过会 throw error
     await formRef.validate()
     
-    // 准备提交的数据（注意：不包含user_id，由后端自动生成）
+    // 准备提交的数据（前端使用驼峰命名风格）
     const userData = {
       userName: form.value.userName,
       telephone: form.value.telephone,
       email: form.value.email,
       password: form.value.password,
       gender: form.value.gender,
-      birthday: form.value.birthday || null,
-      // 头像URL由AvatarUpload组件处理，包含默认头像逻辑
+      birthday: form.value.birthday ? new Date(form.value.birthday).toISOString().split('T')[0] : null,
       avatarUrl: form.value.avatarUrl,
       region: form.value.region || null,
       profile: form.value.profile || null,
       role: form.value.role,
-      register_time: new Date().toISOString().split('T')[0], // 当前日期
-      points: 100 // 新用户初始积分
-      // 注意：user_id 由后端数据库自动生成，无需前端提供
+      registerTime: new Date().toISOString().split('T')[0], // 当前日期 
+      points: 0 // 新用户初始积分为0
+      // 注意：后端会自动处理字段名转换和user_id生成
     }
     
     // 校验通过后发起请求
     const res = await registerUser(userData)
     
-    if (res && res.data && res.data.success) {
-      alert('注册成功！已获得100积分奖励')
-      router.push('/login') // 注册成功后跳转到登录页面
+    if (res && res.code === 0) {
+      // 注册成功
+      ElMessage.success(res.msg || '注册成功！')
+      
+      // 清空密码字段以提高安全性
+      form.value.password = ''
+      form.value.confirmPassword = ''
+      
+      // 如果后端返回了新用户ID和用户名，可以在这里处理
+      if (res.data && res.data.userId) {
+        console.log('新用户ID:', res.data.userId)
+        console.log('用户名:', res.data.userName)
+
+        // 可选：存储用户信息到本地存储
+        // localStorage.setItem('lastRegisteredUser', JSON.stringify({
+        //   userid: res.data.userid,
+        //   username: res.data.username,
+        //   registerTime: new Date().toISOString()
+        // }))
+      }
+      // 延迟跳转，让用户看到成功提示
+      setTimeout(() => {
+        router.push('/login')
+      }, 1500)
     } else {
-      alert(res?.data?.message || '注册失败')
+      // 注册失败 - 直接使用后端返回的错误消息
+      const errorMsg = res?.msg || '注册失败，请重试'
+      ElMessage.error(errorMsg)
+      console.error('注册失败:', res)
     }
   } catch (err) {
-    // 如果是表单校验错误（Element Plus 校验错误是 Error 对象且有 message 字段） 
-    if (err && err.name === 'Error' && err.message) {
-      // 表单校验错误，不做处理
-      console.error('表单校验错误:', err.message)
+    // 如果是表单校验错误（Element Plus 会抛出包含校验信息的错误） 
+    if (err && typeof err === 'object' && !err.response) {
+      // 表单校验错误，不需要特殊处理，Element Plus 会自动显示错误信息
+      console.error('表单校验错误:', err)
       return
     }
-    // 其它错误（如网络异常）
+    
+    // 处理网络或服务器错误
     console.error('注册异常:', err)
-    alert('网络请求出错！')
+    if (err.response) {
+      const status = err.response.status
+      switch (status) {
+        case 400:
+          ElMessage.error('请求参数错误，请检查输入信息')
+          break
+        case 409:
+          ElMessage.error('用户名或邮箱已存在')
+          break
+        case 500:
+          ElMessage.error('服务器内部错误，请稍后重试')
+          break
+        default:
+          ElMessage.error(`注册失败：${status}`)
+      }
+    } else if (err.request) {
+      ElMessage.error('网络连接失败，请检查网络设置')
+    } else {
+      ElMessage.error('注册过程中发生未知错误')
+    }
   } finally {
     isLoading.value = false  // 结束加载
   }

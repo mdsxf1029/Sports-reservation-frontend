@@ -44,16 +44,88 @@ export const deleteVenue = (id) => {
 
 // 注册（创建用户）
 export function registerUser(userData) {
-  return instance.post('/api/users', userData);
+  return instance.post('/api/auth/register', userData);
 }
 
 // 登录（创建会话/令牌）
 export function loginUser(credentials) {
-  return instance.post('/api/sessions', credentials);
+  return instance.post('/api/auth/login', credentials);
 }
 
+// 上传头像
+export function uploadAvatar(formData) {
+  return instance.post('/api/upload/avatar', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+}
 
-/* 用户相关结束 */
+// 获取用户头像 用户头像可以公开获取 不用token
+export function getAvatar(userId) { 
+  return instance.get(`/api/user/${userId}/avatar`,userId);
+}
+
+// 获取用户信息 用于个人中心
+export function getUserInfo(userId) {
+  const token = localStorage.getItem('token');
+  return instance.get(`/api/user/${userId}`, {
+    headers: {
+      'token': token
+    }
+  });
+}
+
+// 更新用户信息
+export function updateUserInfo(userId, userData) {
+  const token = localStorage.getItem('token');
+  return instance.put(`/api/user/${userId}`, userData, {
+    headers: {
+      'token': token
+    }
+  });
+}
+
+// 获取我的订单信息（根据用户ID和其他参数）
+export const fetchMyOrderSummary = (userId, params = {}) => {
+  return instance.get(`/api/appointments`, {
+    params: { 
+      userId,
+      ...params // 支持传入额外的查询参数，如page、appointmentStatus、beginTime、endTime等
+    }
+  });
+};
+
+// 获取用户积分记录
+export const fetchUserPoints = (userId, params = {}) => {
+  return instance.get(`/api/user/${userId}/points`, {
+    params: {
+      ...params // 支持传入page、pageSize、type等参数
+    }
+  });
+};
+
+// 获取积分变化记录
+export const fetchPointsHistory = (userId, params = {}) => {
+  return instance.get(`/api/user/${userId}/points/history`, {
+    params: {
+      ...params // 支持传入page、pageSize、beginTime、endTime等参数
+    }
+  });
+};
+
+// 获取用户通知列表
+export const fetchUserNotifications = (userId, params = {}) => {
+  return instance.get(`/api/user/${userId}/notifications`, {
+    params: {
+      ...params // 支持传入page、pageSize、isRead、type等参数
+    }
+  });
+};
+
+
+
+/* 用户账户与信息相关结束 */
 
 // 获取社区帖子列表
 export const fetchCommunityPosts = (params) => {
