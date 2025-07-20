@@ -1,10 +1,11 @@
-
 <template>
   <div id="app">
     <HeaderNavbar class="header-navbar"/>
+    
     <div class="route-view-container">
-
+      <CourtReservation />
     </div>
+    
     <FooterNavbar class="footer-navbar"/>
   </div>
 </template>
@@ -12,6 +13,12 @@
 <script setup>
 import HeaderNavbar from './components/HeaderNavbar.vue'
 import FooterNavbar from './components/FooterNavbar.vue'
+import CourtReservation from './views/CourtReservation.vue'
+</script>
+
+
+
+<script setup>
 
 </script>
 
