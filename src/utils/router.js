@@ -5,6 +5,7 @@ import VenueManagement from '../views/VenueManagement.vue';
 import ViolationManagement from '../views/ViolationManagement.vue';
 import PostManagement from '../views/PostManagement.vue';
 import PostEditor from '../views/PostEditor.vue';
+import PostViewer from '../views/PostViewer.vue';
 import AppealManagement from '../views/AppealManagement.vue';
 import ViolationHistory from '../views/ViolationHistory.vue';
 import Reservation from '../views/Reservation.vue'
@@ -52,6 +53,10 @@ const routes = [
     {
         path: '/post/posteditor',
         component: PostEditor
+    },
+    {
+        path: '/post/postviewer',
+        component: PostViewer
     },
     {
         path: '/appeal',
