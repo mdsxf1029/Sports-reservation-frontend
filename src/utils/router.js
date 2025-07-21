@@ -7,8 +7,10 @@ import ViolationManagement from '../views/ViolationManagement.vue';
 import PostManagement from '../views/PostManagement.vue';
 import AppealManagement from '../views/AppealManagement.vue';
 import ViolationHistory from '../views/ViolationHistory.vue';
-import Reservation from '../views/Reservation.vue'
+//import Reservation from '../views/Reservation.vue'
 import VenueDetail from '../views/VenueDetail.vue'
+import Home from '../views/Home.vue'
+import VenueList from '../views/VenueList.vue'
 
 
 const Dummy = { template: '<div style="padding:20px;"><h2>ҳ�潨����...</h2></div>' }
@@ -45,11 +47,11 @@ const routes = [
         name: 'OrderDetail',
         component: OrderDetail
     },
-  {
-        path: '/reservation',
-        name: 'Reservation',
-        component: Reservation
-    },
+  //{
+  //      path: '/reservation',
+  //      name: 'Reservation',
+  //      component: Reservation
+  //  },
     {
         path: '/community',
         name: 'Community',
@@ -60,7 +62,17 @@ const routes = [
         name: 'News',
         component: Dummy
     },
-    { path: '/venue/:id', component: VenueDetail }
+    { path: '/venue/:id', component: VenueDetail },
+    {
+        path: '/venuelist',
+        name: 'VenueList',
+        component: VenueList
+    },
+    {
+        path: '/home',
+        name: 'Home',
+        component: Home
+    }
 ];
 
 
