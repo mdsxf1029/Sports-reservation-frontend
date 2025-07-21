@@ -24,8 +24,8 @@
       
       <!-- 预览区域 -->
       <div class="preview-box" v-if="isPreviewShow">
-        <h3 class="preview-title">{{ title }}</h3>
-        <p class="preview-content">{{ content }}</p>
+        <h3 class="preview-title">{{ post_title }}</h3>
+        <p class="preview-content">{{ post_content }}</p>
       </div>
     </div>
     
@@ -42,30 +42,52 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router'; // 引入路由钩子
+import axios from 'axios';
+
 // 响应式数据
-const title = ref('');
-const content = ref('');
+const post_title = ref('');
+const post_content = ref('');
 const isPreviewShow = ref(false);
+const router = useRouter(); // 获取路由实例
+
 // 预览按钮事件
 const handlePreview = () => {
   isPreviewShow.value = !isPreviewShow.value;
 };
+
 // 发布按钮事件
-const handlePublish = () => {
-  if (!title.value.trim() || !content.value.trim()) {
+const handlePublish = async () => {
+  if (!post_title.value.trim() || !post_content.value.trim()) {
     alert('标题和正文不能为空，请完善后再发布！');
     return;
   }
-  console.log('发布的标题：', title.value);
-  console.log('发布的正文：', content.value);
-  alert('帖子发布成功！（实际需结合接口完成）');
+
+  try {
+    const response = await axios.post('/api/community/posteditor', {
+      title: post_title.value,
+      content: post_content.value
+    });
+
+    console.log('发布的标题：', post_title.value);
+    console.log('发布的正文：', post_content.value);
+    console.log('API 响应：', response.data);
+    alert('帖子发布成功！');
+    
+    // 发布成功后也返回上一页
+    router.back();
+  } catch (error) {
+    console.error('发布帖子时出错：', error);
+    alert('帖子发布失败，请稍后重试。');
+  }
 };
+
 // 取消编辑事件
 const handleCancel = () => {
-  title.value = '';
-  content.value = '';
-  isPreviewShow.value = false;
-  alert('已取消编辑，输入内容已清空。');
+  // 确认是否取消
+  if (confirm('确定要取消编辑吗？所有未保存的内容将丢失。')) {
+    router.back(); // 返回上一个页面
+  }
 };
 </script>
 
