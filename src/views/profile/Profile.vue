@@ -315,7 +315,10 @@ export default {
   
   async mounted() {
     console.log('Profile页面已加载，开始检查登录状态...')
-    
+       
+    // 检查路由参数，设置默认Tab
+    this.setActiveTabFromRoute()
+
     // 设置测试登录信息（开发用）
     AuthService.setTestLoginInfo()
     
@@ -363,6 +366,20 @@ export default {
     formatDate,
     getGenderText,
     getRoleText,
+
+    // 新增：根据路由参数设置活跃Tab
+    setActiveTabFromRoute() {
+      const tab = this.$route.query.activeTab //这里根据你添加的参数名修改 
+      console.log('路由参数中的tab:', tab)
+      const validTabs = ['profile', 'reservation', 'points', 'notification']
+      
+      if (tab && validTabs.includes(tab)) {
+        this.activeTab = tab
+        console.log('通过路由参数设置活跃Tab:', tab)
+      } else {
+        this.activeTab = 'profile' // 默认显示个人资料
+      }
+    },
 
     // 检查登录状态并加载用户资料
     async checkLoginAndLoadProfile() {
