@@ -65,8 +65,10 @@
         native-type="submit"
         class="login-btn"
         style="width: 100%; background-color: #000; color: white;"
+        :loading="isLoading"
+        :disabled="isLoading"
       >
-        登录
+        {{ isLoading ? '登录中...' : '登录' }}
       </el-button> 
     </el-form>
   </div>
@@ -83,12 +85,13 @@ const router = useRouter()  // 路由实例
 const loginFormRef = ref()  // 引用表单实例
 
 const form = ref({
-  role: '',      // 改为role，与数据库字段一致
-  email: '',     // 改为email，仅支持邮箱登录
+  role: 'normal',  // 设置默认值为普通用户
+  email: '',       // 改为email，仅支持邮箱登录
   password: ''
 })
 // 记住用户名的复选框
 const rememberMe = ref(false)  // 记住
+const isLoading = ref(false)   // 登录加载状态
 // 页面加载时自动读取本地保存的账号信息
 onMounted(() => {
   const savedEmail = localStorage.getItem('saved_email')  // 改为email
@@ -119,36 +122,70 @@ const login = () => {
   console.log('登录请求开始...')
   loginFormRef.value.validate(async (valid) => {
     if (!valid) return
+    
+    isLoading.value = true // 开始加载
     console.log('表单校验通过，开始登录请求...')
+    
     try {
-
       const res = await loginUser({
-        email: form.value.email,        // 改为email，仅支持邮箱登录
+        role: form.value.role,
+        email: form.value.email,       
         password: form.value.password,
-        role: form.value.role
+        way: 'password' // API要求的登录方式参数
       })
-      if (res.data.token) {
+      
+      if (res.code === 0) {
         ElMessage.success('登录成功！')
+        // 存储登录信息
         localStorage.setItem('token', res.data.token)
+        localStorage.setItem('userId', res.data.userId)
+        localStorage.setItem('userName', res.data.userName)
+        localStorage.setItem('expires', res.data.expires)
+        
         // 记住账号逻辑
         if (rememberMe.value) {
-          localStorage.setItem('saved_email', form.value.email)    // 改为email
+          localStorage.setItem('saved_email', form.value.email)  
           localStorage.setItem('saved_role', form.value.role)
         } else {
-          localStorage.removeItem('saved_email')     // 改为email
+          localStorage.removeItem('saved_email')  
           localStorage.removeItem('saved_role')
         }
         router.push('/profile')
       } else {
-        alert(res.data.message || '登录失败')
+        ElMessage.error(res.msg || '登录失败')
       }
     } catch (err) {
       console.error('登录错误:', err)
-      if (err.response?.status === 401) {
-        ElMessage.error('账号或密码错误')
+      
+      // 更详细的错误处理
+      if (err.response) {
+        // 服务器响应错误
+        const status = err.response.status
+        switch (status) {
+          case 400:
+            ElMessage.error('请求参数错误')
+            break
+          case 401:
+            ElMessage.error('账号或密码错误')
+            break
+          case 403:
+            ElMessage.error('账号被禁用，请联系管理员')
+            break
+          case 500:
+            ElMessage.error('服务器内部错误，请稍后重试')
+            break
+          default:
+            ElMessage.error(`请求失败：${status}`)
+        }
+      } else if (err.request) {
+        // 网络连接错误
+        ElMessage.error('网络连接失败，请检查网络设置')
       } else {
-        ElMessage.error('网络请求出错，请稍后重试')
+        // 其他错误
+        ElMessage.error('登录过程中发生未知错误')
       }
+    } finally {
+      isLoading.value = false // 结束加载
     }
   })
 }

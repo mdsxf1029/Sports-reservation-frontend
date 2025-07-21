@@ -13,6 +13,7 @@ import VenueDetail from '../views/VenueDetail.vue'
 import Login from '../views/auth/Login.vue';
 import Register from '../views/auth/Register.vue';
 import Profile from '../views/profile/Profile.vue';
+import CourtReservation from '../views/CourtReservation.vue';
 
 const Dummy = { template: '<div style="padding:20px;"><h2>ҳ页面建设中...</h2></div>' }
 
@@ -85,14 +86,17 @@ const routes = [
     {
         path: '/venue/:id',
         component: VenueDetail
-    }
+    },
+    /*{
+        path: '/test',
+        component: QrCode
+    }*/
 ];
 
 
 const router = createRouter({
     history: createWebHistory(),
     routes
-
 });
 
 export default router;
