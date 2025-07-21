@@ -1,0 +1,661 @@
+<template>
+  <el-dialog
+    v-model="visible"
+    title="编辑个人资料"
+    width="700px"
+    :before-close="handleClose"
+    destroy-on-close
+    class="edit-profile-dialog"
+  >
+    <div class="dialog-content">
+      <el-form
+        ref="profileForm"
+        :model="editForm"
+        :rules="formRules"
+        label-width="100px"
+        class="profile-form"
+        v-loading="loading"
+      >
+        <!-- 头像上传 -->
+        <div class="avatar-section">
+          <h4>头像设置</h4>
+          <div class="avatar-upload">
+            <el-upload
+              class="avatar-uploader"
+              :action="uploadUrl"
+              :show-file-list="false"
+              :on-success="handleAvatarSuccess"
+              :before-upload="beforeAvatarUpload"
+              :headers="uploadHeaders"
+            >
+              <img v-if="editForm.avatarUrl" :src="editForm.avatarUrl" class="avatar" alt="头像">
+              <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+            </el-upload>
+            <div class="avatar-tip">
+              <p>点击上传头像</p>
+              <p class="tip-text">支持jpg、png格式，不超过2MB</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 基本信息 -->
+        <div class="form-section">
+          <h4>基本信息</h4>
+          
+          <el-form-item label="用户名" prop="userName">
+            <el-input
+              v-model="editForm.userName"
+              placeholder="请输入用户名"
+              maxlength="20"
+              show-word-limit
+            />
+          </el-form-item>
+          
+          <el-form-item label="用户ID" prop="userId">
+            <el-input
+              v-model="editForm.userId"
+              placeholder="用户ID"
+              disabled
+              class="disabled-input"
+            />
+            <div class="field-tip">用户ID无法修改</div>
+          </el-form-item>
+          
+          <el-form-item label="电话号码" prop="telephone">
+            <el-input
+              v-model="editForm.telephone"
+              placeholder="请输入电话号码"
+              maxlength="11"
+            />
+          </el-form-item>
+          
+          <el-form-item label="邮箱" prop="email">
+            <el-input
+              v-model="editForm.email"
+              placeholder="请输入邮箱地址"
+            />
+          </el-form-item>
+          
+          <el-form-item label="性别" prop="gender">
+            <el-radio-group v-model="editForm.gender">
+              <el-radio label="male">男</el-radio>
+              <el-radio label="female">女</el-radio>
+              <el-radio label="unknown">保密</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          
+          <el-form-item label="出生日期" prop="birthday">
+            <el-date-picker
+              v-model="editForm.birthday"
+              type="date"
+              placeholder="选择出生日期"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              style="width: 100%"
+            />
+          </el-form-item>
+          
+          <el-form-item label="所在地区" prop="region">
+            <el-input
+              v-model="editForm.region"
+              placeholder="请输入所在地区"
+              maxlength="50"
+            />
+          </el-form-item>
+          
+          <el-form-item label="个人简介" prop="profile">
+            <el-input
+              v-model="editForm.profile"
+              type="textarea"
+              placeholder="介绍一下你自己吧..."
+              :rows="3"
+              maxlength="200"
+              show-word-limit
+            />
+          </el-form-item>
+        </div>
+        
+        <!-- 密码修改 -->
+        <div class="form-section">
+          <h4>安全设置</h4>
+          
+          <el-form-item label="当前密码" prop="currentPassword">
+            <el-input
+              v-model="editForm.currentPassword"
+              type="password"
+              placeholder="请输入当前密码"
+              show-password
+            />
+            <div class="field-tip">如需修改密码，请先输入当前密码</div>
+          </el-form-item>
+          
+          <el-form-item label="新密码" prop="newPassword">
+            <el-input
+              v-model="editForm.newPassword"
+              type="password"
+              placeholder="请输入新密码（可选）"
+              show-password
+            />
+          </el-form-item>
+          
+          <el-form-item label="确认新密码" prop="confirmPassword">
+            <el-input
+              v-model="editForm.confirmPassword"
+              type="password"
+              placeholder="请再次输入新密码"
+              show-password
+            />
+          </el-form-item>
+        </div>
+      </el-form>
+    </div>
+    
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="resetForm">重置</el-button>
+        <el-button @click="handleClose">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="saving"
+          @click="saveProfile"
+        >
+          保存更改
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
+</template>
+
+<script>
+import { getUserInfo, updateUserInfo } from '@/utils/api'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
+
+export default {
+  name: 'EditProfileDialog',
+  components: {
+    Plus
+  },
+  
+  props: {
+    modelValue: {
+      type: Boolean,
+      default: false
+    },
+    userProfile: {
+      type: Object,
+      default: () => ({})
+    }
+  },
+  
+  emits: ['update:modelValue', 'success'],
+  
+  data() {
+    // 自定义验证规则
+    const validateEmail = (rule, value, callback) => {
+      if (!value) {
+        return callback(new Error('请输入邮箱地址'))
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(value)) {
+        return callback(new Error('请输入有效的邮箱地址'))
+      }
+      callback()
+    }
+
+    const validatePhone = (rule, value, callback) => {
+      if (!value) {
+        return callback(new Error('请输入电话号码'))
+      }
+      const phoneRegex = /^1[3-9]\d{9}$/
+      if (!phoneRegex.test(value)) {
+        return callback(new Error('请输入有效的手机号码'))
+      }
+      callback()
+    }
+
+    const validateConfirmPassword = (rule, value, callback) => {
+      if (this.editForm.newPassword && !value) {
+        return callback(new Error('请确认新密码'))
+      }
+      if (value && value !== this.editForm.newPassword) {
+        return callback(new Error('两次输入的密码不一致'))
+      }
+      callback()
+    }
+
+    return {
+      loading: false,
+      saving: false,
+      uploadUrl: '/api/upload/avatar',
+      uploadHeaders: {
+        'token': localStorage.getItem('token')
+      },
+      
+      // 编辑表单数据
+      editForm: {
+        userName: '',
+        userId: '',
+        telephone: '',
+        email: '',
+        gender: '',
+        birthday: '',
+        avatarUrl: '',
+        region: '',
+        profile: '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      },
+      
+      // 原始数据，用于重置
+      originalData: {},
+      
+      // 表单验证规则
+      formRules: {
+        userName: [
+          { required: true, message: '请输入用户名', trigger: 'blur' },
+          { min: 2, max: 20, message: '用户名长度在 2 到 20 个字符', trigger: 'blur' }
+        ],
+        telephone: [
+          { validator: validatePhone, trigger: 'blur' }
+        ],
+        email: [
+          { validator: validateEmail, trigger: 'blur' }
+        ],
+        newPassword: [
+          { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' }
+        ],
+        confirmPassword: [
+          { validator: validateConfirmPassword, trigger: 'blur' }
+        ]
+      }
+    }
+  },
+  
+  computed: {
+    visible: {
+      get() {
+        return this.modelValue
+      },
+      set(value) {
+        this.$emit('update:modelValue', value)
+      }
+    }
+  },
+  
+  watch: {
+    modelValue(newValue) {
+      if (newValue) {
+        this.initFormData()
+      }
+    }
+  },
+  
+  methods: {
+    // 初始化表单数据
+    initFormData() {
+      this.editForm = {
+        userName: this.userProfile.userName || '',
+        userId: this.userProfile.userId || '',
+        telephone: this.userProfile.telephone || '',
+        email: this.userProfile.email || '',
+        gender: this.userProfile.gender || 'unknown',
+        birthday: this.userProfile.birthday || '',
+        avatarUrl: this.userProfile.avatarUrl || '',
+        region: this.userProfile.region || '',
+        profile: this.userProfile.profile || '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }
+      
+      // 保存原始数据
+      this.originalData = { ...this.editForm }
+    },
+    
+    // 关闭弹窗
+    handleClose() {
+      // 检查是否有未保存的更改
+      const hasChanges = this.checkForChanges()
+      
+      if (hasChanges) {
+        ElMessageBox.confirm('有未保存的更改，确定要关闭吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          this.visible = false
+          this.resetFormData()
+        }).catch(() => {
+          // 取消关闭
+        })
+      } else {
+        this.visible = false
+        this.resetFormData()
+      }
+    },
+    
+    // 检查是否有更改
+    checkForChanges() {
+      const currentData = { ...this.editForm }
+      // 不检查密码字段
+      delete currentData.currentPassword
+      delete currentData.newPassword
+      delete currentData.confirmPassword
+      
+      const originalData = { ...this.originalData }
+      delete originalData.currentPassword
+      delete originalData.newPassword
+      delete originalData.confirmPassword
+      
+      return JSON.stringify(currentData) !== JSON.stringify(originalData)
+    },
+    
+    // 重置表单数据
+    resetFormData() {
+      this.editForm = {
+        userName: '',
+        userId: '',
+        telephone: '',
+        email: '',
+        gender: '',
+        birthday: '',
+        avatarUrl: '',
+        region: '',
+        profile: '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }
+      this.originalData = {}
+      
+      // 清除表单验证
+      this.$nextTick(() => {
+        if (this.$refs.profileForm) {
+          this.$refs.profileForm.clearValidate()
+        }
+      })
+    },
+    
+    // 头像上传成功
+    handleAvatarSuccess(response) {
+      if (response.code === 0) {
+        this.editForm.avatarUrl = response.data.url
+        ElMessage.success('头像上传成功')
+      } else {
+        ElMessage.error('头像上传失败')
+      }
+    },
+    
+    // 头像上传前验证
+    beforeAvatarUpload(file) {
+      const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
+      const isLt2M = file.size / 1024 / 1024 < 2
+      
+      if (!isJPG) {
+        ElMessage.error('上传头像只能是 JPG/PNG 格式!')
+        return false
+      }
+      if (!isLt2M) {
+        ElMessage.error('上传头像大小不能超过 2MB!')
+        return false
+      }
+      return true
+    },
+    
+    // 重置表单
+    resetForm() {
+      ElMessageBox.confirm('确定要重置所有更改吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.editForm = { ...this.originalData }
+        this.editForm.currentPassword = ''
+        this.editForm.newPassword = ''
+        this.editForm.confirmPassword = ''
+        ElMessage.success('已重置所有更改')
+      }).catch(() => {
+        // 取消重置
+      })
+    },
+    
+    // 保存个人资料
+    async saveProfile() {
+      try {
+        // 表单验证
+        await this.$refs.profileForm.validate()
+        
+        this.saving = true
+        
+        // 准备更新数据
+        const updateData = {
+          userName: this.editForm.userName,
+          telephone: this.editForm.telephone,
+          email: this.editForm.email,
+          gender: this.editForm.gender,
+          birthday: this.editForm.birthday,
+          avatarUrl: this.editForm.avatarUrl,
+          region: this.editForm.region,
+          profile: this.editForm.profile
+        }
+        
+        // 如果要修改密码
+        if (this.editForm.currentPassword && this.editForm.newPassword) {
+          updateData.currentPassword = this.editForm.currentPassword
+          updateData.newPassword = this.editForm.newPassword
+        }
+        
+        const userId = localStorage.getItem('userId')
+        const response = await updateUserInfo(userId, updateData)
+        
+        if (response && response.code === 0) {
+          ElMessage.success('个人资料更新成功')
+          
+          // 更新本地存储的用户信息
+          if (this.editForm.userName) {
+            localStorage.setItem('userName', this.editForm.userName)
+          }
+          if (this.editForm.avatarUrl) {
+            localStorage.setItem('userAvatar', this.editForm.avatarUrl)
+          }
+          
+          // 通知父组件更新成功
+          this.$emit('success', updateData)
+          
+          // 关闭弹窗
+          this.visible = false
+          this.resetFormData()
+          
+        } else {
+          ElMessage.error(response.message || '更新失败')
+        }
+        
+      } catch (error) {
+        console.error('保存个人资料失败:', error)
+        if (error.message) {
+          ElMessage.error(error.message)
+        } else {
+          ElMessage.error('保存失败，请检查网络连接')
+        }
+      } finally {
+        this.saving = false
+      }
+    }
+  }
+}
+</script>
+
+<style scoped>
+/* 弹窗内容样式 */
+.dialog-content {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0 4px;
+}
+
+/* 表单区块 */
+.form-section {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.form-section h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px 0;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #2062ea;
+}
+
+/* 头像上传区域 */
+.avatar-section {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.avatar-section h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px 0;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #2062ea;
+}
+
+.avatar-upload {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.avatar-uploader {
+  flex-shrink: 0;
+}
+
+.avatar-uploader :deep(.el-upload) {
+  border: 2px dashed #d9d9d9;
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-uploader :deep(.el-upload:hover) {
+  border-color: #2062ea;
+}
+
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.avatar-tip p {
+  margin: 0 0 4px 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.tip-text {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 表单项样式 */
+.el-form-item {
+  margin-bottom: 20px;
+}
+
+.disabled-input :deep(.el-input__inner) {
+  background-color: #f5f7fa;
+  color: #909399;
+}
+
+.field-tip {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.4;
+}
+
+/* 弹窗底部按钮 */
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* 弹窗样式 */
+:deep(.edit-profile-dialog .el-dialog__header) {
+  padding: 20px 24px 16px 24px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+:deep(.edit-profile-dialog .el-dialog__body) {
+  padding: 20px 24px;
+}
+
+:deep(.edit-profile-dialog .el-dialog__footer) {
+  padding: 16px 24px 20px 24px;
+  border-top: 1px solid #e8e8e8;
+}
+
+/* 滚动条样式 */
+.dialog-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dialog-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .avatar-upload {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .dialog-footer {
+    flex-direction: column;
+  }
+  
+  :deep(.edit-profile-dialog) {
+    width: 95% !important;
+    margin: 0 !important;
+  }
+}
+</style>

@@ -40,3 +40,7 @@ import CourtReservation from './views/CourtReservation.vue'
 }
 
 </style>
+
+/*      <router-view />
+  </div>
+</template>*/
