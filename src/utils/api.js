@@ -52,12 +52,20 @@ export function loginUser(credentials) {
   return instance.post('/api/auth/login', credentials);
 }
 
-// 上传头像
+// 上传头像（注册时无需token，登录后需要token）
 export function uploadAvatar(formData) {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'multipart/form-data'
+  };
+  
+  // 如果有token就添加到headers中
+  if (token) {
+    headers['token'] = token;
+  }
+  
   return instance.post('/api/upload/avatar', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+    headers: headers
   });
 }
 

@@ -20,19 +20,11 @@
         <div class="avatar-section">
           <h4>头像设置</h4>
           <div class="avatar-upload">
-            <el-upload
-              class="avatar-uploader"
-              :action="uploadUrl"
-              :show-file-list="false"
-              :on-success="handleAvatarSuccess"
-              :before-upload="beforeAvatarUpload"
-              :headers="uploadHeaders"
-            >
-              <img v-if="editForm.avatarUrl" :src="editForm.avatarUrl" class="avatar" alt="头像">
-              <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
-            </el-upload>
+            <AvatarUpload 
+              v-model="editForm.avatarUrl"
+              :gender="editForm.gender"
+            />
             <div class="avatar-tip">
-              <p>点击上传头像</p>
               <p class="tip-text">支持jpg、png格式，不超过2MB</p>
             </div>
           </div>
@@ -170,11 +162,13 @@
 import { getUserInfo, updateUserInfo } from '@/utils/api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import AvatarUpload from '@/components/AvatarUpload.vue'
 
 export default {
   name: 'EditProfileDialog',
   components: {
-    Plus
+    Plus,
+    AvatarUpload
   },
   
   props: {
@@ -227,10 +221,6 @@ export default {
     return {
       loading: false,
       saving: false,
-      uploadUrl: '/api/upload/avatar',
-      uploadHeaders: {
-        'token': localStorage.getItem('token')
-      },
       
       // 编辑表单数据
       editForm: {
@@ -376,32 +366,6 @@ export default {
           this.$refs.profileForm.clearValidate()
         }
       })
-    },
-    
-    // 头像上传成功
-    handleAvatarSuccess(response) {
-      if (response.code === 0) {
-        this.editForm.avatarUrl = response.data.url
-        ElMessage.success('头像上传成功')
-      } else {
-        ElMessage.error('头像上传失败')
-      }
-    },
-    
-    // 头像上传前验证
-    beforeAvatarUpload(file) {
-      const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
-      const isLt2M = file.size / 1024 / 1024 < 2
-      
-      if (!isJPG) {
-        ElMessage.error('上传头像只能是 JPG/PNG 格式!')
-        return false
-      }
-      if (!isLt2M) {
-        ElMessage.error('上传头像大小不能超过 2MB!')
-        return false
-      }
-      return true
     },
     
     // 重置表单

@@ -182,17 +182,17 @@ const handleFileChange = async (file) => {
     // 上传文件到服务器
     const response = await uploadAvatar(formData)
     
-    if (response && response.success === true) {
+    if (response && response.data && response.data.code === 0) {
       // 服务器返回图片URL
-      const avatarUrl = response.avatarUrl 
+      const avatarUrl = response.data.data.avatarUrl 
       emit('update:modelValue', avatarUrl)
       
       // 记录上传成功的文件信息
       lastUploadedFile.value = currentFileInfo
       
-      ElMessage.success('头像上传成功!')
+      ElMessage.success(response.data.msg || '头像上传成功!')
     } else {
-      ElMessage.error('头像上传失败')
+      ElMessage.error(response.data?.msg || '头像上传失败')
     }
   } catch (error) {
     console.error('头像上传错误:', error)
