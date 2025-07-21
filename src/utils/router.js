@@ -7,8 +7,10 @@ import PostManagement from '../views/PostManagement.vue';
 import PostEditor from '../views/PostEditor.vue';
 import AppealManagement from '../views/AppealManagement.vue';
 import ViolationHistory from '../views/ViolationHistory.vue';
-import Reservation from '../views/Reservation.vue'
+//import Reservation from '../views/Reservation.vue'
 import VenueDetail from '../views/VenueDetail.vue'
+import Home from '../views/Home.vue'
+import VenueList from '../views/VenueList.vue'
 import Login from '../views/auth/Login.vue';
 import Register from '../views/auth/Register.vue';
 import Profile from '../views/profile/Profile.vue';
@@ -76,6 +78,16 @@ const routes = [
         path: '/news',
         name: 'News',
         component: Dummy
+    },
+    {
+        path: '/venuelist',
+        name: 'VenueList',
+        component: VenueList
+    },
+    {
+        path: '/home',
+        name: 'Home',
+        component: Home
     },
     {
         path: '/venue/:id',
