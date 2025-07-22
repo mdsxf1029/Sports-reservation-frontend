@@ -12,7 +12,7 @@ import VenueDetail from '../views/VenueDetail.vue'
 import Login from '../views/auth/Login.vue';
 import Register from '../views/auth/Register.vue';
 import Profile from '../views/profile/Profile.vue';
-
+import Home from '../views/Home.vue';
 const Dummy = { template: '<div style="padding:20px;"><h2>ҳ页面建设中...</h2></div>' }
 
 const routes = [
@@ -30,6 +30,7 @@ const routes = [
     },
     {
         path: '/profile',
+        name: 'Profile',
         component: Profile
     },
     {
@@ -80,6 +81,11 @@ const routes = [
     {
         path: '/venue/:id',
         component: VenueDetail
+    },
+    {
+        path: '/home',
+        name: 'Home',
+        component: Home
     }
 ];
 
