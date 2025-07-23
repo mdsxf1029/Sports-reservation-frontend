@@ -7,20 +7,20 @@
     <main class="main-content">
       <!-- 欢迎横幅 -->
       <section class="hero-section">
-        <div class="hero-content">
-          <h1 class="hero-title">运动场馆预约平台</h1>
-          <p class="hero-subtitle">轻松预约，畅享运动生活</p>
-          <div class="hero-actions">
-            <el-button type="primary" size="large" @click="goToReservation">
-              立即预约
-            </el-button>
-            <el-button size="large" @click="goToVenues">
-              浏览场馆
-            </el-button>
-          </div>
-        </div>
-        <div class="hero-image">
+        <div class="hero-image-full">
           <img src="@/assets/Backgrounds/Back1.jpg" alt="运动场馆" />
+          <div class="hero-overlay">
+            <h1 class="hero-title">运动场馆预约平台</h1>
+            <p class="hero-subtitle">轻松预约，畅享运动生活</p>
+            <div class="hero-actions">
+              <el-button type="primary" size="large" @click="goToReservation">
+                立即预约
+              </el-button>
+              <el-button size="large" @click="goToVenues">
+                浏览场馆
+              </el-button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -120,6 +120,7 @@
     <!-- 页脚 -->
     <FooterNavbar />
   </div>
+  <BackToTop />
 </template>
 
 <script>
@@ -127,6 +128,7 @@ import { Calendar, Location, Star, ChatDotRound, User } from '@element-plus/icon
 import { getVenues } from '../utils/api.js'
 import HeaderNavbar from '../components/HeaderNavbar.vue'
 import FooterNavbar from '../components/FooterNavbar.vue'
+import BackToTop from '../components/BackToTop.vue'
 
 export default {
   name: 'Home',
@@ -155,8 +157,8 @@ export default {
         this.venuesLoading = true
         const response = await getVenues()
         if (response && response.data) {
-          // 取前6个场馆作为热门场馆显示
-          this.popularVenues = response.data.slice(0, 6)
+          // 取前3个场馆作为热门场馆显示
+          this.popularVenues = response.data.slice(0, 3)
         }
       } catch (error) {
         console.error('加载热门场馆失败:', error)
@@ -201,34 +203,57 @@ export default {
 }
 
 /* 英雄区域 */
+
 .hero-section {
-  background: linear-gradient(135deg, #edefe9 0%, #000000 100%);
-  color: white;
-  padding: 80px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 1200px;
-  margin: 0 auto;
-  border-radius: 0 0 20px 20px;
+  position: relative;
+  width: 100%;
+  height: 800px;
+  margin-bottom: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-.hero-content {
-  flex: 1;
-  max-width: 500px;
+.hero-image-full {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-image-full img {
+  width: 100%;
+  height: 800px;
+  object-fit: cover;
+  display: block;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.32);
+  color: #fff;
+  z-index: 2;
 }
 
 .hero-title {
-  font-size: 3rem;
+  font-size: 2.8rem;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   line-height: 1.2;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.18);
 }
 
 .hero-subtitle {
-  font-size: 1.25rem;
-  margin-bottom: 40px;
-  opacity: 0.9;
+  font-size: 1.2rem;
+  margin-bottom: 32px;
+  opacity: 0.95;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.12);
 }
 
 .hero-actions {
@@ -236,18 +261,8 @@ export default {
   gap: 20px;
 }
 
-.hero-image {
-  flex: 1;
-  text-align: center;
-}
-
-.hero-image img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 10px;
-}
-
 /* 功能特色 */
+ 
 .features-section {
   padding: 80px 0;
   background: #f8f9fa;
@@ -282,7 +297,7 @@ export default {
 .feature-icon {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #ecefcf 0%, #606958 100%);
+  background: linear-gradient(135deg, #e3f1f1 0%, #77cafa 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
