@@ -70,9 +70,9 @@ const routes = [
         component: OrderDetail
     },
     {
-        path: '/reservation',
-        name: 'Reservation',
-        component: Reservation
+        path: '/home',
+        name: 'Home',
+        component: Home
     },
     {
         path: '/court-reservation',
