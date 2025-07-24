@@ -10,7 +10,7 @@
     <el-menu-item class="navbar-item" index="2"@click="$router.push('/community')">
       运动新闻
     </el-menu-item>
-    <el-menu-item class="navbar-item" index="3"@click="$router.push('/reservation')">
+    <el-menu-item class="navbar-item" index="3"@click="$router.push('/home')">
       运动场地预约
     </el-menu-item>
 
