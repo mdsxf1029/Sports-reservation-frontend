@@ -22,7 +22,6 @@
       <!-- 预约成功弹窗 -->
       <div v-if="showPopup" class="popup">
         <div class="popup-content">
-          <p>预约成功！</p>
           <p>{{ countdown }} 秒后返回“我的订单”页面</p>
           <button @click="goToOrders">立即前往</button>
         </div>
@@ -84,17 +83,15 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const route = useRoute()
 
-// 拿到前一页传来的球场名称，没有时显示默认
-//const venueName = route.query.venue || '未知球类场馆'
 
-//测试
-const venueName = '未知球类场馆'
+// 拿到前一页传来的球场名称，没有时显示默认
+const venueName = route.query.venueName|| '未知球类场馆'
 
 // 球场和时间段数据
 //const courts = ref([])         
-
 // 测试：场地列表
 const courts = ref(['场地1', '场地2', '场地3', '场地4','场地5','场地6','小场地1', '小场地2'])
+
 const timeSlots = ['09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00', '19:00-20:00', '20:00-21:00']
 const weekLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 // 获取今天的日期
@@ -118,11 +115,12 @@ const selectedDate = ref(1)
 const selectedCells = ref(new Set())
 const dailyLimit = ref(2)
 const remainingHours = ref(2)
-const pricePerSlot = 20  // 每个时间段固定价格 ¥20
+const pricePerSlot = 20  // 测试每个时间段价格 ¥20
 const totalPrice = ref(0)
 const showPopup = ref(false)
 const countdown = ref(5)
 let timer = null
+let orderId = null 
 
 // 模拟接口拦截
 const MOCK_MODE = true
@@ -175,6 +173,49 @@ if (MOCK_MODE) {
   }
 }
 
+//用户限制
+async function loadUserLimitStatus() {
+  try {
+    const res = await fetch('/api/user-limit-status')
+    const data = await res.json()
+    if (data.success) {
+      dailyLimit.value = data.daily_limit
+      remainingHours.value = data.remaining_hours
+    }
+  } catch {
+    alert('加载预约额度失败')
+  }
+}
+
+// 场地列表
+async function loadCourtsFromBackend() {
+  try {
+    const res = await fetch(`/api/venues?name=${encodeURIComponent(venueName)}`)
+    const data = await res.json()
+    if (data.success) {
+      courts.value = data.venues.map(v => v.venue_subname)
+    } else {
+      alert('加载场地失败：' + data.message)
+    }
+  } catch (e) {
+    alert('网络错误，无法加载场地')
+  }
+}
+
+// 时间段列表
+async function loadTimeSlotsFromBackend() {
+  try {
+    const res = await fetch('/api/time-slots')
+    const data = await res.json()
+    if (data.success) {
+      timeSlots.splice(0, timeSlots.length, ...data.slots.map(slot => `${slot.begin_time}-${slot.end_time}`))
+    } else {
+      alert('加载时间段失败')
+    }
+  } catch (e) {
+    alert('网络错误，无法加载时间段')
+  }
+}
 
 //预约成功弹窗
 function showSuccessPopup() {
@@ -188,16 +229,23 @@ function showSuccessPopup() {
     }
   }, 1000)
 }
-// 跳转到“我的订单”页面
+
+// 跳转到“订单”页面
 function goToOrders() {
   clearInterval(timer)
   showPopup.value = false
-  router.push('/my-orders')                                                       // 替换成主页中“订单页面”路径
+  if (orderId) {
+    router.push(`/order/${orderId}`) 
+  } else {
+    alert('订单号缺失，跳转失败')
+  }
 }
+
 // 返回上一页的函数
 function goBack() {
   window.history.back()
 }
+
 //根据“当前格子是否被选中”来返回对应的 CSS 样式类名
 function getStatusClass(court, time) {
   const key = `${court}-${time}`
@@ -206,6 +254,7 @@ function getStatusClass(court, time) {
   }
   return selectedCells.value.has(key) ? 'selected' : 'available'
 }
+
 // 点击一个格子时，切换它的“选中/未选中”状态，最多只能选中两个格子
 async function toggleSelect(court, time) {
   const key = `${court}-${time}`
@@ -222,8 +271,11 @@ async function toggleSelect(court, time) {
   if (locked) {
     selectedCells.value.add(key)
     totalPrice.value += pricePerSlot  // 增加价格
+     remainingHours.value -= 1         // 预约后减少剩余小时
+    dailyLimit.value -= 1             // 预约后减少当日可预约次数
   }
 }
+
 //点击场地后显示
 function handleClick(court, time) {
   const key = `${court}-${time}`
@@ -260,12 +312,15 @@ async function checkAndLock(court, time) {
     return false
   }
 }
-// 用户点击“确认预约”后，将已选中的格子永久变灰，并清空当前选中状态
+
+//点击预约按钮时，提交预约信息
+//需要后端接口：确认预约
 async function confirmBooking() {
   if (selectedCells.value.size === 0) {
     alert('请先选择时间段')
     return
   }
+
   const selectedList = Array.from(selectedCells.value).map(key => {
     const [court, time] = key.split('-')
     return {
@@ -274,23 +329,27 @@ async function confirmBooking() {
       time_slot: time
     }
   })
+
   try {
-    const res = await fetch('/api/confirm-booking', {                                    //需要后端接口：用户点击“确认预约”按钮时，真正提交订单，写入数据库
+    const res = await fetch('/api/confirm-booking', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reservations: selectedList })
     })
     const data = await res.json()
     if (data.success) {
-      // 将这些格子加入 lockedCells
+      // 存下 orderId
+      orderId = data.order_id
+
+      // 加入 lockedCells
       selectedList.forEach(item => {
-        const key = `${item.court_id}-${item.time_slot}`
+        const key = `${item.venue_id}-${item.time_slot}`
         lockedCells.value.add(key)
       })
-      // 清空已选格子
+
       selectedCells.value.clear()
-      totalPrice.value = 0  // 清空价格
-       showSuccessPopup()
+      totalPrice.value = 0
+      showSuccessPopup()
     } else {
       alert(data.message || '预约失败')
     }
@@ -298,6 +357,7 @@ async function confirmBooking() {
     alert('网络错误，请稍后再试')
   }
 }
+
 //调用后端接口获取指定日期的预约数据
 async function loadLockedCells() {
   const date = fullDate.value
@@ -330,14 +390,16 @@ onMounted(async () => {
   console.log('weekDates:', weekDates)
   console.log('selectedDate:', selectedDate.value)
   console.log('courts:', courts.value)
-  await loadCourtsFromBackend()     // 先加载场地列表
-  await loadLockedCells()           // 然后加载预约信息
+  //await loadTimeSlotsFromBackend()   // 加载开放时间段
+  //await loadCourtsFromBackend()     // 先加载场地列表
+  //await loadLockedCells()           // 然后加载预约信息
 })
 </script>
+
 <style scoped>
 /* 右侧图标容器样式 */
 .legend {
-  width: 160px;                 /* 固定宽度 */
+  width: 400px;                 /* 固定宽度 */
   border: 1px solid #ccc;       /* 边框颜色和样式 */
   padding: 12px;                /* 内边距 */
   border-radius: 8px;           /* 圆角 */
@@ -347,6 +409,9 @@ onMounted(async () => {
   height: fit-content;          /* 高度适应内容 */
   margin-top: 50px;             /* 顶部外边距 */
   margin-left: 60px;            /* 左侧外边距 */
+}
+.legend-item span {
+  white-space: nowrap; /* 不允许换行 */
 }
 
 /* 图例中每一项的样式，水平排列 */
@@ -413,11 +478,15 @@ onMounted(async () => {
 
 /* 主容器，左右布局 */
 .container {
-  display: flex;               /* 弹性盒布局 */
-  gap: 20px;                  /* 子元素间距 */
-  padding: 1rem;               /* 内边距 */
-  font-family: sans-serif;     /* 字体族 */
+  display: flex;
+  gap: 20px;
+  padding: 1rem;
+  font-family: sans-serif;
+
+  max-width: 1100px;    /* 限制最大宽度，根据你内容宽度调 */
+  margin: 0 auto;       /* 左右自动外边距，实现居中 */
 }
+
 
 /* 主内容区域 */
 .main-content {
@@ -504,7 +573,6 @@ onMounted(async () => {
   gap: 1rem;               /* 控件之间的间距（可选） */
 }
 
-
 .confirm-btn {
   background: #0F40F5;        /* 深蓝背景 */
   color: white;               /* 白色字体 */
@@ -513,8 +581,6 @@ onMounted(async () => {
   border-radius: 4px;         /* 圆角 */
   cursor: pointer;            /* 鼠标变手指 */
 }
-
-
 
 /* 锁定状态样式 */
 .locked {
@@ -546,5 +612,3 @@ onMounted(async () => {
 }
 
 </style>
-
-

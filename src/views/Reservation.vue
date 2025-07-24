@@ -75,10 +75,23 @@
     import { useRouter } from 'vue-router'
     const router = useRouter()
 
-    function goToDetail(id) {
-        router.push(`/venue/${id}`)
-    }
+function goToDetail(venueId) {
+  const venue = venues.value.find(v => v.id === venueId)
+  if (venue) {
+    router.push({
+      path: '/court-reservation',
+      query: {
+        venueName: venue.name
+      }
+    })
+  } else {
+    alert('未找到对应场馆')
+  }
+}
 
+
+
+    
 
     const filteredVenues = computed(() =>
         venues.value.filter(v => v.sport === currentSport.value)

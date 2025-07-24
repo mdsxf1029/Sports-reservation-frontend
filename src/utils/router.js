@@ -14,12 +14,18 @@ import VenueList from '../views/VenueList.vue'
 import Login from '../views/auth/Login.vue';
 import Register from '../views/auth/Register.vue';
 import Profile from '../views/profile/Profile.vue';
+<<<<<<< Updated upstream
+=======
+import Reservation from '../views/Reservation.vue';
+import CourtReservation from '../views/CourtReservation.vue';       
+>>>>>>> Stashed changes
 
 const Dummy = { template: '<div style="padding:20px;"><h2>ҳ页面建设中...</h2></div>' }
 
 const routes = [
     {
         path: '/',
+        redirect: '/reservation',   // 默认跳到 场地预约 页面
         component: App
     },
     {
@@ -68,6 +74,11 @@ const routes = [
         path: '/reservation',
         name: 'Reservation',
         component: Reservation
+    },
+    {
+    path: '/court-reservation',
+    name: 'CourtReservation',
+    component: CourtReservation,
     },
     {
         path: '/community',
