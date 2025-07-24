@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import App from '../App.vue';
+import Home from '../views/Home.vue';
 import OrderDetail from '../views/OrderDetail.vue';
 import VenueManagement from '../views/VenueManagement.vue';
 import ViolationManagement from '../views/ViolationManagement.vue';
@@ -13,15 +14,13 @@ import VenueDetail from '../views/VenueDetail.vue'
 import Login from '../views/auth/Login.vue';
 import Register from '../views/auth/Register.vue';
 import Profile from '../views/profile/Profile.vue';
-import Reservation from '../views/Reservation.vue';
-import CourtReservation from '../views/CourtReservation.vue';       
+import CourtReservation from '../views/CourtReservation.vue';
 
 const Dummy = { template: '<div style="padding:20px;"><h2>ҳ页面建设中...</h2></div>' }
 
 const routes = [
     {
         path: '/',
-        redirect: '/reservation',   // 默认跳到 场地预约 页面
         component: App
     },
     {
@@ -76,9 +75,9 @@ const routes = [
         component: Reservation
     },
     {
-    path: '/court-reservation',
-    name: 'CourtReservation',
-    component: CourtReservation,
+        path: '/court-reservation',
+        name: 'CourtReservation',
+        component: CourtReservation,
     },
     {
         path: '/community',
