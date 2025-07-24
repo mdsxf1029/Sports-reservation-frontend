@@ -167,6 +167,11 @@ export const fetchOrderDetail = (appointmentId) => {
   return axios.get(`http://127.0.0.1:4523/m1/6319279-6014567-default/api/appointments/1`);
 };
 
+// 举报社区帖子
+export const reportCommunityPost = (postId, data) => {
+  return instance.post('/api/community/posts/${postId}/report', data);
+};
+
 // 获取预约是否成功信息
 export const fetchConfirmInfo = (appointmentId) => {
   /*return instance.get(`/api/appointments/{appointmentId}/confirm-info`);*/
