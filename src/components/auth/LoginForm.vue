@@ -5,7 +5,7 @@
 
     <p>请使用邮箱进行登录:</p>
     <p>没有账号吗？<router-link to="/register">去注册</router-link></p>
-    <p>暂时不想登录？这里返回到<router-link to="/">首页</router-link></p>
+    <p>暂时不想登录？这里返回到<router-link to="/home">首页</router-link></p>
 
     <el-form
       :model="form"

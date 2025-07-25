@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import App from '../App.vue';
 import OrderDetail from '../views/OrderDetail.vue';
 import VenueManagement from '../views/VenueManagement.vue';
 import ViolationManagement from '../views/ViolationManagement.vue';
@@ -18,7 +17,7 @@ const Dummy = { template: '<div style="padding:20px;"><h2>ҳ页面建设中...</
 const routes = [
     {
         path: '/',
-        component: App
+        component: Home
     },
     {
         path: '/login',
