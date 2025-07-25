@@ -24,8 +24,7 @@
               v-model="editForm.avatarUrl"
               :gender="editForm.gender"
             />
-            <div class="avatar-tip">
-              <p class="tip-text">支持jpg、png格式，不超过2MB</p>
+            <div class="avatar-tip"> 
             </div>
           </div>
         </div>
