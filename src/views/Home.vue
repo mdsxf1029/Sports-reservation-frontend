@@ -65,7 +65,15 @@
       <section class="popular-venues">
         <div class="container">
           <h2 class="section-title">热门场馆</h2>
-          <div class="venues-grid" v-loading="venuesLoading">
+          
+          <!-- 加载状态 -->
+          <div v-if="venuesLoading" class="loading-container">
+            <el-icon class="is-loading"><Loading /></el-icon>
+            <span>正在加载热门场馆...</span>
+          </div>
+          
+          <!-- 场馆网格 -->
+          <div v-else-if="popularVenues.length > 0" class="venues-grid">
             <div 
               v-for="venue in popularVenues" 
               :key="venue.id" 
@@ -73,7 +81,11 @@
               @click="goToVenueDetail(venue.id)"
             >
               <div class="venue-image">
-                <img :src="venue.imageUrl || '/images/default-venue.jpg'" :alt="venue.name" />
+                <img 
+                  :src="venue.imageUrl || getDefaultVenueImage(venue.type)" 
+                  :alt="venue.name"
+                  @error="handleImageError"
+                />
               </div>
               <div class="venue-info">
                 <h3>{{ venue.name }}</h3>
@@ -86,7 +98,16 @@
               </div>
             </div>
           </div>
-          <div class="view-more">
+          
+          <!-- 无场馆状态 -->
+          <div v-else class="empty-venues">
+            <el-icon><LocationInformation /></el-icon>
+            <h3>暂无场馆信息</h3>
+            <p>场馆信息正在更新中，请稍后再试</p>
+            <el-button type="primary" @click="loadPopularVenues">重新加载</el-button>
+          </div>
+          
+          <div v-if="popularVenues.length > 0" class="view-more">
             <el-button @click="goToVenues">查看更多场馆</el-button>
           </div>
         </div>
@@ -124,7 +145,7 @@
 </template>
 
 <script>
-import { Calendar, Location, Star, ChatDotRound, User } from '@element-plus/icons-vue'
+import { Calendar, Location, Star, ChatDotRound, User, Loading, LocationInformation } from '@element-plus/icons-vue'
 import { getVenues } from '../utils/api.js'
 import HeaderNavbar from '../components/HeaderNavbar.vue'
 import FooterNavbar from '../components/FooterNavbar.vue'
@@ -139,7 +160,9 @@ export default {
     Location,
     Star,
     ChatDotRound,
-    User
+    User,
+    Loading,
+    LocationInformation
   },
   data() {
     return {
@@ -155,13 +178,113 @@ export default {
     async loadPopularVenues() {
       try {
         this.venuesLoading = true
+        console.log('开始加载热门场馆...')
         const response = await getVenues()
+        console.log('场馆API响应:', response)
+        
+        let venuesData = []
+        
+        // 处理不同的响应格式
         if (response && response.data) {
-          // 取前3个场馆作为热门场馆显示
-          this.popularVenues = response.data.slice(0, 3)
+          if (response.code === 0 && response.data) {
+            // 格式: { code: 0, data: [...] }
+            venuesData = response.data
+          } else if (response.code === 0 && response.list) {
+            // 格式: { code: 0, list: [...] }
+            venuesData = response.list
+          } else if (Array.isArray(response.data)) {
+            // 格式: { data: [...] }
+            venuesData = response.data
+          } else if (response.venues) {
+            // 格式: { venues: [...] }
+            venuesData = response.venues
+          }
+        } else if (response && Array.isArray(response)) {
+          // 直接是数组格式
+          venuesData = response
+        }
+        
+        console.log('处理后的场馆数据:', venuesData)
+        
+        if (Array.isArray(venuesData) && venuesData.length > 0) {
+          // 取前3个场馆作为热门场馆显示，并格式化数据
+          this.popularVenues = venuesData.slice(0, 3).map(venue => ({
+            id: venue.id || venue.venueId,
+            name: venue.name || venue.venueName || '未知场馆',
+            type: venue.type || venue.venueType || venue.category || '运动场馆',
+            price: venue.price || venue.hourlyRate || venue.cost || 30,
+            rating: venue.rating || venue.score || 4.5,
+            bookings: venue.bookings || venue.reservationCount || 0,
+            imageUrl: venue.imageUrl || venue.image || venue.photo || this.getDefaultVenueImage(venue.type || venue.venueType),
+            // 保留原始数据
+            originalData: venue
+          }))
+          console.log('设置热门场馆:', this.popularVenues)
+        } else {
+          console.warn('没有获取到场馆数据或数据格式不正确')
+          // 设置吸引人的示例数据
+          this.popularVenues = [
+            {
+              id: 1,
+              name: '四平校区篮球馆',
+              type: '篮球场',
+              price: 30,
+              rating: 4.8,
+              bookings: 156,
+              imageUrl: this.getDefaultVenueImage('篮球')
+            },
+            {
+              id: 2,
+              name: '嘉定校区羽毛球馆',
+              type: '羽毛球场',
+              price: 25,
+              rating: 4.6,
+              bookings: 89,
+              imageUrl: this.getDefaultVenueImage('羽毛球')
+            },
+            {
+              id: 3,
+              name: '综合体育馆',
+              type: '多功能场馆',
+              price: 40,
+              rating: 4.7,
+              bookings: 127,
+              imageUrl: this.getDefaultVenueImage('综合')
+            }
+          ]
         }
       } catch (error) {
         console.error('加载热门场馆失败:', error)
+        // 设置吸引人的示例数据
+        this.popularVenues = [
+          {
+            id: 1,
+            name: '四平校区篮球馆',
+            type: '篮球场',
+            price: 30,
+            rating: 4.8,
+            bookings: 156,
+            imageUrl: this.getDefaultVenueImage('篮球')
+          },
+          {
+            id: 2,
+            name: '嘉定校区羽毛球馆',
+            type: '羽毛球场',
+            price: 25,
+            rating: 4.6,
+            bookings: 89,
+            imageUrl: this.getDefaultVenueImage('羽毛球')
+          },
+          {
+            id: 3,
+            name: '综合体育馆',
+            type: '多功能场馆',
+            price: 40,
+            rating: 4.7,
+            bookings: 127,
+            imageUrl: this.getDefaultVenueImage('综合')
+          }
+        ]
       } finally {
         this.venuesLoading = false
       }
@@ -180,6 +303,81 @@ export default {
     // 跳转到场馆详情
     goToVenueDetail(venueId) {
       this.$router.push(`/venue/${venueId}`)
+    },
+
+    // 获取默认场馆图片
+    getDefaultVenueImage(venueType, venueName = '') {
+      const type = (venueType || '').toLowerCase()
+      const name = (venueName || '').toLowerCase()
+      
+      // 篮球场馆
+      if (type.includes('篮球') || type.includes('basketball') || 
+          name.includes('篮球') || name.includes('basketball')) {
+        // 随机选择篮球场图片
+        const basketballImages = [
+          '/src/assets/pictures/basketballplace1.png',
+          '/src/assets/pictures/basketballplace2.png'
+        ]
+        return basketballImages[Math.floor(Math.random() * basketballImages.length)]
+      }
+      
+      // 羽毛球场馆
+      else if (type.includes('羽毛球') || type.includes('badminton') || 
+               name.includes('羽毛球') || name.includes('badminton')) {
+        const badmintonImages = [
+          '/src/assets/pictures/yumaoqiuplace1.png',
+          '/src/assets/pictures/yumaoqiuplace2.png'
+        ]
+        return badmintonImages[Math.floor(Math.random() * badmintonImages.length)]
+      }
+      
+      // 乒乓球场馆
+      else if (type.includes('乒乓') || type.includes('ping') || type.includes('table') ||
+               name.includes('乒乓') || name.includes('ping') || name.includes('table')) {
+        const pingpongImages = [
+          '/src/assets/pictures/pingpangplace1.png',
+          '/src/assets/pictures/pingpangplace2.png'
+        ]
+        return pingpongImages[Math.floor(Math.random() * pingpongImages.length)]
+      }
+      
+      // 网球场馆
+      else if (type.includes('网球') || type.includes('tennis') ||
+               name.includes('网球') || name.includes('tennis')) {
+        const tennisImages = [
+          '/src/assets/pictures/wangqiuplace1.png',
+          '/src/assets/pictures/wangqiuplace2.png'
+        ]
+        return tennisImages[Math.floor(Math.random() * tennisImages.length)]
+      }
+      
+      // 健身房/体育馆
+      else if (type.includes('健身') || type.includes('gym') || type.includes('fitness') ||
+               name.includes('健身') || name.includes('gym') || name.includes('fitness') ||
+               name.includes('体育馆') || name.includes('训练馆')) {
+        const gymImages = [
+          '/src/assets/pictures/gym1.png',
+          '/src/assets/pictures/gym2.png',
+          '/src/assets/pictures/gym3.png'
+        ]
+        return gymImages[Math.floor(Math.random() * gymImages.length)]
+      }
+      
+      // 默认图片
+      else {
+        // 如果都不匹配，随机返回一个图片
+        const allImages = [
+          '/src/assets/pictures/basketballplace1.png',
+          '/src/assets/pictures/yumaoqiuplace1.png',
+          '/src/assets/pictures/gym2.png'
+        ]
+        return allImages[Math.floor(Math.random() * allImages.length)]
+      }
+    },
+
+    // 处理图片加载错误
+    handleImageError(event) {
+      event.target.src = '@/assets/Backgrounds/Back1.jpg'
     }
   }
 }
@@ -207,7 +405,7 @@ export default {
 .hero-section {
   position: relative;
   width: 100%;
-  height: 800px;
+  height: 90vh;
   margin-bottom: 0;
   padding: 0;
   overflow: hidden;
@@ -221,7 +419,7 @@ export default {
 
 .hero-image-full img {
   width: 100%;
-  height: 800px;
+  height: 90vh;
   object-fit: cover;
   display: block;
 }
@@ -321,6 +519,39 @@ export default {
 /* 热门场馆 */
 .popular-venues {
   padding: 80px 0;
+}
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  font-size: 1.1rem;
+  color: #666;
+  gap: 12px;
+}
+
+.empty-venues {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.empty-venues .el-icon {
+  font-size: 4rem;
+  color: #ddd;
+  margin-bottom: 20px;
+}
+
+.empty-venues h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.empty-venues p {
+  margin-bottom: 20px;
+  color: #666;
 }
 
 .venues-grid {

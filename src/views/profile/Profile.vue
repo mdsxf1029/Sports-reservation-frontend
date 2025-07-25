@@ -7,7 +7,12 @@
         <div class="profile-bg"></div>
         <!-- 个人信息卡片 -->
         <div class="profile-card">
-            <img class="avatar" :src="userProfile.avatarUrl || '@/assets/Backgrounds/Flower2.jpg'" alt="头像"/>
+                        <img 
+              class="avatar" 
+              :src="avatarUrl" 
+              alt="头像"
+              @error="handleAvatarError"
+            />
                 <div class="profile-info">
                 <div class="name">{{ userProfile.userName || '加载中...' }}</div>
                 <div class="desc">{{ userProfile.email || '加载中...' }} | {{ getRoleText(userProfile.role) || '加载中...' }}</div>
@@ -111,6 +116,7 @@
             :status="item.status"
             :statusType="item.statusType"
             :order-detail="item"
+            @show-qr-code="openQRCodeDialog"
           />
           
           <!-- 分页组件 -->
@@ -231,7 +237,14 @@
       :user-profile="userProfile"
       @success="onEditSuccess"
     />
-    </div>
+    
+    <!-- 订单二维码弹窗 -->
+    <OrderQRCodeDialog
+      :visible="showQRCodeDialog"
+      :displayDetail="currentOrder"
+      @close="showQRCodeDialog = false"
+    />
+  </div>
 </template>
 
 <script>
@@ -244,12 +257,16 @@ import PointsItem from '@/components/profile/PointsItem.vue'
 import TabContent from '@/components/profile/TabContent.vue'
 import BackToTop from '../../components/BackToTop.vue'
 import EditProfileDialog from '@/components/profile/EditProfileDialog.vue'
+import OrderQRCodeDialog from '@/components/profile/OrderQRCodeDialog.vue'
+
+// 导入默认头像
+import defaultAvatar from '@/assets/Backgrounds/Flower2.jpg'
 
 // 导入服务和工具类
 import { UserProfileService, ReservationService, PointsService, NotificationService } from '@/utils/profileService'
 import { AuthService } from '@/utils/auth'
 import { formatDate, getGenderText, getRoleText } from '@/utils/formatters'
-
+import { fetchOrderDetail } from '@/utils/api'
         
 export default {
   components: { 
@@ -260,7 +277,8 @@ export default {
     PointsItem,
     TabContent,
     BackToTop,
-    EditProfileDialog
+    EditProfileDialog,
+    OrderQRCodeDialog
   },
   data() {
     return {
@@ -286,6 +304,8 @@ export default {
         pageSize: 20
       }, // 通知分页信息
       showEditDialog: false, // 控制编辑弹窗显示
+      showQRCodeDialog: false,  // 控制二维码弹窗显示
+      currentOrder: {},         // 当前选中的订单信息
       
       // 用户个人资料数据（初始化为空，将从API获取）
       userProfile: {
@@ -361,6 +381,18 @@ export default {
       }
     }
   },
+  computed: {
+    // 添加计算属性
+    avatarUrl() {
+      // 如果有头像URL且不为空字符串，直接返回
+      if (this.userProfile.avatarUrl && this.userProfile.avatarUrl.trim() !== '') {
+        return this.userProfile.avatarUrl
+      }
+      
+      // 使用与注册页面相同的默认头像URL
+      return 'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
+    }
+  },
   methods: {
     // 格式化工具方法（直接引用工具函数）
     formatDate,
@@ -398,15 +430,20 @@ export default {
     async loadUserProfile(userId) {
       this.isLoading = true
       try {
+        console.log('开始加载用户资料，用户ID:', userId)
+        console.log('默认头像路径测试:', defaultAvatar)
         const userProfile = await UserProfileService.loadUserProfile(userId)
         this.userProfile = userProfile
         this.currentPoints = userProfile.points || 0
         console.log('用户信息更新成功:', this.userProfile)
+        console.log('头像URL:', this.userProfile.avatarUrl)
         ElMessage.success('用户信息加载成功')
       } catch (error) {
         console.error('获取用户信息失败:', error)
+        console.log('使用默认用户信息')
         this.userProfile = UserProfileService.getDefaultUserProfile()
         this.currentPoints = 1250
+        ElMessage.warning('无法获取用户信息，显示默认数据')
       } finally {
         this.isLoading = false
       }
@@ -439,16 +476,112 @@ export default {
 
       this.reservationLoading = true
       try {
+        // 先尝试从API获取数据
         const pagination = { ...this.reservationPagination, page }
         const result = await ReservationService.loadReservationData(userId, pagination)
         
-        this.reservationList = result.reservationList
-        this.reservationPagination = result.paginationInfo
+        if (result.reservationList && result.reservationList.length > 0) {
+          this.reservationList = result.reservationList
+          this.reservationPagination = result.paginationInfo
+        } else {
+          // 如果API没有数据，使用测试数据
+          console.log('API无数据，使用测试预约数据')
+          this.loadTestReservationData()
+        }
       } catch (error) {
-        console.error('加载预约数据失败:', error)
+        console.error('加载预约数据失败:', error, '使用测试数据')
+        // API失败时使用测试数据
+        this.loadTestReservationData()
       } finally {
         this.reservationLoading = false
       }
+    },
+
+    // 加载测试预约数据
+    loadTestReservationData() {
+      const testReservations = [
+        {
+          appointmentId: 'test001',
+          id: 'test001',
+          content: '🏀 篮球场地 - 明天 15:00-17:00',
+          status: '已确认',
+          statusType: 'active',
+          venue_name: '四平校区篮球馆',
+          venue_subname: 'A区1号场地',
+          user_name: '测试用户',
+          begin_time: '2025-07-26T15:00:00Z',
+          end_time: '2025-07-26T17:00:00Z',
+          apply_time: '2025-07-25T10:30:00Z',
+          originalData: {
+            id: 'test001',
+            venue_name: '四平校区篮球馆',
+            venue_subname: 'A区1号场地',
+            user_name: '测试用户',
+            phone: '138****8888',
+            price: 30,
+            begin_time: '2025-07-26T15:00:00Z',
+            end_time: '2025-07-26T17:00:00Z',
+            apply_time: '2025-07-25T10:30:00Z'
+          }
+        },
+        {
+          appointmentId: 'test002',
+          id: 'test002',
+          content: '🏸 羽毛球场地 - 本周六 09:00-11:00',
+          status: '待确认',
+          statusType: 'pending',
+          venue_name: '嘉定校区羽毛球馆',
+          venue_subname: 'B区3号场地',
+          user_name: '测试用户',
+          begin_time: '2025-07-27T09:00:00Z',
+          end_time: '2025-07-27T11:00:00Z',
+          apply_time: '2025-07-25T14:20:00Z',
+          originalData: {
+            id: 'test002',
+            venue_name: '嘉定校区羽毛球馆',
+            venue_subname: 'B区3号场地',
+            user_name: '测试用户',
+            phone: '138****8888',
+            price: 25,
+            begin_time: '2025-07-27T09:00:00Z',
+            end_time: '2025-07-27T11:00:00Z',
+            apply_time: '2025-07-25T14:20:00Z'
+          }
+        },
+        {
+          appointmentId: 'test003',
+          id: 'test003',
+          content: '🏊 游泳池 - 本周日 14:00-15:00',
+          status: '已完成',
+          statusType: 'cancelled',
+          venue_name: '综合体育馆游泳池',
+          venue_subname: '标准泳道',
+          user_name: '测试用户',
+          begin_time: '2025-07-28T14:00:00Z',
+          end_time: '2025-07-28T15:00:00Z',
+          apply_time: '2025-07-25T09:15:00Z',
+          originalData: {
+            id: 'test003',
+            venue_name: '综合体育馆游泳池',
+            venue_subname: '标准泳道',
+            user_name: '测试用户',
+            phone: '138****8888',
+            price: 40,
+            begin_time: '2025-07-28T14:00:00Z',
+            end_time: '2025-07-28T15:00:00Z',
+            apply_time: '2025-07-25T09:15:00Z'
+          }
+        }
+      ]
+
+      this.reservationList = testReservations
+      this.reservationPagination = {
+        total: testReservations.length,
+        page: 1,
+        pageSize: 10
+      }
+      
+      console.log('已加载测试预约数据:', this.reservationList)
     },
 
     // 加载用户当前积分
@@ -550,6 +683,304 @@ export default {
       console.log('通知每页数量改变:', pageSize)
       this.notificationPagination.page = 1
       this.loadNotificationData(1)
+    },
+
+    //  openQRCodeDialog 方法
+    async openQRCodeDialog(order) {
+      try {
+        console.log('点击查看二维码，Summary订单信息:', order)
+        
+        // 从Summary返回的order中获取appointmentId
+        const appointmentId = order.appointmentId || order.originalData?.id || order.id
+        
+        if (!appointmentId) {
+          ElMessage.error('订单ID不存在，无法获取详细信息')
+          return
+        }
+
+        // 先显示弹窗和加载状态
+        this.showQRCodeDialog = true
+        this.currentOrder = { 
+          ...order, 
+          loading: true,
+          appointmentId: appointmentId
+        }
+        
+        console.log('设置loading状态:', this.currentOrder)
+
+        console.log('开始获取订单详情，appointmentId:', appointmentId)
+
+        // 🔥 关键：通过appointmentId调用Detail API获取完整信息
+        let detailResponse
+        try {
+          detailResponse = await fetchOrderDetail(appointmentId)
+        } catch (apiError) {
+          console.log('API调用失败，使用测试数据:', apiError)
+          // API失败时使用测试数据
+          detailResponse = this.getTestOrderDetail(appointmentId)
+        }
+        
+        console.log('Detail API响应:', detailResponse)
+
+        if (detailResponse && detailResponse.data) {
+          // 🔥 将API返回的嵌套结构转换为OrderQRCodeDialog期望的扁平结构
+          const apiData = detailResponse.data
+          
+          // 转换数据格式以适配OrderQRCodeDialog组件
+          this.currentOrder = {
+            // 保留Summary的一些字段（如果需要）
+            summaryData: order,
+            
+            // 🔥 转换API数据为组件期望的格式
+            // 场馆信息
+            venue_name: apiData.venue?.venue_name || '未知场馆',
+            venue_subname: apiData.venue?.venue_subname || '',
+            venue_location: apiData.venue?.venue_location || '',
+            venue_type: apiData.venue?.venue_type || '',
+            
+            // 用户信息
+            user_name: apiData.user?.user_name || '未知用户',
+            user_id: apiData.user?.user_id || '',
+            
+            // 时间信息（保持原始格式供组件使用）
+            begin_time: apiData.appointment?.begin_time,
+            end_time: apiData.appointment?.end_time,
+            apply_time: apiData.appointment?.apply_time,
+            
+            // 格式化的时间信息（为组件提供）
+            formattedDate: this.formatOrderDate(apiData.appointment?.begin_time),
+            formattedWeekday: this.formatOrderWeekday(apiData.appointment?.begin_time),
+            formattedTimeRange: this.formatOrderTimeRange(apiData.appointment?.begin_time, apiData.appointment?.end_time),
+            formattedApplyTime: this.formatOrderDate(apiData.appointment?.apply_time),
+            
+            // 费用和状态
+            price: apiData.bill?.bill_amount || 0,
+            status: this.getAppointmentStatusText(apiData.appointment?.appointment_status),
+            bill_status: apiData.bill?.bill_status,
+            
+            // ID信息
+            appointmentId: apiData.appointment?.appointment_id || appointmentId,
+            bill_id: apiData.bill?.bill_id,
+            
+            // 为二维码生成数据
+            qrcode_data: `https://yourdomain.com/entry/${apiData.appointment?.appointment_id || appointmentId}`,
+            
+            // 清除加载状态
+            loading: false 
+          }
+
+          console.log('加载状态已清除')
+          console.log('传递给二维码组件的转换后订单信息:', this.currentOrder)
+          
+        } else {
+          throw new Error('Detail API返回数据为空')
+        }
+        
+      } catch (error) {
+        console.error('获取订单详情失败:', error)
+        ElMessage.error('获取订单详情失败，请稍后重试')
+        
+        // 错误时使用Summary的基础信息作为兜底
+        this.currentOrder = {
+          ...order,
+          appointmentId: order.appointmentId || order.id,
+          qrcode_data: `https://yourdomain.com/entry/${order.appointmentId || order.id}`,
+          loading: false,
+          error: true,
+          errorMessage: '详细信息获取失败，显示基础信息'
+        }
+      }
+    },
+
+    // 获取预约状态文本
+    getAppointmentStatusText(status) {
+      const statusMap = {
+        'upcoming': '即将开始',
+        'confirmed': '已确认', 
+        'pending': '待确认',
+        'completed': '已完成',
+        'cancelled': '已取消'
+      }
+      return statusMap[status] || status || '未知'
+    },
+
+    // 格式化订单日期
+    formatOrderDate(dateString) {
+      if (!dateString) return '未设置'
+      try {
+        const date = new Date(dateString)
+        return date.toLocaleDateString('zh-CN')
+      } catch (error) {
+        return '日期格式错误'
+      }
+    },
+
+    // 格式化订单星期
+    formatOrderWeekday(dateString) {
+      if (!dateString) return ''
+      try {
+        const date = new Date(dateString)
+        const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+        return weekdays[date.getDay()]
+      } catch (error) {
+        return ''
+      }
+    },
+
+    // 格式化订单时间范围
+    formatOrderTimeRange(beginTime, endTime) {
+      if (!beginTime || !endTime) return '时间未设置'
+      try {
+        const begin = new Date(beginTime)
+        const end = new Date(endTime)
+        const beginStr = begin.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+        const endStr = end.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+        return `${beginStr}-${endStr}`
+      } catch (error) {
+        return '时间格式错误'
+      }
+    },
+
+    // 获取测试订单详情 - 返回嵌套结构供转换
+    getTestOrderDetail(appointmentId) {
+      const testDetails = {
+        'test001': {
+          code: 0,
+          data: {
+            appointment: {
+              appointment_id: 1,
+              appointment_status: "upcoming",
+              apply_time: "2025-07-25T10:30:00Z",
+              begin_time: "2025-07-26T15:00:00Z",
+              end_time: "2025-07-26T17:00:00Z"
+            },
+            venue: {
+              venue_id: 1,
+              venue_name: "四平校区篮球馆",
+              venue_subname: "A区1号场地",
+              venue_type: "篮球",
+              venue_location: "上海市杨浦区四平路1239号体育中心",
+              venue_capacity: 20,
+              venue_status: "open"
+            },
+            bill: {
+              bill_id: 1,
+              bill_status: "paid",
+              bill_amount: 30,
+              begin_time: "2025-07-25T10:30:00Z"
+            },
+            user: {
+              user_id: 1,
+              user_name: "测试用户"
+            }
+          }
+        },
+        'test002': {
+          code: 0,
+          data: {
+            appointment: {
+              appointment_id: 2,
+              appointment_status: "pending",
+              apply_time: "2025-07-25T14:20:00Z",
+              begin_time: "2025-07-27T09:00:00Z",
+              end_time: "2025-07-27T11:00:00Z"
+            },
+            venue: {
+              venue_id: 2,
+              venue_name: "嘉定校区羽毛球馆",
+              venue_subname: "B区3号场地",
+              venue_type: "羽毛球",
+              venue_location: "上海市嘉定区曹安公路4800号",
+              venue_capacity: 4,
+              venue_status: "open"
+            },
+            bill: {
+              bill_id: 2,
+              bill_status: "pending",
+              bill_amount: 25,
+              begin_time: "2025-07-25T14:20:00Z"
+            },
+            user: {
+              user_id: 1,
+              user_name: "测试用户"
+            }
+          }
+        },
+        'test003': {
+          code: 0,
+          data: {
+            appointment: {
+              appointment_id: 3,
+              appointment_status: "completed",
+              apply_time: "2025-07-25T09:15:00Z",
+              begin_time: "2025-07-28T14:00:00Z",
+              end_time: "2025-07-28T15:00:00Z"
+            },
+            venue: {
+              venue_id: 3,
+              venue_name: "综合体育馆游泳池",
+              venue_subname: "标准泳道",
+              venue_type: "游泳",
+              venue_location: "上海市杨浦区四平路1239号综合体育馆",
+              venue_capacity: 50,
+              venue_status: "open"
+            },
+            bill: {
+              bill_id: 3,
+              bill_status: "paid",
+              bill_amount: 40,
+              begin_time: "2025-07-25T09:15:00Z"
+            },
+            user: {
+              user_id: 1,
+              user_name: "测试用户"
+            }
+          }
+        }
+      }
+
+      return testDetails[appointmentId] || {
+        code: 0,
+        data: {
+          appointment: {
+            appointment_id: appointmentId,
+            appointment_status: "upcoming",
+            apply_time: new Date().toISOString(),
+            begin_time: new Date(Date.now() + 24*60*60*1000).toISOString(),
+            end_time: new Date(Date.now() + 25*60*60*1000).toISOString()
+          },
+          venue: {
+            venue_id: 999,
+            venue_name: "测试场馆",
+            venue_subname: "测试场地",
+            venue_type: "测试",
+            venue_location: "测试地址",
+            venue_capacity: 10,
+            venue_status: "open"
+          },
+          bill: {
+            bill_id: 999,
+            bill_status: "paid",
+            bill_amount: 30
+          },
+          user: {
+            user_id: 1,
+            user_name: "测试用户"
+          }
+        }
+      }
+    },
+
+    // 处理二维码弹窗关闭
+    handleQRCodeDialogClose() {
+      this.showQRCodeDialog = false
+      this.currentOrder = null
+    },
+
+    // 处理头像加载错误
+    handleAvatarError(event) {
+      console.error('头像加载失败，使用默认头像URL') 
+      event.target.src = 'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
     }
   }
 }

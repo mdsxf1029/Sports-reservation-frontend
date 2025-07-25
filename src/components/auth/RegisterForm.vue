@@ -4,7 +4,10 @@
       <h1>用户注册</h1>
       <p class="form-description">请填写以下信息进行注册</p>
       <div class="login-link">
-        已有账号？<router-link to="/login">立即登录</router-link>
+        已有账号？<router-link to="/login">立即登录</router-link> 
+      </div>
+      <div class="login-link"> 
+        暂时不想注册？这里返回到<router-link to="/">首页</router-link>
       </div>
     </div>
 

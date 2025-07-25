@@ -1,7 +1,9 @@
 <template>
-  <div class="notification-item" :class="{ 'unread': !isRead }">
-    <p>{{ content }}</p>
-    <span class="time">{{ time }}</span>
+  <div class="notification-item">
+    <div class="notification-content">
+      <p>{{ content }}</p>
+      <span class="time">{{ time }}</span>
+    </div>
   </div>
 </template>
 
@@ -9,6 +11,10 @@
 export default {
   name: 'NotificationItem',
   props: {
+    notificationId: {
+      type: String,
+      required: true
+    },
     content: {
       type: String,
       required: true
@@ -16,12 +22,10 @@ export default {
     time: {
       type: String,
       required: true
-    },
-    isRead: {
-      type: Boolean,
-      default: false
     }
+    // 删除isRead prop
   }
+  // 删除emit mark-read
 }
 </script>
 
@@ -32,25 +36,27 @@ export default {
   margin-bottom: 12px;
   border-radius: 8px;
   border-left: 4px solid #2062ea;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   transition: all 0.2s;
 }
 
-.notification-item.unread {
-  background: #e3f2fd;
-  border-left-color: #1976d2;
+.notification-content {
+  width: 100%;
 }
 
-.notification-item p {
-  margin: 0;
-  color: #444;
-  font-size: 16px;
+.notification-content p {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
 }
 
 .time {
-  color: #888;
-  font-size: 14px;
+  font-size: 12px;
+  color: #666;
+}
+
+.notification-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 </style>

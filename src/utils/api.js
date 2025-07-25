@@ -69,14 +69,15 @@ export function uploadAvatar(formData) {
   });
 }
 
-// 获取用户头像 用户头像可以公开获取 不用token
-export function getAvatar(userId) { 
-  return instance.get(`/api/user/${userId}/avatar`,userId);
-}
-
 // 获取用户信息 用于个人中心
 export function getUserInfo(userId) {
   const token = localStorage.getItem('token');
+  
+  // 如果没有token，抛出错误
+  if (!token) {
+    return Promise.reject(new Error('用户未登录，无法获取用户信息'));
+  }
+  
   return instance.get(`/api/user/${userId}`, {
     headers: {
       'token': token
