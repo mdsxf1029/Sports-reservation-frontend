@@ -1,38 +1,24 @@
+
 import { createRouter, createWebHistory } from 'vue-router';
 import App from '../App.vue';
 import OrderDetail from '../views/OrderDetail.vue';
 import VenueManagement from '../views/VenueManagement.vue';
 import ViolationManagement from '../views/ViolationManagement.vue';
 import PostManagement from '../views/PostManagement.vue';
-import PostEditor from '../views/PostEditor.vue';
-import PostViewer from '../views/PostViewer.vue';
 import AppealManagement from '../views/AppealManagement.vue';
 import ViolationHistory from '../views/ViolationHistory.vue';
 import Reservation from '../views/Reservation.vue'
 import VenueDetail from '../views/VenueDetail.vue'
-import Login from '../views/auth/Login.vue';
-import Register from '../views/auth/Register.vue';
-import Profile from '../views/profile/Profile.vue';
-import CourtReservation from '../views/CourtReservation.vue';
+import CommunityHome from '../views/CommunityHome.vue';
+import PostViewer from '../views/PostViewer.vue';
 
-const Dummy = { template: '<div style="padding:20px;"><h2>ҳ页面建设中...</h2></div>' }
+
+const Dummy = { template: '<div style="padding:20px;"><h2>页面建设中...</h2></div>' }
 
 const routes = [
     {
         path: '/',
         component: App
-    },
-    {
-        path: '/login',
-        component: Login
-    },
-    {
-        path: '/register',
-        component: Register
-    },
-    {
-        path: '/profile',
-        component: Profile
     },
     {
         path: '/venue',
@@ -52,14 +38,6 @@ const routes = [
         component: PostManagement
     },
     {
-        path: '/post/posteditor',
-        component: PostEditor
-    },
-    {
-        path: '/post/postviewer',
-        component: PostViewer
-    },
-    {
         path: '/appeal',
         component: AppealManagement
     },
@@ -74,9 +52,17 @@ const routes = [
         component: Reservation
     },
     {
+        // 社区首页
         path: '/community',
         name: 'Community',
-        component: () => import('../views/CommunityHome.vue')
+        component: CommunityHome
+    },
+    {
+        // 帖子详情页（占位符）
+        path: '/community/post/postviewer:postId',
+        name: 'PostViewer',
+        component: PostViewer,
+        props: true
     },
     {
         path: '/news',
@@ -86,17 +72,15 @@ const routes = [
     {
         path: '/venue/:id',
         component: VenueDetail
-    },
-    /*{
-        path: '/test',
-        component: QrCode
-    }*/
+    }
 ];
 
 
 const router = createRouter({
     history: createWebHistory(),
     routes
+
 });
 
 export default router;
+

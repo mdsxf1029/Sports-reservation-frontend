@@ -8,8 +8,10 @@
       </div>
     </div>
 
-    <h3 class="post-title">{{ post.title }}</h3>
-    <p class="post-content">{{ post.content }}</p>
+    <router-link :to="{ name: 'PostViewer', params: { postId: post.postId } }" class="post-link">
+      <h3 class="post-title">{{ post.title }}</h3>
+      <p class="post-content">{{ post.content }}</p>
+    </router-link>
 
     <div class="post-actions">
       <div class="action-item" @click="handleLike">
@@ -182,6 +184,10 @@ const submitReport = async () => {
 </script>
 
 <style scoped>
+.post-link {
+  color: inherit;
+  text-decoration: none;
+}
 .post-card {
   background-color: #fff;
   padding: 20px;
