@@ -17,6 +17,7 @@
           <table class="main-table">
             <thead>
               <tr>
+                <th>序号</th>
                 <th>用户名</th>
                 <th>用户ID</th>
                 <th>违约原因</th>
@@ -26,7 +27,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in users" :key="user.userId">
+              <tr v-for="(user, index) in users" :key="user.userId">
+                <td>{{ index + 1 }}</td>
                 <td>{{ user.userName }}</td>
                 <td>{{ user.userId }}</td>
                 <td>{{ user.violationReason }}</td>
@@ -57,13 +59,15 @@
           <table class="main-table">
             <thead>
               <tr>
+                <th>序号</th>
                 <th>用户名</th>
                 <th>用户ID</th>
                 <th>黑名单时间</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in users.filter(u=>u.isBlacklisted)" :key="user.userId">
+              <tr v-for="(user, index) in users.filter(u=>u.isBlacklisted)" :key="user.userId">
+                <td>{{ index + 1 }}</td>
                 <td>{{ user.userName }}</td>
                 <td>{{ user.userId }}</td>
                 <td>{{ formatDate(user.blacklistTimestamp) }}</td>

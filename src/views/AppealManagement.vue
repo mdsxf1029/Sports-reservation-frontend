@@ -10,6 +10,7 @@
           <table class="main-table">
             <thead>
               <tr>
+                <th>序号</th>
                 <th>用户名</th>
                 <th>用户ID</th>
                 <th>申诉原因</th>
@@ -18,7 +19,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="appeal in appeals" :key="appeal.id">
+              <tr v-for="(appeal, index) in appeals" :key="appeal.id">
+                <td>{{ index + 1 }}</td>
                 <td>{{ appeal.userName }}</td>
                 <td>{{ appeal.userId }}</td>
                 <td>{{ appeal.reason }}</td>

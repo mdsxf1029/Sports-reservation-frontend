@@ -10,6 +10,8 @@
           <table class="main-table">
             <thead>
               <tr>
+                <th>序号</th>
+                <th>用户名</th>
                 <th>违约时间</th>
                 <th>违约原因</th>
                 <th>场馆</th>
@@ -17,7 +19,9 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="record in history" :key="record.id">
+              <tr v-for="(record, index) in history" :key="record.id">
+                <td>{{ index + 1 }}</td>
+                <td>{{ record.userName }}</td>
                 <td>{{ record.date }}</td>
                 <td>{{ record.reason }}</td>
                 <td>{{ record.venue }}</td>
@@ -40,8 +44,9 @@ export default {
     return {
       // 这里可以根据实际传参动态获取
       history: [
-        { id: 1, date: "2024-01-01", reason: "未签到", venue: "乒乓球馆", timeSlot: "8:00-9:00" },
-        { id: 2, date: "2024-02-15", reason: "迟到", venue: "羽毛球馆", timeSlot: "9:00-10:00" }
+        { id: 1, userName: "夏浩博", date: "2024-01-01", reason: "未签到", venue: "乒乓球馆", timeSlot: "8:00-9:00" },
+        { id: 2, userName: "李明", date: "2024-02-15", reason: "迟到", venue: "羽毛球馆", timeSlot: "9:00-10:00" },
+        { id: 3, userName: "王芳", date: "2024-03-10", reason: "未到场", venue: "篮球馆", timeSlot: "14:00-15:00" }
       ]
     };
   }
