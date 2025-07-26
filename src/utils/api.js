@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // 创建 axios 实例
 const instance = axios.create({
-  baseURL: 'https://m1.apifoxmock.com/m1/6799481-6512616-default',
+  baseURL: '',
   timeout: 5000
 });
 
