@@ -1,6 +1,7 @@
 
 import { createRouter, createWebHistory } from 'vue-router';
 import App from '../App.vue';
+import Home from '../views/Home.vue';
 import OrderDetail from '../views/OrderDetail.vue';
 import VenueManagement from '../views/VenueManagement.vue';
 import ViolationManagement from '../views/ViolationManagement.vue';
@@ -47,9 +48,14 @@ const routes = [
         component: OrderDetail
     },
     {
-        path: '/reservation',
-        name: 'Reservation',
-        component: Reservation
+        path: '/home',
+        name: 'Home',
+        component: Home
+    },
+    {
+        path: '/court-reservation',
+        name: 'CourtReservation',
+        component: CourtReservation,
     },
     {
         // 社区首页
@@ -72,7 +78,7 @@ const routes = [
     {
         path: '/venue/:id',
         component: VenueDetail
-    }
+    },
 ];
 
 
