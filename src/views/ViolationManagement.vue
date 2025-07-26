@@ -44,7 +44,7 @@
                     class="action-link"
                     v-if="!user.isBlacklisted"
                     @click.prevent="addToBlacklist(user)"
-                  >加入黑名单设置</a>
+                  >加入黑名单</a>
                   <span v-else class="blacklist-time"
                     >黑名单时间：{{ formatDate(user.blacklistTimestamp) }}</span
                   >
@@ -63,6 +63,7 @@
                 <th>用户名</th>
                 <th>用户ID</th>
                 <th>黑名单时间</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -71,6 +72,13 @@
                 <td>{{ user.userName }}</td>
                 <td>{{ user.userId }}</td>
                 <td>{{ formatDate(user.blacklistTimestamp) }}</td>
+                <td>
+                  <a
+                    href="#"
+                    class="action-link"
+                    @click.prevent="removeFromBlacklist(user)"
+                  >移除黑名单</a>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -119,6 +127,10 @@ export default {
     addToBlacklist(user) {
       user.isBlacklisted = true;
       user.blacklistTimestamp = new Date().toISOString();
+    },
+    removeFromBlacklist(user) {
+      user.isBlacklisted = false;
+      user.blacklistTimestamp = null;
     }
   }
 };
