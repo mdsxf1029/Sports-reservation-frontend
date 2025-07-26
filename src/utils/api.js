@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // 创建 axios 实例
 const instance = axios.create({
-  baseURL: '/',
+  baseURL: 'https://m1.apifoxmock.com/m1/6799481-6512616-default',
   timeout: 5000
 });
 
@@ -172,3 +172,12 @@ export const fetchConfirmInfo = (appointmentId) => {
   /*return instance.get(`/api/appointments/{appointmentId}/confirm-info`);*/
   return axios.get(`http://127.0.0.1:4523/m1/6319279-6014567-default/api/appointments/1/confirm-info`);
 };
+
+//帖子管理相关
+export const getPendingPosts = () => instance.get('/api/posts/pending');
+export const approvePost = (id) => instance.put(`/api/posts/${id}/approve`);
+export const rejectPost = (id) => instance.put(`/api/posts/${id}/reject`)
+
+//举报管理相关
+export const getPendingReports = () => instance.get('/api/reports/pending');
+export const processReport = (id, data) => instance.put(`/api/reports/${id}/process`, data);
