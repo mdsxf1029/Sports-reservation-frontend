@@ -6,6 +6,30 @@ import { getUserInfo, fetchMyOrderSummary, fetchUserPoints, fetchPointsHistory, 
 import { ElMessage } from 'element-plus'
 import { formatTimeRange, formatRelativeTime } from '@/utils/formatters'
 
+// 统一的响应处理函数
+function extractResponseData(response) {
+  // 处理空响应
+  if (!response) return null
+  
+  // 如果有axios包装的data
+  if (response.data) {
+    const data = response.data
+    
+    // 检查成功状态码 所以之后不用检查code
+    if ((data.code === 0 || data.code === 200)) {
+      // 返回整个data对象，让调用方自己决定如何使用
+      return data  // ✅ 统一返回整个data对象
+    }
+  }
+  
+  // 如果响应已经被拦截器处理过
+  if ((response.code === 0 || response.code === 200) && response.data) {
+    return response  // ✅ 返回整个response对象
+  }
+  
+  return null
+}
+
 // 用户资料服务
 export class UserProfileService {
   // 加载用户资料
@@ -13,12 +37,17 @@ export class UserProfileService {
     try {
       console.log('开始获取用户信息，用户ID:', userId)
       const response = await getUserInfo(userId)
-      console.log('API响应:', response)
+      console.log('API完整响应:', response)
       
-      if (response && response.code === 0 && response.data) {
-        return UserProfileService.updateUserProfile(response.data)
+      const responseData = extractResponseData(response)
+
+      if (responseData) {
+        const userData = responseData.data || responseData  // 处理可能的嵌套结构
+        console.log('解析出的用户数据:', userData)
+        return UserProfileService.updateUserProfile(userData)
       } else {
-        throw new Error('API响应格式错误')
+        console.warn('无法解析用户数据，使用默认数据')
+        return UserProfileService.getDefaultUserProfile()
       }
     } catch (error) {
       console.error('获取用户信息失败:', error)
@@ -42,7 +71,7 @@ export class UserProfileService {
       profile: userData.profile || userData.bio || userData.description || userData.introduction || '这个人很懒，什么都没有留下...',
       role: userData.role || 'normal',
       register_time: userData.register_time || userData.registerTime || userData.createdAt || '',
-      points: userData.points || 0
+      points: userData.points || 1250
     }
   }
 
@@ -56,7 +85,7 @@ export class UserProfileService {
       password: '',
       gender: 'male',
       birthday: '1995-06-15',
-      avatarUrl: '',
+      avatarUrl: '', // 置空，让getAvatarUrl()方法处理
       region: '上海市',
       profile: '热爱运动的大学生',
       role: 'normal',
@@ -79,40 +108,39 @@ export class ReservationService {
       })
       console.log('订单API响应:', response)
 
-      if (response && response.code === 0 && response.data) {
+      const responseData = extractResponseData(response)
+      
+      if (responseData) {
+        const reservationData = responseData.data || responseData
+        console.log('解析出的订单数据:', reservationData)
         let orderData = []
-        const responseData = response.data
-        
-        if (responseData && responseData.list) {
-          if (Array.isArray(responseData.list)) {
-            orderData = responseData.list
-          } else if (typeof responseData.list === 'object') {
-            orderData = [responseData.list]
+
+        if (reservationData && reservationData.list) {
+          if (Array.isArray(reservationData.list)) {
+            orderData = reservationData.list
+          } else if (typeof reservationData.list === 'object') {
+            orderData = [reservationData.list]
           }
         }
 
-        // 更新分页信息
+        console.log('订单数据:', orderData)
         const paginationInfo = {
-          total: responseData.total || 0,
-          page: responseData.page || pagination.page,
+          total: reservationData.total || 0,
+          page: reservationData.page || pagination.page,
           pageSize: pagination.pageSize
         }
 
-        // 转换订单数据格式
         const reservationList = orderData.map(order => ReservationService.formatOrderData(order))
         
         console.log('订单数据加载成功:', reservationList)
-        console.log('分页信息:', paginationInfo)
-
         return { reservationList, paginationInfo }
       } else {
-        throw new Error(`API返回错误: ${response.data?.msg || '未知错误'}`)
+        throw new Error('无法解析API响应数据')
       }
     } catch (error) {
       console.error('获取订单数据失败:', error)
       ElMessage.error('获取订单数据失败，请稍后重试')
       
-      // 返回默认数据
       return {
         reservationList: ReservationService.getDefaultReservations(),
         paginationInfo: { total: 2, page: 1, pageSize: 10 }
@@ -232,10 +260,13 @@ export class PointsService {
       const response = await fetchUserPoints(userId)
       console.log('用户积分API响应:', response)
 
-      if (response && response.code === 0 && response.data) {
-        return response.data.points || response.data.currentPoints || 0
+      const responseData = extractResponseData(response)
+      
+      if (responseData) {
+        const actualData = responseData.data || responseData
+        return actualData.points || actualData.currentPoints || 0
       } else {
-        throw new Error(`API返回错误: ${response.data?.msg || '未知错误'}`)
+        throw new Error('无法解析API响应数据')
       }
     } catch (error) {
       console.error('获取用户积分失败:', error)
@@ -253,15 +284,18 @@ export class PointsService {
       })
       console.log('积分API响应:', response)
 
-      if (response && response.code === 0 && response.data) {
+      const responseData = extractResponseData(response)
+      
+      if (responseData) {
+        const actualData = responseData.data || responseData
         let pointsData = []
         let paginationInfo = { ...pagination }
         
-        if (response.data.list && Array.isArray(response.data.list)) {
-          pointsData = response.data.list
-          paginationInfo.total = response.data.total || 0
-        } else if (Array.isArray(response.data)) {
-          pointsData = response.data
+        if (actualData.list && Array.isArray(actualData.list)) {
+          pointsData = actualData.list
+          paginationInfo.total = actualData.total || 0
+        } else if (Array.isArray(actualData)) {
+          pointsData = actualData
         }
 
         const pointsList = pointsData.map(point => PointsService.formatPointsData(point))
@@ -270,7 +304,7 @@ export class PointsService {
         console.log('积分数据加载成功:', pointsList)
         return { pointsList, paginationInfo }
       } else {
-        throw new Error(`API返回错误: ${response.data?.msg || '未知错误'}`)
+        throw new Error('无法解析API响应数据')
       }
     } catch (error) {
       console.error('获取积分数据失败:', error)
@@ -282,7 +316,7 @@ export class PointsService {
       }
     }
   }
-
+  
   // 格式化积分数据
   static formatPointsData(point) {
     const changeAmount = point.changeAmount || point.change_amount || point.points || 0
@@ -346,19 +380,22 @@ export class NotificationService {
       console.log('开始获取用户通知，用户ID:', userId)
       const response = await fetchUserNotifications(userId, {
         page: pagination.page,
-        pageSize: pagination.pageSize
+        pageSize: pagination.pageSize  // 修复：移除错误的pageSizeData
       })
       console.log('通知API响应:', response)
+      
+      const responseData = extractResponseData(response)
 
-      if (response && response.code === 0 && response.data) {
+      if (responseData) {
+        const actualData = responseData.data || responseData
         let notificationData = []
         let paginationInfo = { ...pagination }
-        
-        if (response.data.list && Array.isArray(response.data.list)) {
-          notificationData = response.data.list
-          paginationInfo.total = response.data.total || 0
-        } else if (Array.isArray(response.data)) {
-          notificationData = response.data
+
+        if (actualData.list && Array.isArray(actualData.list)) {
+          notificationData = actualData.list
+          paginationInfo.total = actualData.total || 0
+        } else if (Array.isArray(actualData)) {
+          notificationData = actualData
         }
 
         const notificationList = notificationData.map(notification => NotificationService.formatNotificationData(notification))
@@ -367,7 +404,7 @@ export class NotificationService {
         console.log('通知数据加载成功:', notificationList)
         return { notificationList, paginationInfo }
       } else {
-        throw new Error(`API返回错误: ${response.data?.msg || '未知错误'}`)
+        throw new Error('无法解析API响应数据')
       }
     } catch (error) {
       console.error('获取通知数据失败:', error)
@@ -383,7 +420,6 @@ export class NotificationService {
   // 格式化通知数据
   static formatNotificationData(notification) {
     const content = notification.content || notification.message || notification.title || '系统通知'
-    const isRead = notification.isRead || notification.is_read || false
     const createTime = notification.createTime || notification.create_time || notification.time || ''
     const timeDisplay = formatRelativeTime(createTime)
 
@@ -391,7 +427,6 @@ export class NotificationService {
       notificationId: notification.notificationId || notification.id || Math.random().toString(),
       content: content,
       time: timeDisplay,
-      isRead: isRead,
       originalData: notification
     }
   }
@@ -402,14 +437,12 @@ export class NotificationService {
       { 
         notificationId: 'demo1',
         content: '📢 您的篮球场预约已确认', 
-        time: '30分钟前', 
-        isRead: false 
+        time: '30分钟前'        
       },
       { 
         notificationId: 'demo2',
         content: '💰 会员积分+50，继续加油！', 
-        time: '2小时前', 
-        isRead: true 
+        time: '2小时前'
       }
     ]
   }

@@ -21,7 +21,7 @@ const Dummy = { template: '<div style="padding:20px;"><h2>ҳ页面建设中...</
 const routes = [
     {
         path: '/',
-        component: App
+        component: Home
     },
     {
         path: '/login',
@@ -33,6 +33,7 @@ const routes = [
     },
     {
         path: '/profile',
+        name: 'Profile',
         component: Profile
     },
     {
