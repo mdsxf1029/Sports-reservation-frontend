@@ -6,11 +6,14 @@
     </div>
   </div>
 </template>
+
 <script>
 import AdminSidebarMenu from '../components/AdminSidebarMenu.vue'
 export default { name: "VenueManagement", components: { AdminSidebarMenu } }
 </script>
+
 <style src="../styles/admin-sidebar.css"></style>
+
 <style scoped>
 .page-layout {
   display: flex;

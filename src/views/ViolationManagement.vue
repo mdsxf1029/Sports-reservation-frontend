@@ -90,6 +90,9 @@
 
 <script>
 import AdminSidebarMenu from '../components/AdminSidebarMenu.vue'
+import { getViolations, addToBlacklist } from '../utils/api';
+
+
 export default {
   name: "ViolationManagement",
   components: { AdminSidebarMenu },
@@ -124,6 +127,7 @@ export default {
       const date = new Date(timestamp);
       return date.toLocaleDateString();
     },
+    // 加入黑名单操作
     addToBlacklist(user) {
       user.isBlacklisted = true;
       user.blacklistTimestamp = new Date().toISOString();
@@ -132,11 +136,29 @@ export default {
       user.isBlacklisted = false;
       user.blacklistTimestamp = null;
     }
+  },
+  mounted() {
+    this.fetchUsers();
   }
 };
 </script>
 
 <style src="../styles/admin-sidebar.css"></style>
+
+<style scoped>
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  border: 1px solid #eee;
+  padding: 8px;
+  text-align: center;
+}
+</style>
+<!-- 全局引入样式 -->
+
+
 <style src="../styles/violation.css"></style>
 
 <style scoped>

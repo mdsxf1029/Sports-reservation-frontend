@@ -11,7 +11,9 @@
 import AdminSidebarMenu from '../components/AdminSidebarMenu.vue'
 export default { name: "PostManagement", components: { AdminSidebarMenu } }
 </script>
+
 <style src="../styles/admin-sidebar.css"></style>
+
 <style scoped>
 .page-layout {
   display: flex;
