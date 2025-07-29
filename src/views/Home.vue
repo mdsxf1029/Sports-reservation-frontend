@@ -103,7 +103,7 @@
     }
 
     function goToSport(sport) {
-        router.push({ name: 'VenueList', query: { sport } })
+        router.push({ name: 'VenueList' })
     }
 
     function goToDetail(id) {
