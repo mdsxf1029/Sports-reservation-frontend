@@ -181,3 +181,6 @@ export const rejectPost = (id) => instance.put(`/api/posts/${id}/reject`)
 //举报管理相关
 export const getPendingReports = () => instance.get('/api/reports/pending');
 export const processReport = (id, data) => instance.put(`/api/reports/${id}/process`, data);
+
+//管理员发布公告
+export const publishAnnouncement = (data) => instance.post('/api/announcements', data);
