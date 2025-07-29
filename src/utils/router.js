@@ -75,9 +75,9 @@ const routes = [
         component: Home
     },
     {
-        path: '/court-reservation',
-        name: 'CourtReservation',
-        component: CourtReservation,
+       path: '/court-reservation',
+       name: 'CourtReservation',
+       component: CourtReservation,
     },
     {
         path: '/community',
