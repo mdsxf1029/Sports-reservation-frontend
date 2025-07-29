@@ -12,7 +12,11 @@ import Reservation from '../views/Reservation.vue'
 import VenueDetail from '../views/VenueDetail.vue'
 import CommunityHome from '../views/CommunityHome.vue';
 import PostViewer from '../views/PostViewer.vue';
-
+import Login from '../views/auth/Login.vue';
+import Register from '../views/auth/Register.vue';
+import Profile from '../views/profile/Profile.vue';
+import CourtReservation from '../views/CourtReservation.vue';
+import VenueList from '../views/VenueList.vue';
 
 const Dummy = { template: '<div style="padding:20px;"><h2>页面建设中...</h2></div>' }
 
@@ -66,9 +70,9 @@ const routes = [
         component: Home
     },
     {
-       path: '/court-reservation',
-       name: 'CourtReservation',
-       component: CourtReservation,
+        path: '/court-reservation',
+        name: 'CourtReservation',
+        component: CourtReservation,
     },
     {
         // 社区首页
@@ -91,6 +95,10 @@ const routes = [
     {
         path: '/venue/:id',
         component: VenueDetail
+    },
+    {
+        path: '/venuelist',
+        component: VenueList
     },
 ];
 

@@ -71,12 +71,14 @@ import '@/styles/responsive.css'
 
 .responsive-image {
   width: 100%;
-  max-width: 550px;
+  max-width: 600px;
   height: auto;
-  max-height: 650px;
+  max-height: 700px;
   object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  border-radius: 0; /* 不要圆角 */
+  box-shadow: none; /* 不要阴影 */
+  margin-top: 18px;
+  display: block;
 }
 
 @media (max-width: 1200px) {
@@ -91,5 +93,9 @@ import '@/styles/responsive.css'
     max-width: 320px;
     max-height: 180px;
   }
+}
+
+.responsive-right {
+  margin-top: 35px;
 }
 </style>

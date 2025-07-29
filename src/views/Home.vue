@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="home-page">
     <!-- 导航栏 -->
     <HeaderNavbar />
@@ -15,9 +15,6 @@
             <div class="hero-actions">
               <el-button type="primary" size="large" @click="goToReservation">
                 立即预约
-              </el-button>
-              <el-button size="large" @click="goToVenues">
-                浏览场馆
               </el-button>
             </div>
           </div>
@@ -108,7 +105,7 @@
           </div>
           
           <div v-if="popularVenues.length > 0" class="view-more">
-            <el-button @click="goToVenues">查看更多场馆</el-button>
+            <el-button @click="goToReservation">查看更多场馆</el-button>
           </div>
         </div>
       </section>
@@ -292,12 +289,7 @@ export default {
 
     // 跳转到预约页面
     goToReservation() {
-      this.$router.push('/reservation')
-    },
-
-    // 跳转到场馆列表
-    goToVenues() {
-      this.$router.push('/venue')
+      this.$router.push('/venuelist')
     },
 
     // 跳转到场馆详情

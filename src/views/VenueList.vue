@@ -1,10 +1,7 @@
 <template>
     <div class="venue-list-page">
         <!-- 顶部导航栏 -->
-        <div class="top-navbar">
-            <el-icon class="back-icon" @click="goBack"><ArrowLeft /></el-icon>
-            <span class="title">运动场地预约</span>
-        </div>
+        <TopNavbar title="运动场地预约" />
 
         <!-- 筛选区域 -->
         <div class="filter-bar">
@@ -71,6 +68,7 @@
     import { ref, onMounted, watch } from 'vue'
     import { useRouter } from 'vue-router'
     import { ArrowLeft } from '@element-plus/icons-vue'
+    import TopNavbar from '../components/TopNavbar.vue'
     import axios from 'axios'
 
     const router = useRouter()

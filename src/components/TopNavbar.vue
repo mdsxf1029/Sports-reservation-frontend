@@ -47,6 +47,7 @@
         justify-content: center;
         width: 32px;
         height: 32px;
+        transform: translateY(-2px);
     }
 
     .title {
