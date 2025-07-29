@@ -170,11 +170,23 @@ export const fetchMyCollectedPosts = (params) => {
   });
 };
 
+// 举报社区帖子
+export const reportCommunityPost = (postId, data) => {
+  return instance.post(`/api/community/posts/${postId}/report`, data);
+};
+
+// 获取帖子详情页
+export const fetchPostById = (postId) => {
+  return instance.get(`/api/community/posts/${postId}`);
+};
+
 // 获取订单详情（根据预约 ID）
 export const fetchOrderDetail = (appointmentId) => {
   /*return instance.get(`/api/appointments/${appointmentId}`);*/
   return axios.get(`http://127.0.0.1:4523/m1/6319279-6014567-default/api/appointments/1`);
 };
+
+
 
 // 获取预约是否成功信息
 export const fetchConfirmInfo = (appointmentId) => {
