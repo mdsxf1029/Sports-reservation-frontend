@@ -18,6 +18,7 @@ import Profile from '../views/profile/Profile.vue';
 import CourtReservation from '../views/CourtReservation.vue';
 import VenueList from '../views/VenueList.vue';
 import News from '../views/News.vue';
+import PostEditor from '../views/PostEditor.vue';
 
 const Dummy = { template: '<div style="padding:20px;"><h2>页面建设中...</h2></div>' }
 
@@ -91,6 +92,10 @@ const routes = [
         name: 'PostViewer',
         component: PostViewer,
         props: true
+    },
+    {
+        path: '/community/posteditor',
+        component: PostEditor
     },
     {
         path: '/news',
