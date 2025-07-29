@@ -1,6 +1,6 @@
 ﻿<template>
     <div class="home-layout">
-        <!-- ✅ 顶部导航栏组件 -->
+        <!-- 顶部导航栏组件 -->
         <HeaderNavbar />
 
         <!-- 搜索栏 -->
@@ -13,7 +13,9 @@
                     <el-icon><Search /></el-icon>
                 </template>
             </el-input>
-            <el-button type="primary" icon="el-icon-search" @click="doSearch">搜索</el-button>
+            <el-button type="primary" icon="el-icon-search" @click="doSearch">
+                搜索
+            </el-button>
         </div>
 
         <!-- 图标分类导航 -->
@@ -31,18 +33,19 @@
         <div class="recommend-section">
             <h3 class="section-title">推荐场馆</h3>
             <div class="venue-list">
-                <div class="venue-item"
-                     v-for="venue in recommendedVenues"
-                     :key="venue.id">
+                <div class="venue-item" v-for="venue in recommendedVenues" :key="venue.id">
                     <img :src="venue.image" class="venue-image" />
                     <div class="venue-info">
                         <h4>{{ venue.name }}</h4>
                         <p>📍 {{ venue.address }}</p>
                         <p>🕒 {{ venue.hours }}</p>
-                        <el-button type="primary" size="small" @click="goToDetail(venue.id)">
-                            预约
-                        </el-button>
                     </div>
+                    <el-button type="primary"
+                               size="small"
+                               class="reserve-button"
+                               @click="goToDetail(venue.id)">
+                        预约
+                    </el-button>
                 </div>
             </div>
         </div>
@@ -50,21 +53,21 @@
 </template>
 
 <script setup>
-    import { ref } from 'vue'
+    import { ref, onMounted } from 'vue'
     import { useRouter } from 'vue-router'
     import { Search } from '@element-plus/icons-vue'
-    import HeaderNavbar from '../components/HeaderNavbar.vue' // ✅ 引入导航栏组件
-    import { onMounted } from 'vue'
+    import HeaderNavbar from '../components/HeaderNavbar.vue'
+    import axios from 'axios'
 
     const router = useRouter()
     const searchQuery = ref('')
-
-    import axios from 'axios'
     const recommendedVenues = ref([])
 
     onMounted(async () => {
         try {
-            const res = await axios.get('http://127.0.0.1:4523/m1/6792249-6505029-default/api/venues') // 👈用你的真实Mock地址替换
+            const res = await axios.get(
+                'http://127.0.0.1:4523/m1/6792249-6505029-default/api/venues'
+            )
             recommendedVenues.value = res.data
             console.log('收到推荐场馆数据：', res.data)
         } catch (err) {
@@ -72,22 +75,26 @@
         }
     })
 
-
-    // 图标分类
+    // 图标分类数据
     const sports = ref([
         { name: '羽毛球', icon: new URL('../assets/icons/badminton.png', import.meta.url).href },
         { name: '乒乓球', icon: new URL('../assets/icons/pingpong.png', import.meta.url).href },
         { name: '网球', icon: new URL('../assets/icons/basketball.png', import.meta.url).href },
-        { name: '健身', icon: new URL('../assets/icons/fitness.png', import.meta.url).href }
+        { name: '健身', icon: new URL('../assets/icons/fitness.png', import.meta.url).href },
+        { name: '足球', icon: new URL('../assets/icons/football.png', import.meta.url).href },
+        { name: '游泳', icon: new URL('../assets/icons/swim.png', import.meta.url).href }
     ])
 
     async function doSearch() {
         try {
-            const res = await axios.get('http://127.0.0.1:4523/m1/6792249-6505029-default/api/venues', {
-                params: {
-                    query: searchQuery.value // 👈 将关键词作为参数传递
+            const res = await axios.get(
+                'http://127.0.0.1:4523/m1/6792249-6505029-default/api/venues',
+                {
+                    params: {
+                        query: searchQuery.value
+                    }
                 }
-            })
+            )
             recommendedVenues.value = res.data
             console.log('搜索结果：', res.data)
         } catch (err) {
@@ -96,7 +103,7 @@
     }
 
     function goToSport(sport) {
-        router.push({ name: 'VenueList', query: { sport } })
+        router.push({ name: 'VenueList' })
     }
 
     function goToDetail(id) {
@@ -171,6 +178,8 @@
         display: flex;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
         overflow: hidden;
+        position: relative; /* ✅ 用于定位按钮 */
+        padding-right: 60px; /* ✅ 给按钮预留空间 */
     }
 
     .venue-image {
@@ -182,10 +191,21 @@
     .venue-info {
         padding: 10px;
         flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding-bottom: 40px; /* ✅ 预留按钮空间 */
     }
 
         .venue-info h4 {
             font-size: 16px;
             margin: 0 0 4px;
         }
+
+    .reserve-button {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        z-index: 1;
+    }
 </style>
