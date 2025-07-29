@@ -17,7 +17,6 @@
           <table class="main-table">
             <thead>
               <tr>
-                <th>序号</th>
                 <th>用户名</th>
                 <th>用户ID</th>
                 <th>违约原因</th>
@@ -27,8 +26,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(user, index) in users" :key="user.userId">
-                <td>{{ index + 1 }}</td>
+              <tr v-for="user in users" :key="user.userId">
                 <td>{{ user.userName }}</td>
                 <td>{{ user.userId }}</td>
                 <td>{{ user.violationReason }}</td>
@@ -44,7 +42,7 @@
                     class="action-link"
                     v-if="!user.isBlacklisted"
                     @click.prevent="addToBlacklist(user)"
-                  >加入黑名单</a>
+                  >加入黑名单设置</a>
                   <span v-else class="blacklist-time"
                     >黑名单时间：{{ formatDate(user.blacklistTimestamp) }}</span
                   >
@@ -59,26 +57,16 @@
           <table class="main-table">
             <thead>
               <tr>
-                <th>序号</th>
                 <th>用户名</th>
                 <th>用户ID</th>
                 <th>黑名单时间</th>
-                <th>操作</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(user, index) in users.filter(u=>u.isBlacklisted)" :key="user.userId">
-                <td>{{ index + 1 }}</td>
+              <tr v-for="user in users.filter(u=>u.isBlacklisted)" :key="user.userId">
                 <td>{{ user.userName }}</td>
                 <td>{{ user.userId }}</td>
                 <td>{{ formatDate(user.blacklistTimestamp) }}</td>
-                <td>
-                  <a
-                    href="#"
-                    class="action-link"
-                    @click.prevent="removeFromBlacklist(user)"
-                  >移除黑名单</a>
-                </td>
               </tr>
             </tbody>
           </table>
@@ -90,9 +78,6 @@
 
 <script>
 import AdminSidebarMenu from '../components/AdminSidebarMenu.vue'
-import { getViolations, addToBlacklist } from '../utils/api';
-
-
 export default {
   name: "ViolationManagement",
   components: { AdminSidebarMenu },
@@ -127,38 +112,15 @@ export default {
       const date = new Date(timestamp);
       return date.toLocaleDateString();
     },
-    // 加入黑名单操作
     addToBlacklist(user) {
       user.isBlacklisted = true;
       user.blacklistTimestamp = new Date().toISOString();
-    },
-    removeFromBlacklist(user) {
-      user.isBlacklisted = false;
-      user.blacklistTimestamp = null;
     }
-  },
-  mounted() {
-    this.fetchUsers();
   }
 };
 </script>
 
 <style src="../styles/admin-sidebar.css"></style>
-
-<style scoped>
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-th, td {
-  border: 1px solid #eee;
-  padding: 8px;
-  text-align: center;
-}
-</style>
-<!-- 全局引入样式 -->
-
-
 <style src="../styles/violation.css"></style>
 
 <style scoped>
