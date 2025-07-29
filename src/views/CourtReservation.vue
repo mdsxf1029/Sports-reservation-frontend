@@ -1,8 +1,10 @@
 <!-- CourtReservation.vue -->
 <template>
   <div class="header-bar">
-    <button class="back-btn" @click="goBack">← 返回</button>
-    <div class="title">{{ venueName }}</div>
+    <el-button class="back-btn" type="text" @click="goBack">
+      <el-icon style="font-size: 24px;"><ArrowLeft /></el-icon>
+        <div class="title">{{ venueName }}</div>
+      </el-button>   
   </div>
 
   <div class="container">
@@ -80,6 +82,7 @@ import { watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useRouter } from 'vue-router'
+import { ArrowLeft } from '@element-plus/icons-vue'
 const router = useRouter()
 const route = useRoute()
 
@@ -451,9 +454,9 @@ onMounted(async () => {
   display: flex;                /* 弹性盒布局 */
   align-items: center;          /* 垂直居中 */
   position: relative;           /* 方便定位子元素 */
-  height: 40px;                 /* 高度 */
+  height: 70px;                 /* 高度 */
   border-bottom: 1px solid #ddd; /* 底部边框 */
-  margin-bottom: 12px;          /* 底部外边距 */
+  margin-bottom: 0rem;          /* 底部外边距 */
 }
 
 /* 返回按钮样式 */
@@ -462,7 +465,7 @@ onMounted(async () => {
   left: 10px;                  /* 左侧距离 */
   background-color: transparent; /* 背景透明 */
   border: none;                /* 无边框 */
-  color: #0F40F5;              /* 蓝色字体 */
+  color: #000000;              /* 黑色字体 */
   font-size: 16px;             /* 字体大小 */
   cursor: pointer;             /* 鼠标样式为指针 */
   z-index: 10;                 /* 保证层级在上 */
@@ -473,7 +476,9 @@ onMounted(async () => {
   flex: 1;                     /* 占满剩余空间 */
   text-align: center;          /* 居中对齐文字 */
   font-weight: 600;            /* 加粗 */
-  font-size: 18px;             /* 字体大小 */
+  font-size: 26px;             /* 字体大小 */
+  margin-left: 10px;
+  margin-top: 10px;
 }
 
 /* 主容器，左右布局 */
@@ -509,7 +514,8 @@ onMounted(async () => {
 .date-bar {
   display: flex;              /* 水平排列 */
   justify-content: space-around; /* 子元素均匀分布 */
-  margin-bottom: 1rem;        /* 底部间距 */
+  margin-bottom: 0.5rem;        /* 底部间距 */
+  margin-top: -10px;          /* 向上偏移10px */
 }
 
 /* 单个日期项 */
@@ -566,11 +572,13 @@ onMounted(async () => {
 
 /* 底部区域 */
 .footer {
-  margin-top: 1rem;
+  margin-top: 0rem;
+  width:fit-content;
+  margin-left: 40px;
   display: flex;           /* 设置为弹性布局 */
-  justify-content: flex-end;  /* 控制对齐方式（left/center/right） */
+  justify-content: space-between; /* 两端对齐 */  /* 控制对齐方式（left/center/right） */
   align-items: center;     /* 垂直居中 */
-  gap: 1rem;               /* 控件之间的间距（可选） */
+  gap: 20rem;               /* 控件之间的间距（可选） */
 }
 
 .confirm-btn {
@@ -580,6 +588,7 @@ onMounted(async () => {
   border: none;               /* 无边框 */
   border-radius: 4px;         /* 圆角 */
   cursor: pointer;            /* 鼠标变手指 */
+  margin-left: auto;
 }
 
 /* 锁定状态样式 */

@@ -19,7 +19,20 @@ const Dummy = { template: '<div style="padding:20px;"><h2>页面建设中...</h2
 const routes = [
     {
         path: '/',
-        component: App
+        component: Home
+    },
+    {
+        path: '/login',
+        component: Login
+    },
+    {
+        path: '/register',
+        component: Register
+    },
+    {
+        path: '/profile',
+        name: 'Profile',
+        component: Profile
     },
     {
         path: '/venue',
@@ -53,9 +66,9 @@ const routes = [
         component: Home
     },
     {
-        path: '/court-reservation',
-        name: 'CourtReservation',
-        component: CourtReservation,
+       path: '/court-reservation',
+       name: 'CourtReservation',
+       component: CourtReservation,
     },
     {
         // 社区首页

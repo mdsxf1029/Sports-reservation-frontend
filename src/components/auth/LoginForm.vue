@@ -5,6 +5,7 @@
 
     <p>请使用邮箱进行登录:</p>
     <p>没有账号吗？<router-link to="/register">去注册</router-link></p>
+    <p>暂时不想登录？这里返回到<router-link to="/home">首页</router-link></p>
 
     <el-form
       :model="form"
@@ -225,9 +226,10 @@ const openDialog = () => {
   }
   /* 段落样式 */
   .login-form p {
-      margin-bottom: 4px;/* 段落底部间距 */
-      color: #666;
-      font-size: 20px;
+      margin-bottom: 0px;/* 段落底部间距 */
+      margin-top:0px; /* 段落顶部间距 */
+      color: #a1a1a1;
+      font-size: 15px;
       padding : 0 0 0 20px; /* 指定左内边距 */
   }
   /* 针对 Element Plus 输入框、下拉框、复选框、按钮的字体大小 */
@@ -235,20 +237,31 @@ const openDialog = () => {
   .login-form :deep(.el-form-item__label) {
     font-size: 20px !important;
   }
+  /* 输入框内的文字 - 减小字体 */
   .login-form :deep(.el-input__inner) {
-    font-size: 20px !important;
+    font-size: 15px !important;     /* 从20px改为15px */ 
   }
+  /* 下拉框选中项 - 减小字体 */
   .login-form :deep(.el-select__selected-item) {
-    font-size: 20px !important;
+    font-size: 15px !important;     /* 从20px改为15px */
   }
+
+  /* 下拉框选项 - 减小字体 */
   .login-form :deep(.el-select-dropdown__item) {
-    font-size: 20px !important;
+    font-size: 15px !important;     /* 从20px改为15px */ 
   }
+  
+  /* 输入框占位符文字 */
+  .login-form :deep(.el-input__inner::placeholder) {
+    font-size: 15px !important;     /* 占位符更小 */
+    color: #c0c4cc !important;      /* 占位符颜色 */
+  }
+
   .login-form :deep(.el-button) {
     font-size: 20px !important;
   }
   .login-form :deep(.el-checkbox__label) {
-    font-size: 18px !important;
+    font-size: 14px !important;
   }
   .login-btn {
     font-size: 20px !important;
