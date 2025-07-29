@@ -17,6 +17,7 @@
           <table class="main-table">
             <thead>
               <tr>
+                <th>序号</th>
                 <th>用户名</th>
                 <th>用户ID</th>
                 <th>违约原因</th>
@@ -26,7 +27,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in users" :key="user.userId">
+              <tr v-for="(user, index) in users" :key="user.userId">
+                <td>{{ index + 1 }}</td>
                 <td>{{ user.userName }}</td>
                 <td>{{ user.userId }}</td>
                 <td>{{ user.violationReason }}</td>
@@ -42,7 +44,7 @@
                     class="action-link"
                     v-if="!user.isBlacklisted"
                     @click.prevent="addToBlacklist(user)"
-                  >加入黑名单设置</a>
+                  >加入黑名单</a>
                   <span v-else class="blacklist-time"
                     >黑名单时间：{{ formatDate(user.blacklistTimestamp) }}</span
                   >
@@ -57,16 +59,26 @@
           <table class="main-table">
             <thead>
               <tr>
+                <th>序号</th>
                 <th>用户名</th>
                 <th>用户ID</th>
                 <th>黑名单时间</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in users.filter(u=>u.isBlacklisted)" :key="user.userId">
+              <tr v-for="(user, index) in users.filter(u=>u.isBlacklisted)" :key="user.userId">
+                <td>{{ index + 1 }}</td>
                 <td>{{ user.userName }}</td>
                 <td>{{ user.userId }}</td>
                 <td>{{ formatDate(user.blacklistTimestamp) }}</td>
+                <td>
+                  <a
+                    href="#"
+                    class="action-link"
+                    @click.prevent="removeFromBlacklist(user)"
+                  >移除黑名单</a>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -115,6 +127,10 @@ export default {
     addToBlacklist(user) {
       user.isBlacklisted = true;
       user.blacklistTimestamp = new Date().toISOString();
+    },
+    removeFromBlacklist(user) {
+      user.isBlacklisted = false;
+      user.blacklistTimestamp = null;
     }
   }
 };

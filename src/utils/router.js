@@ -42,7 +42,6 @@ const routes = [
         path: '/venue',
         component: VenueManagement
     },
-
     {
         path: '/violation',
         component: ViolationManagement
@@ -73,6 +72,11 @@ const routes = [
         path: '/court-reservation',
         name: 'CourtReservation',
         component: CourtReservation,
+    },
+    {
+        path: '/reservation',
+        name: 'Reservation',
+        component: Reservation,
     },
     {
         // 社区首页

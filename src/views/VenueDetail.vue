@@ -107,7 +107,7 @@
 
     // ✅ 点击预约跳转
     function goToReservation(date) {
-        router.push({ path: '/reservation', query: { date } })
+        router.push({ path: '/court-reservation', query: { date } })
     }
 
     
