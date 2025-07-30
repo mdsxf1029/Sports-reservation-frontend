@@ -32,7 +32,7 @@
                          v-for="item in reservationStatus"
                          :key="item.date"
                          :class="{ available: item.status === '可预约', full: item.status === '已订满' }"
-                         @click="goToReservation(item.date)">
+                         @click="goToReservation(item.date,venue)">
                         <p class="weekday">{{ item.weekday }}</p>
                         <p class="date">{{ item.date }}</p>
                         <p class="status">{{ item.status }}</p>
@@ -106,8 +106,15 @@
     })
 
     // ✅ 点击预约跳转
-    function goToReservation(date) {
-        router.push({ path: '/reservation', query: { date } })
+    goToReservation(date, venue) {
+        this.$router.push({
+            name: 'Reservation',   // 预约页面的路由名称
+            query: {
+                date: date,
+                venueId: venue.id,  // 假设 venue 对象有 id
+                venueName: venue.name // 如果要传场馆名称
+            }
+        });
     }
 
     
