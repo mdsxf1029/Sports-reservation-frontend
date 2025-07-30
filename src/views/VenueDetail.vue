@@ -120,13 +120,6 @@ function goToReservation(date) {
     })
 }
 
-<<<<<<< Updated upstream
-    // ✅ 点击预约跳转
-    function goToReservation(date) {
-        router.push({ path: '/reservation', query: { date } })
-    }
-=======
->>>>>>> Stashed changes
 
 
 function isValidDate(date) {
