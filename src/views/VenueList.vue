@@ -1,67 +1,73 @@
 <template>
-    <div class="venue-list-page">
-        <!-- 顶部导航栏 -->
-        <div class="top-navbar">
-            <el-icon class="back-icon" @click="goBack"><ArrowLeft /></el-icon>
-            <span class="title">运动场地预约</span>
-        </div>
+    <div>
+        <HeaderNavbar />
+        <div class="venue-list-page">
 
-        <!-- 筛选区域 -->
-        <div class="filter-bar">
-            <h3 class="section-title">个人预约</h3>
 
-            <!-- 校区筛选 -->
-            <div class="filter-group">
-                <span class="label">校区：</span>
-                <div class="button-group">
-                    <el-button v-for="campus in campuses"
-                               :key="campus"
-                               :class="['filter-btn', selectedCampus === campus ? 'active' : '']"
-                               size="small"
-                               @click="selectedCampus = campus">
-                        {{ campus }}
-                    </el-button>
+
+
+            <!-- 顶部导航栏 -->
+            <!--<div class="top-navbar">
+                <el-icon class="back-icon" @click="goBack"><ArrowLeft /></el-icon>
+                <span class="title">运动场地预约</span>
+            </div>-->
+            <!-- 筛选区域 -->
+            <div class="filter-bar">
+                <h3 class="section-title">个人预约</h3>
+
+                <!-- 校区筛选 -->
+                <div class="filter-group">
+                    <span class="label">校区：</span>
+                    <div class="button-group">
+                        <el-button v-for="campus in campuses"
+                                   :key="campus"
+                                   :class="['filter-btn', selectedCampus === campus ? 'active' : '']"
+                                   size="small"
+                                   @click="selectedCampus = campus">
+                            {{ campus }}
+                        </el-button>
+                    </div>
+                </div>
+
+                <!-- 类型筛选 -->
+                <div class="filter-group">
+                    <span class="label">类型：</span>
+                    <div class="button-group">
+                        <el-button v-for="type in types"
+                                   :key="type"
+                                   :class="['filter-btn', selectedType === type ? 'active' : '']"
+                                   size="small"
+                                   @click="selectedType = type">
+                            {{ type }}
+                        </el-button>
+                    </div>
                 </div>
             </div>
 
-            <!-- 类型筛选 -->
-            <div class="filter-group">
-                <span class="label">类型：</span>
-                <div class="button-group">
-                    <el-button v-for="type in types"
-                               :key="type"
-                               :class="['filter-btn', selectedType === type ? 'active' : '']"
-                               size="small"
-                               @click="selectedType = type">
-                        {{ type }}
-                    </el-button>
+            <!-- 搜索框 -->
+            <div class="search-section">
+                <div class="search-input-group">
+                    <el-input v-model="searchQuery"
+                              placeholder="请输入场馆名称或运动类型名称"
+                              class="search-input"
+                              clearable />
+                    <el-button class="search-btn" @click="doSearch">搜索</el-button>
                 </div>
             </div>
-        </div>
 
-        <!-- 搜索框 -->
-        <div class="search-section">
-            <div class="search-input-group">
-                <el-input v-model="searchQuery"
-                          placeholder="请输入场馆名称或运动类型名称"
-                          class="search-input"
-                          clearable />
-                <el-button class="search-btn" @click="doSearch">搜索</el-button>
-            </div>
-        </div>
-
-        <!-- 场馆卡片列表 -->
-        <div class="venue-card-list">
-            <div v-for="venue in venues"
-                 :key="venue.id"
-                 class="venue-card">
-                <img :src="venue.image" class="venue-img" />
-                <div class="venue-info">
-                    <h4>{{ venue.name }}</h4>
-                    <p class="ellipsis">地址：{{ venue.address }}</p>
-                    <p>时间：{{ venue.hours }}</p>
+            <!-- 场馆卡片列表 -->
+            <div class="venue-card-list">
+                <div v-for="venue in venues"
+                     :key="venue.id"
+                     class="venue-card">
+                    <img :src="venue.image" class="venue-img" />
+                    <div class="venue-info">
+                        <h4>{{ venue.name }}</h4>
+                        <p class="ellipsis">地址：{{ venue.address }}</p>
+                        <p>时间：{{ venue.hours }}</p>
+                    </div>
+                    <el-button class="reserve-btn" size="small" @click="goToDetail(venue.id)">预约</el-button>
                 </div>
-                <el-button class="reserve-btn" size="small" @click="goToDetail(venue.id)">预约</el-button>
             </div>
         </div>
     </div>
@@ -121,7 +127,7 @@
     }
 
     /* 顶部导航栏固定吸顶，左对齐 */
-    .top-navbar {
+/*    .top-navbar {
         position: fixed;
         top: 0;
         left: 0;
@@ -135,7 +141,7 @@
         background-color: #ffffff;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
         z-index: 1000;
-    }
+    }*/
 
     .back-icon {
         margin-right: 12px;
