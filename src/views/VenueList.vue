@@ -1,11 +1,7 @@
 <template>
+    <!-- 顶部导航栏 -->
+    <HeaderNavbar />
     <div class="venue-list-page">
-        <!-- 顶部导航栏 -->
-        <div class="top-navbar">
-            <el-icon class="back-icon" @click="goBack"><ArrowLeft /></el-icon>
-            <span class="title">运动场地预约</span>
-        </div>
-
         <!-- 筛选区域 -->
         <div class="filter-bar">
             <h3 class="section-title">个人预约</h3>
@@ -71,6 +67,7 @@
     import { ref, onMounted, watch } from 'vue'
     import { useRouter } from 'vue-router'
     import { ArrowLeft } from '@element-plus/icons-vue'
+    import TopNavbar from '../components/TopNavbar.vue'
     import axios from 'axios'
 
     const router = useRouter()
@@ -117,24 +114,7 @@
 
 <style scoped>
     .venue-list-page {
-        padding: 76px 40px 40px 80px; /* 顶部预留导航栏高度 + 左侧留白 */
-    }
-
-    /* 顶部导航栏固定吸顶，左对齐 */
-    .top-navbar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 56px;
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        font-size: 18px;
-        font-weight: bold;
-        background-color: #ffffff;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-        z-index: 1000;
+        padding: 20px 40px 40px 80px; /* 顶部预留导航栏高度 + 左侧留白 */
     }
 
     .back-icon {

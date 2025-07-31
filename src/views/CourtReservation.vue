@@ -10,6 +10,7 @@
       </el-button>
       <div class="title">{{ venueName }}</div>
     </header>
+    
     <!-- 主体区域 -->
     <main class="content-wrapper">
       <!-- 中间主要内容 -->
@@ -51,6 +52,7 @@
           <p style="text-align: center;font-size: 16px;">页面将在 {{ countdown }} 秒后跳转订单详情页</p>
         </el-dialog>
       </section>
+
       <!-- 右侧图例 -->
       <aside class="legend">
         <div class="legend-item"><span class="color available"></span>未被选定</div>
@@ -240,6 +242,7 @@ function getStatusClass(court, time) {
   }
   return selectedCells.value.has(key) ? 'selected' : 'available'
 }
+
 // 点击一个格子时，切换选中/取消状态（不做异步锁定）
 function toggleSelect(court, time) {
   const key = `${court}-${time}`
@@ -294,6 +297,7 @@ function handleClick(court, time) {
     return false
   }
 }*/
+
 //点击预约按钮时，提交预约信息
 //需要后端接口：确认预约
 async function confirmBooking() {

@@ -2,7 +2,9 @@
 <template>
   <el-menu :default-active='activeIndex' class='header-navbar' mode='horizontal' :ellipsis='false'>
     <el-container>
-      <h1>运动场地预约系统</h1>
+      <h1>
+        <router-link to="/home"  class="title-link">运动场地预约系统</router-link>
+      </h1>
     </el-container>
     <el-menu-item class="navbar-item" index="1" @click="$router.push('/community')">
       运动社区
@@ -10,7 +12,7 @@
     <el-menu-item class="navbar-item" index="2" @click="$router.push('/news')">
       运动新闻
     </el-menu-item>
-    <el-menu-item class="navbar-item" index="3"@click="$router.push('/home')">
+    <el-menu-item class="navbar-item" index="3"@click="$router.push('/venuelist')">
       运动场地预约
     </el-menu-item>
 
@@ -192,7 +194,15 @@ const toggleDarkMode = () => {
   --header-shadow-color-2: rgba(255, 255, 255, 0.06);
   --header-text-color: #ffffff;
 }
-
+/* 让 header 里的所有文字都用变量色 */
+.header-navbar,
+.header-navbar h1,
+.header-navbar .navbar-item,
+.header-navbar .el-menu-item,
+.header-navbar .el-menu-item.is-active,
+.header-navbar .el-menu-item:hover {
+  color: var(--header-text-color) !important;
+}
 .header-navbar {
   align-items: center;
   min-width: 1200px;
@@ -217,6 +227,27 @@ h1 {
 
 .navbar-item {
   font-size: 16px;
+}
+
+/* 新增：重置router-link样式，保持原文字样式 */
+.title-link {
+  color: inherit;           /* 继承父元素的颜色 */
+  text-decoration: none;    /* 去除下划线 */
+  font-size: inherit;       /* 继承父元素的字体大小 */
+  font-weight: inherit;     /* 继承父元素的字体粗细 */
+  display: inline;          /* 保持行内显示 */
+}
+
+.title-link:hover {
+  color: inherit;           /* 悬停时也保持原色 */
+}
+
+.title-link:visited {
+  color: inherit;           /* 访问后保持原色 */
+}
+
+.title-link:active {
+  color: inherit;           /* 点击时保持原色 */
 }
 
 </style>

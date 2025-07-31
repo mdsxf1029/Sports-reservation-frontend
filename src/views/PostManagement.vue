@@ -1,3 +1,7 @@
+帖子管理第二版
+1839721
+src\views\PostManagement.vue
+@@ -1,68 +1,223 @@
 <template>
   <div class="post-management-container">
     <el-tabs v-model="activeTab">
@@ -50,8 +54,6 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 // 导入所有需要的API函数
 import { getPendingPosts, approvePost, rejectPost, getPendingReports, processReport } from '../utils/api';
 import '../styles/post-management.css';
-
-
 
 const activeTab = ref('pending'); 
 

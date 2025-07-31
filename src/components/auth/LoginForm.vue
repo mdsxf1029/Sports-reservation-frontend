@@ -3,14 +3,15 @@
     <h1>欢迎登录</h1>
     <h2>运动场地预约系统</h2>
 
-    <p>请使用邮箱进行登录:</p>
+    <!--<p>请使用邮箱进行登录:</p>-->
     <p>没有账号吗？<router-link to="/register">去注册</router-link></p>
+    <p class="space-below">暂时不想登录？这里返回到<router-link to="/">首页</router-link></p>
 
     <el-form
       :model="form"
       :rules="rules"
       ref="loginFormRef"
-      label-width="100px"
+      label-width="80px"
       size="large"
       @submit.prevent="login"
       hide-required-asterisk
@@ -54,8 +55,6 @@
               <el-button type="primary" style="width: 100%;" @click="dialogVisible = false">确 定</el-button>
             </template>
           </el-dialog>
-
-
         </span>
       </div>
      
@@ -64,7 +63,7 @@
         size="large"
         native-type="submit"
         class="login-btn"
-        style="width: 100%; background-color: #000; color: white;"
+        style="width: 95%; background-color: #1c1c1c; color: white;"
         :loading="isLoading"
         :disabled="isLoading"
       >
@@ -194,15 +193,12 @@ const openDialog = () => {
   dialogVisible.value = true
 }
 </script>
- 
-
 
 <style scoped>
-     
   .login-form {
     width: 90%;             
     max-width: 420px;        /* 放大宽度 */
-    padding: 48px 40px 36px 40px;
+    padding: 0px 40px 34px 40px;
     margin: 0 auto;
     border-radius: 12px;
     box-shadow: 0 2px 16px rgba(0,0,0,0.08);
@@ -210,55 +206,75 @@ const openDialog = () => {
     flex-direction: column;
     align-items: stretch;
     background: #fff;
+    text-align: center;
   }
   /* 标题样式 */
   .login-form h1 {        
-      font-size: 2.5rem;       /* 更大标题 */
+      font-size: 2rem;       /* 更大标题 */
       font-weight: bold;
-      margin-bottom: 8px;
+      margin-bottom: 0px;
   }
   .login-form h2 {
-      font-size: 1.75rem;
+      font-size: 1.35rem;
       font-weight: 500;
-      margin-bottom: 8px;
+      margin-top: 12px;
+      margin-bottom: 16px;
       color: #222;
   }
   /* 段落样式 */
   .login-form p {
-      margin-bottom: 4px;/* 段落底部间距 */
-      color: #666;
-      font-size: 20px;
+      margin-bottom: 2px;/* 段落底部间距 */
+      margin-top: 2px; /* 段落顶部间距 */
+      color: #a1a1a1;
+      font-size: 15px;
       padding : 0 0 0 20px; /* 指定左内边距 */
+  }
+
+  .login-form .space-below {
+      margin-bottom: 26px;
   }
   /* 针对 Element Plus 输入框、下拉框、复选框、按钮的字体大小 */
 
   .login-form :deep(.el-form-item__label) {
-    font-size: 20px !important;
-  }
-  .login-form :deep(.el-input__inner) {
-    font-size: 20px !important;
-  }
-  .login-form :deep(.el-select__selected-item) {
-    font-size: 20px !important;
-  }
-  .login-form :deep(.el-select-dropdown__item) {
-    font-size: 20px !important;
-  }
-  .login-form :deep(.el-button) {
-    font-size: 20px !important;
-  }
-  .login-form :deep(.el-checkbox__label) {
     font-size: 18px !important;
   }
-  .login-btn {
-    font-size: 20px !important;
+  /* 输入框内的文字 - 减小字体 */
+  .login-form :deep(.el-input__inner) {
+    font-size: 15px !important;     /* 从20px改为15px */ 
+  }
+  /* 下拉框选中项 - 减小字体 */
+  .login-form :deep(.el-select__selected-item) {
+    font-size: 15px !important;     /* 从20px改为15px */
   }
 
-  .remember-row {
+  .login-form :deep(.el-form-item) {
+    margin-bottom: 26px !important;
+  }
+
+  /* 下拉框选项 - 减小字体 */
+  .login-form :deep(.el-select-dropdown__item) {
+    font-size: 15px !important;     /* 从20px改为15px */ 
+  }
+  
+  /* 输入框占位符文字 */
+  .login-form :deep(.el-input__inner::placeholder) {
+    font-size: 15px !important;     /* 占位符更小 */
+    color: #c0c4cc !important;      /* 占位符颜色 */
+  }
+
+  .login-form :deep(.el-button) {
+    font-size: 17px !important;
+  }
+  .login-form :deep(.el-checkbox__label) {
+    font-size: 14px !important;
+  }
+
+  .login-form .remember-row {
     display: flex;
+    width: 400px;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: auto;
+    margin: 25px auto 15px;
   }
 
   /* 忘记密码链接样式 */
@@ -283,7 +299,4 @@ const openDialog = () => {
     border-top: none;
     padding-top: 0;
   }
-
-
-
 </style>
