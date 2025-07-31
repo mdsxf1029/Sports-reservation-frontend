@@ -1,5 +1,8 @@
 <template>
-  <div class="venue-management-container">
+  <div class="page-layout">
+    <AdminSidebarMenu />
+    <div class="page-content">
+      <div class="venue-management-container">
     <div class="header-controls">
       <el-input
         v-model="searchKeyword"
@@ -72,6 +75,8 @@
         </span>
       </template>
     </el-dialog>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -81,6 +86,7 @@ import { Search } from '@element-plus/icons-vue';
 import { getVenues, createVenue, updateVenue, deleteVenue } from '../utils/api';
 import '../styles/venue-management.css';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import AdminSidebarMenu from '../components/AdminSidebarMenu.vue';
 
 const searchKeyword = ref('');
 const loading = ref(true);
@@ -172,3 +178,18 @@ const handleDelete = (row) => {
   });
 };
 </script>
+
+<style src="../styles/admin-sidebar.css"></style>
+<style scoped>
+.page-layout {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+}
+.page-content {
+  flex: 1;
+  padding: 20px;
+  background: #fff;
+  margin-left: 180px;
+}
+</style>

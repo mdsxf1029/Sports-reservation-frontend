@@ -7,7 +7,7 @@ import VenueManagement from '../views/VenueManagement.vue';
 import ViolationManagement from '../views/ViolationManagement.vue';
 import PostManagement from '../views/PostManagement.vue';
 import AppealManagement from '../views/AppealManagement.vue';
-import ViolationHistory from '../views/ViolationHistory.vue';
+
 import Reservation from '../views/Reservation.vue'
 import VenueDetail from '../views/VenueDetail.vue'
 import CommunityHome from '../views/CommunityHome.vue';
@@ -25,7 +25,7 @@ const Dummy = { template: '<div style="padding:20px;"><h2>页面建设中...</h2
 const routes = [
     {
         path: '/',
-        component: Home
+        redirect: '/violation'
     },
     {
         path: '/login',
@@ -48,10 +48,7 @@ const routes = [
         path: '/violation',
         component: ViolationManagement
     },
-    {
-        path: '/violation/history',
-        component: ViolationHistory
-    },
+
     {
         path: '/post',
         component: PostManagement
