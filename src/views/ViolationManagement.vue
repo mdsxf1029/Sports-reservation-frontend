@@ -35,10 +35,11 @@
                 <td>{{ user.venue }}</td>
                 <td>{{ user.timeSlot }}</td>
                 <td>
-                  <router-link
+                  <a
+                    href="#"
                     class="action-link"
-                    :to="{ path: '/violation/history', query: { userId: user.userId } }"
-                  >历史违约记录</router-link>
+                    @click.prevent="showViolationHistory(user)"
+                  >历史违约记录</a>
                   <a
                     href="#"
                     class="action-link"
@@ -85,6 +86,46 @@
         </div>
       </div>
     </div>
+
+    <!-- 历史违约记录弹窗 -->
+    <el-dialog
+      v-model="historyDialogVisible"
+      :title="`${selectedUser?.userName || ''} 的历史违约记录`"
+      width="800px"
+      :close-on-click-modal="false"
+    >
+      <div v-if="selectedUser">
+        <div class="history-table-wrapper">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>违约时间</th>
+                <th>违约原因</th>
+                <th>场馆</th>
+                <th>时间段</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(record, index) in userViolationHistory" :key="record.id">
+                <td>{{ index + 1 }}</td>
+                <td>{{ record.date }}</td>
+                <td>{{ record.reason }}</td>
+                <td>{{ record.venue }}</td>
+                <td>{{ record.timeSlot }}</td>
+                <td>
+                  <span :class="getStatusClass(record.status)">{{ getStatusText(record.status) }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-if="userViolationHistory.length === 0" class="no-data">
+          该用户暂无违约记录
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -96,6 +137,9 @@ export default {
   data() {
     return {
       currentTab: 'violation',
+      historyDialogVisible: false,
+      selectedUser: null,
+      userViolationHistory: [],
       users: [
         {
           userName: "夏浩博",
@@ -131,6 +175,43 @@ export default {
     removeFromBlacklist(user) {
       user.isBlacklisted = false;
       user.blacklistTimestamp = null;
+    },
+    showViolationHistory(user) {
+      this.selectedUser = user;
+      this.historyDialogVisible = true;
+      this.loadUserViolationHistory(user.userId);
+    },
+    loadUserViolationHistory(userId) {
+      // 模拟从API获取用户的历史违约记录
+      // 这里可以根据实际的API调用替换
+      const mockHistory = {
+        "123456": [
+          { id: 1, date: "2024-01-01", reason: "未签到", venue: "乒乓球馆", timeSlot: "8:00-9:00", status: "confirmed" },
+          { id: 2, date: "2024-01-15", reason: "迟到", venue: "篮球馆", timeSlot: "14:00-15:00", status: "confirmed" }
+        ],
+        "654321": [
+          { id: 3, date: "2024-02-15", reason: "迟到", venue: "羽毛球馆", timeSlot: "9:00-10:00", status: "confirmed" },
+          { id: 4, date: "2024-03-01", reason: "未到场", venue: "乒乓球馆", timeSlot: "16:00-17:00", status: "pending" }
+        ]
+      };
+      
+      this.userViolationHistory = mockHistory[userId] || [];
+    },
+    getStatusText(status) {
+      const statusMap = {
+        'pending': '待确认',
+        'confirmed': '已确认',
+        'appealed': '已申诉'
+      };
+      return statusMap[status] || '未知';
+    },
+    getStatusClass(status) {
+      const classMap = {
+        'pending': 'status-pending',
+        'confirmed': 'status-confirmed',
+        'appealed': 'status-appealed'
+      };
+      return classMap[status] || '';
     }
   }
 };
@@ -142,10 +223,60 @@ export default {
 <style scoped>
 .page-layout {
   display: flex;
+  flex-direction: row;
+  min-height: 100vh;
 }
 .page-content {
   flex: 1;
-  padding: 0;
+  padding: 20px;
   background: #fff;
+  margin-left: 180px;
+}
+
+/* 历史违约记录弹窗样式 */
+.history-table-wrapper {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.history-table th,
+.history-table td {
+  border: 1px solid #eee;
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.history-table th {
+  background: #fafafa;
+  font-weight: bold;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-size: 16px;
+}
+
+.status-pending {
+  color: #e6a23c;
+  font-weight: bold;
+}
+
+.status-confirmed {
+  color: #f56c6c;
+  font-weight: bold;
+}
+
+.status-appealed {
+  color: #409eff;
+  font-weight: bold;
 }
 </style>

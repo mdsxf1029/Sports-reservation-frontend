@@ -91,10 +91,13 @@ export default {
 <style scoped>
 .page-layout {
   display: flex;
+  flex-direction: row;
+  min-height: 100vh;
 }
 .page-content {
   flex: 1;
-  padding: 0;
+  padding: 20px;
   background: #fff;
+  margin-left: 180px;
 }
 </style>
