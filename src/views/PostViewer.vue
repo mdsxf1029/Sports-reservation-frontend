@@ -98,63 +98,58 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+// 去除了原来的模拟数据
+/* 以下是首页跳转测试新增，别管我 */
+// 1. 引入需要的 Vue API 和路由功能
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+// 引入我们刚刚创建的 API 函数
+import { fetchPostById } from '../utils/api.js';
+
+// 2. 定义 Props 来接收从路由传递过来的 postId
+const props = defineProps({
+  postId: {
+    type: [String, Number],
+    required: true
+  }
+});
 
 const router = useRouter();
 
-// 模拟当前用户数据
-const currentUser = ref({
-  avatar: 'https://example.com/author-avatar.jpg',
-  user_name: '当前用户'
-});
+// 3. 初始化组件的状态
+const isLoading = ref(true); // 新增：用于控制加载状态
+const post = ref({ author: {} }); // 初始化 post 对象，防止模板在加载时报错
+const comments = ref([]); // 初始化 comments 数组
 
-// 模拟帖子数据
-const post = ref({
-  title: '这是帖子的标题',
-  content: '这是帖子的正文内容，这里可以是关于运动场地预约的相关信息等。',
-  author: {
-    avatar: 'https://th.bing.com/th/id/OIP.JCEcaQJVR_vC2kgt6BGZlAAAAA?w=216&h=220&c=7&r=0&o=7&dpr=1.8&pid=1.7&rm=3', // 替换为实际的头像链接
-    user_name: '作者昵称'
+// 4. 在组件挂载后，执行数据获取操作
+onMounted(async () => {
+  try {
+    // 调用 API，传入 props.postId
+    const response = await fetchPostById(props.postId);
+
+    if (response.data && response.data.code === 200) {
+      // 5. 用从 API 获取的数据来更新组件状态
+      const postData = response.data.data;
+      post.value = postData.post;
+      comments.value = postData.comments;
+
+      // 也可以用API返回的数据初始化点赞和收藏状态
+      isLiked.value = postData.currentUserInteraction.hasLiked;
+      isFavorited.value = postData.currentUserInteraction.hasCollected;
+      like_count.value = postData.post.stats.likeCount;
+      collection_count.value = postData.post.stats.collectionCount;
+      
+    } else {
+      console.error("获取帖子详情失败:", response.data.message);
+      // 这里可以加入一些错误处理逻辑，比如跳转到错误页面
+    }
+  } catch (error) {
+    console.error("请求帖子详情时发生错误:", error);
+  } finally {
+    isLoading.value = false; // 无论成功或失败，最后都结束加载状态
   }
 });
-
-// 模拟评论数据
-const comments = ref([
-  {
-    content: '这条帖子很有用！',
-    author: {
-      avatar: 'https://th.bing.com/th/id/OIP.JCEcaQJVR_vC2kgt6BGZlAAAAA?w=216&h=220&c=7&r=0&o=7&dpr=1.8&pid=1.7&rm=3', // 替换为实际的头像链接
-      user_name: '评论者1'
-    },
-    isLiked: false,
-    isDisliked: false,
-    like_count: 0,
-    dislike_count: 0
-  },
-  {
-    content: '希望能有更多场地信息。',
-    author: {
-      avatar: 'https://th.bing.com/th/id/OIP.JCEcaQJVR_vC2kgt6BGZlAAAAA?w=216&h=220&c=7&r=0&o=7&dpr=1.8&pid=1.7&rm=3', // 替换为实际的头像链接
-      user_name: '评论者2'
-    },
-    isLiked: false,
-    isDisliked: false,
-    like_count: 0,
-    dislike_count: 0
-  },
-  {
-    content: '感谢分享！',
-    author: {
-      avatar: 'https://th.bing.com/th/id/OIP.JCEcaQJVR_vC2kgt6BGZlAAAAA?w=216&h=220&c=7&r=0&o=7&dpr=1.8&pid=1.7&rm=3', // 替换为实际的头像链接
-      user_name: '评论者3'
-    },
-    isLiked: false,
-    isDisliked: false,
-    like_count: 0,
-    dislike_count: 0
-  }
-]);
+/* 社区首页跳转测试新增到此结束 */
 
 // 返回按钮事件
 const handleBack = () => {
@@ -662,5 +657,13 @@ const handleCommentDislike = (index) => {
   .footer-content {
     width: 95%; /* 小屏幕时浏览区占95%宽度 */
   }
+}
+
+/* 测试新增（别管我）：加载状态的样式 */
+.loading-state {
+  text-align: center;
+  padding: 100px 20px;
+  font-size: 18px;
+  color: #888;
 }
 </style>

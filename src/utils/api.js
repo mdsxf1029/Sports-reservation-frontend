@@ -52,23 +52,32 @@ export function loginUser(credentials) {
   return instance.post('/api/auth/login', credentials);
 }
 
-// 上传头像
+// 上传头像（注册时无需token，登录后需要token）
 export function uploadAvatar(formData) {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'multipart/form-data'
+  };
+  
+  // 如果有token就添加到headers中
+  if (token) {
+    headers['token'] = token;
+  }
+  
   return instance.post('/api/upload/avatar', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+    headers: headers
   });
-}
-
-// 获取用户头像 用户头像可以公开获取 不用token
-export function getAvatar(userId) { 
-  return instance.get(`/api/user/${userId}/avatar`,userId);
 }
 
 // 获取用户信息 用于个人中心
 export function getUserInfo(userId) {
   const token = localStorage.getItem('token');
+  
+  // 如果没有token，抛出错误
+  if (!token) {
+    return Promise.reject(new Error('用户未登录，无法获取用户信息'));
+  }
+  
   return instance.get(`/api/user/${userId}`, {
     headers: {
       'token': token
@@ -161,11 +170,23 @@ export const fetchMyCollectedPosts = (params) => {
   });
 };
 
+// 举报社区帖子
+export const reportCommunityPost = (postId, data) => {
+  return instance.post(`/api/community/posts/${postId}/report`, data);
+};
+
+// 获取帖子详情页
+export const fetchPostById = (postId) => {
+  return instance.get(`/api/community/posts/${postId}`);
+};
+
 // 获取订单详情（根据预约 ID）
 export const fetchOrderDetail = (appointmentId) => {
   /*return instance.get(`/api/appointments/${appointmentId}`);*/
   return axios.get(`http://127.0.0.1:4523/m1/6319279-6014567-default/api/appointments/1`);
 };
+
+
 
 // 获取预约是否成功信息
 export const fetchConfirmInfo = (appointmentId) => {

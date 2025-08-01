@@ -1,20 +1,30 @@
-<!-- src/components/TopNavbar.vue -->
 <template>
     <div class="top-navbar">
-        <el-icon class="back-icon" @click="goBack"><ArrowLeft /></el-icon>
+        <!-- 自定义 SVG 加粗箭头 -->
+        <div class="back-icon" @click="goBack">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                 xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18L9 12L15 6"
+                      stroke="black"
+                      stroke-width="3.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round" />
+            </svg>
+        </div>
+
+        <!-- 标题 -->
         <span class="title">{{ title }}</span>
     </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-import { ArrowLeft } from '@element-plus/icons-vue'
-defineProps({ title: String })
+    import { useRouter } from 'vue-router'
+    defineProps({ title: String })
 
-const router = useRouter()
-function goBack() {
-  router.back()
-}
+    const router = useRouter()
+    function goBack() {
+        router.back()
+    }
 </script>
 
 <style scoped>
@@ -32,8 +42,12 @@ function goBack() {
     .back-icon {
         margin-right: 12px;
         cursor: pointer;
-        font-size: 20px;
-        color: #409EFF;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        transform: translateY(-2px);
     }
 
     .title {

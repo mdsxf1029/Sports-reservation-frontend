@@ -1,5 +1,12 @@
+帖子管理第二版
+1839721
+src\views\PostManagement.vue
+@@ -1,68 +1,223 @@
 <template>
-  <div class="post-management-container">
+  <div class="page-layout">
+    <AdminSidebarMenu />
+    <div class="page-content">
+      <div class="post-management-container">
     <el-tabs v-model="activeTab">
       <el-tab-pane label="待审核帖子" name="pending">
         <el-table :data="pendingPosts" v-loading="postLoading" style="width: 100%">
@@ -41,6 +48,8 @@
         <el-button type="primary" @click="dialogVisible = false">关 闭</el-button>
       </template>
     </el-dialog>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -50,8 +59,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 // 导入所有需要的API函数
 import { getPendingPosts, approvePost, rejectPost, getPendingReports, processReport } from '../utils/api';
 import '../styles/post-management.css';
-
-
+import AdminSidebarMenu from '../components/AdminSidebarMenu.vue';
 
 const activeTab = ref('pending'); 
 
@@ -203,7 +211,20 @@ watch(activeTab, (newTab) => {
 
 </script>
 
+<style src="../styles/admin-sidebar.css"></style>
 <style scoped>
+.page-layout {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+}
+.page-content {
+  flex: 1;
+  padding: 20px;
+  background: #fff;
+  margin-left: 180px;
+}
+
 .post-content-display {
   max-height: 60vh;
   overflow-y: auto;

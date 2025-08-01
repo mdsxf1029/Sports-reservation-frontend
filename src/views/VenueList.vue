@@ -1,32 +1,32 @@
 <template>
+    <!-- 顶部导航栏 -->
+    <HeaderNavbar />
     <div class="venue-list-page">
-        <!-- ✅ 顶部导航栏组件 -->
-        <TopNavbar title="运动场地预约" />
-
-        <!-- 顶部横幅图 -->
-        <div class="banner">
-            <img :src="bannerImg" alt="banner" />
-        </div>
-
-        <!-- 顶部筛选 -->
+        <!-- 筛选区域 -->
         <div class="filter-bar">
-            <h3>个人预约</h3>
-            <div class="filter-options">
-                <div class="filter-group">
-                    <span class="label">校区：</span>
+            <h3 class="section-title">个人预约</h3>
+
+            <!-- 校区筛选 -->
+            <div class="filter-group">
+                <span class="label">校区：</span>
+                <div class="button-group">
                     <el-button v-for="campus in campuses"
                                :key="campus"
-                               :type="selectedCampus === campus ? 'primary' : 'default'"
+                               :class="['filter-btn', selectedCampus === campus ? 'active' : '']"
                                size="small"
                                @click="selectedCampus = campus">
                         {{ campus }}
                     </el-button>
                 </div>
-                <div class="filter-group">
-                    <span class="label">类型：</span>
+            </div>
+
+            <!-- 类型筛选 -->
+            <div class="filter-group">
+                <span class="label">类型：</span>
+                <div class="button-group">
                     <el-button v-for="type in types"
                                :key="type"
-                               :type="selectedType === type ? 'primary' : 'default'"
+                               :class="['filter-btn', selectedType === type ? 'active' : '']"
                                size="small"
                                @click="selectedType = type">
                         {{ type }}
@@ -42,9 +42,7 @@
                           placeholder="请输入场馆名称或运动类型名称"
                           class="search-input"
                           clearable />
-                <el-button type="primary" icon="el-icon-search" @click="doSearch">
-                    搜索
-                </el-button>
+                <el-button class="search-btn" @click="doSearch">搜索</el-button>
             </div>
         </div>
 
@@ -53,44 +51,46 @@
             <div v-for="venue in venues"
                  :key="venue.id"
                  class="venue-card">
-
                 <img :src="venue.image" class="venue-img" />
                 <div class="venue-info">
                     <h4>{{ venue.name }}</h4>
-                    <p>地址：{{ venue.address }}</p>
+                    <p class="ellipsis">地址：{{ venue.address }}</p>
                     <p>时间：{{ venue.hours }}</p>
                 </div>
-                <el-button class="reserve-btn" type="primary" size="small" @click="goToDetail(venue.id)">预约</el-button>
+                <el-button class="reserve-btn" size="small" @click="goToDetail(venue.id)">预约</el-button>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-    import { ref, computed, onMounted, watch } from 'vue'
-    import { useRoute, useRouter } from 'vue-router'
-    import axios from 'axios'
+    import { ref, onMounted, watch } from 'vue'
+    import { useRouter } from 'vue-router'
+    import { ArrowLeft } from '@element-plus/icons-vue'
     import TopNavbar from '../components/TopNavbar.vue'
+    import axios from 'axios'
 
-    const route = useRoute()
     const router = useRouter()
 
-    // ✅ banner 图
-    const bannerImg = new URL('../assets/photos/tongji.png', import.meta.url).href
-
-    // ✅ 筛选选项
     const campuses = ['全部', '四平校区', '彰武校区', '嘉定校区', '沪西校区', '南校区']
     const types = ['全部', '羽毛球', '乒乓球', '网球', '健身', '足球', '田径', '排球', '篮球', '拳操']
-
-    // ✅ 筛选状态
     const selectedCampus = ref('全部')
-    const selectedType = ref(route.query.sport || '全部')
+    const selectedType = ref('羽毛球')
     const searchQuery = ref('')
-
-    // ✅ 场馆数据
     const venues = ref([])
 
-    // ✅ 从后端加载场馆列表（支持筛选/搜索）
+    function goBack() {
+        router.back()
+    }
+
+    function goToDetail(id) {
+        router.push(`/venue/${id}`)
+    }
+
+    function doSearch() {
+        loadVenues()
+    }
+
     async function loadVenues() {
         try {
             const res = await axios.get('https://m1.apifoxmock.com/m1/6792249-6505029-default/api/venues1', {
@@ -103,75 +103,110 @@
             if (res.data.code === 200) {
                 venues.value = res.data.data
             }
-        } catch (error) {
-            console.error('加载场馆数据失败', error)
+        } catch (err) {
+            console.error('加载场馆失败', err)
         }
     }
 
-    // ✅ 搜索按钮点击
-    function doSearch() {
-        loadVenues()
-    }
-
-    // ✅ 页面初始化加载一次
-    onMounted(() => {
-        loadVenues()
-    })
-
-    // ✅ 当筛选项变化时自动重新加载
+    onMounted(loadVenues)
     watch([selectedCampus, selectedType], loadVenues)
-
-    // ✅ 跳转详情
-    function goToDetail(id) {
-        router.push(`/venue/${id}`)
-    }
 </script>
-
 
 <style scoped>
     .venue-list-page {
-        padding: 20px;
+        padding: 20px 40px 40px 80px; /* 顶部预留导航栏高度 + 左侧留白 */
     }
 
-    .banner img {
-        width: 100%;
-        height: 200px;
-        object-fit: cover;
-        margin-bottom: 20px;
+    .back-icon {
+        margin-right: 12px;
+        cursor: pointer;
+        font-size: 20px;
+        color: black;
+    }
+
+    .title {
+        flex: 1;
+    }
+
+    .section-title {
+        font-size: 20px;
+        margin-bottom: 16px;
     }
 
     .filter-bar {
-        margin-bottom: 15px;
+        margin-bottom: 24px;
     }
 
     .filter-group {
-        margin: 10px 0;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
     }
 
     .label {
-        margin-right: 8px;
+        margin-right: 12px;
         font-weight: bold;
+        min-width: 50px;
     }
 
+    .button-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    /* 筛选按钮样式 */
+    ::v-deep(.filter-btn) {
+        border-radius: 20px;
+        padding: 6px 18px;
+        font-size: 14px;
+        background-color: transparent;
+        border: none;
+        color: #666;
+        transition: all 0.2s;
+    }
+
+    ::v-deep(.filter-btn.active) {
+        background-color: #0070C0;
+        color: white;
+        border: none;
+    }
+
+    ::v-deep(.filter-btn:hover) {
+        background-color: #e5efff;
+        color: #0070C0;
+    }
+
+    /* 搜索区域 */
     .search-section {
-        margin: 20px 0;
+        margin: 24px 0;
         max-width: 500px;
     }
 
     .search-input-group {
         display: flex;
-        gap: 8px;
+        gap: 10px;
     }
 
+    .search-btn {
+        border-radius: 20px;
+        padding: 6px 20px;
+        font-size: 14px;
+        background-color: #0070C0;
+        color: white;
+        border: none;
+    }
+
+    /* 场馆卡片 */
     .venue-card-list {
         display: flex;
         flex-wrap: wrap;
-        gap: 20px;
+        gap: 24px;
     }
 
     .venue-card {
         width: 280px;
-        border-radius: 8px;
+        border-radius: 10px;
         background-color: #fff;
         overflow: hidden;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
@@ -190,12 +225,19 @@
     }
 
         .venue-info h4 {
-            margin: 0 0 5px;
+            margin: 0 0 6px;
+            font-size: 16px;
         }
 
     .reserve-btn {
         position: absolute;
         bottom: 10px;
         right: 10px;
+        border-radius: 20px;
+        padding: 6px 20px;
+        font-size: 14px;
+        background-color: #0070C0;
+        color: white;
+        border: none;
     }
 </style>
