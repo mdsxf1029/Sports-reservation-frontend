@@ -2,92 +2,63 @@
   <div class="page-layout">
     <AdminSidebarMenu />
     <div class="page-content">
-      <div class="tab-menu">
-        <span
-          :class="{active: currentTab==='violation'}"
-          @click="currentTab='violation'"
-        >用户违约记录</span>
-        <span
-          :class="{active: currentTab==='blacklist'}"
-          @click="currentTab='blacklist'"
-        >黑名单管理</span>
-      </div>
-      <div v-if="currentTab==='violation'">
-        <div class="table-wrapper">
-          <table class="main-table">
-            <thead>
-              <tr>
-                <th>序号</th>
-                <th>用户名</th>
-                <th>用户ID</th>
-                <th>违约原因</th>
-                <th>预约场馆</th>
-                <th>预约时间段</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(user, index) in users" :key="user.userId">
-                <td>{{ index + 1 }}</td>
-                <td>{{ user.userName }}</td>
-                <td>{{ user.userId }}</td>
-                <td>{{ user.violationReason }}</td>
-                <td>{{ user.venue }}</td>
-                <td>{{ user.timeSlot }}</td>
-                <td>
+      <div class="post-management-container">
+        <el-tabs v-model="currentTab">
+          <el-tab-pane label="用户违约记录" name="violation">
+            <el-table :data="users" style="width: 100%">
+              <el-table-column type="index" label="序号" width="80" />
+              <el-table-column prop="userName" label="用户名" />
+              <el-table-column prop="userId" label="用户ID" />
+              <el-table-column prop="violationReason" label="违约原因" />
+              <el-table-column prop="venue" label="预约场馆" />
+              <el-table-column prop="timeSlot" label="预约时间段" />
+              <el-table-column label="操作" width="250">
+                <template #default="scope">
+                  <div class="action-cell">
+                    <a
+                    href="#"
+                    class="action-link"
+                    @click.prevent="showViolationHistory(scope.row)"
+                    >历史违约记录</a>
+                    <a
+                      href="#"
+                      class="action-link"
+                      v-if="!scope.row.isBlacklisted"
+                      @click.prevent="addToBlacklist(scope.row)"
+                    >加入黑名单</a>
+                    <span v-else class="status-text">已在黑名单</span>
+                  </div>
+                 
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-tab-pane>
+          
+          <el-tab-pane label="黑名单管理" name="blacklist">
+            <el-table :data="blacklistUsers" style="width: 100%">
+              <el-table-column type="index" label="序号" width="80" />
+              <el-table-column prop="userName" label="用户名" />
+              <el-table-column prop="userId" label="用户ID" />
+              <el-table-column label="黑名单时间">
+                 <template #default="scope">
+                  {{ formatDate(scope.row.blacklistTimestamp) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="操作">
+                <template #default="scope">
                   <a
                     href="#"
                     class="action-link"
-                    @click.prevent="showViolationHistory(user)"
-                  >历史违约记录</a>
-                  <a
-                    href="#"
-                    class="action-link"
-                    v-if="!user.isBlacklisted"
-                    @click.prevent="addToBlacklist(user)"
-                  >加入黑名单</a>
-                  <span v-else class="blacklist-time"
-                    >黑名单时间：{{ formatDate(user.blacklistTimestamp) }}</span
-                  >
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div v-else>
-        <div class="table-wrapper">
-          <table class="main-table">
-            <thead>
-              <tr>
-                <th>序号</th>
-                <th>用户名</th>
-                <th>用户ID</th>
-                <th>黑名单时间</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(user, index) in users.filter(u=>u.isBlacklisted)" :key="user.userId">
-                <td>{{ index + 1 }}</td>
-                <td>{{ user.userName }}</td>
-                <td>{{ user.userId }}</td>
-                <td>{{ formatDate(user.blacklistTimestamp) }}</td>
-                <td>
-                  <a
-                    href="#"
-                    class="action-link"
-                    @click.prevent="removeFromBlacklist(user)"
+                    @click.prevent="removeFromBlacklist(scope.row)"
                   >移除黑名单</a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-tab-pane>
+        </el-tabs>
       </div>
     </div>
 
-    <!-- 历史违约记录弹窗 -->
     <el-dialog
       v-model="historyDialogVisible"
       :title="`${selectedUser?.userName || ''} 的历史违约记录`"
@@ -125,12 +96,17 @@
           该用户暂无违约记录
         </div>
       </div>
+      <template #footer>
+        <el-button type="primary" @click="historyDialogVisible = false">关 闭</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script>
 import AdminSidebarMenu from '../components/AdminSidebarMenu.vue'
+import { ElMessage, ElMessageBox } from 'element-plus';
+
 export default {
   name: "ViolationManagement",
   components: { AdminSidebarMenu },
@@ -162,6 +138,11 @@ export default {
       ]
     };
   },
+  computed: {
+    blacklistUsers() {
+      return this.users.filter(u => u.isBlacklisted);
+    }
+  },
   methods: {
     formatDate(timestamp) {
       if (!timestamp) return "";
@@ -169,12 +150,26 @@ export default {
       return date.toLocaleDateString();
     },
     addToBlacklist(user) {
-      user.isBlacklisted = true;
-      user.blacklistTimestamp = new Date().toISOString();
+       ElMessageBox.confirm(`确定要将用户【${user.userName}】加入黑名单吗？`, '确认操作', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }).then(() => {
+        user.isBlacklisted = true;
+        user.blacklistTimestamp = new Date().toISOString();
+        ElMessage.success('已加入黑名单');
+      }).catch(()=>{/* 管理员取消 */});
     },
     removeFromBlacklist(user) {
-      user.isBlacklisted = false;
-      user.blacklistTimestamp = null;
+       ElMessageBox.confirm(`确定要将用户【${user.userName}】从黑名单移除吗？`, '确认操作', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info',
+      }).then(() => {
+        user.isBlacklisted = false;
+        user.blacklistTimestamp = null;
+        ElMessage.success('已从黑名单移除');
+      }).catch(()=>{/* 管理员取消 */});
     },
     showViolationHistory(user) {
       this.selectedUser = user;
@@ -219,6 +214,7 @@ export default {
 
 <style src="../styles/admin-sidebar.css"></style>
 <style src="../styles/violation.css"></style>
+<style src="../styles/post-management.css"></style>
 
 <style scoped>
 .page-layout {
@@ -278,5 +274,15 @@ export default {
 .status-appealed {
   color: #409eff;
   font-weight: bold;
+}
+
+.action-cell {
+  display: flex;
+  align-items: center; 
+}
+
+.status-text {
+  color: #909399;
+  font-size: 16px; 
 }
 </style>
