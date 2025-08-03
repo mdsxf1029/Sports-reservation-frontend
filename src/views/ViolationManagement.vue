@@ -1,8 +1,9 @@
 <template>
   <div class="page-layout">
-    <AdminSidebarMenu />
+    <AdminMenuBar />
     <div class="page-content">
-      <div class="tab-menu">
+      <div class="content-wrapper">
+        <div class="tab-menu">
         <span
           :class="{active: currentTab==='violation'}"
           @click="currentTab='violation'"
@@ -85,6 +86,7 @@
           </table>
         </div>
       </div>
+      </div>
     </div>
 
     <!-- 历史违约记录弹窗 -->
@@ -130,10 +132,10 @@
 </template>
 
 <script>
-import AdminSidebarMenu from '../components/AdminSidebarMenu.vue'
+import AdminMenuBar from '../components/AdminMenuBar.vue'
 export default {
   name: "ViolationManagement",
-  components: { AdminSidebarMenu },
+  components: { AdminMenuBar },
   data() {
     return {
       currentTab: 'violation',
@@ -223,14 +225,22 @@ export default {
 <style scoped>
 .page-layout {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   min-height: 100vh;
 }
 .page-content {
+  display: flex;
+  flex-direction: row;
   flex: 1;
-  padding: 20px;
   background: #fff;
   margin-left: 180px;
+  margin-top: 60px;
+  padding-top: 20px;
+}
+
+.content-wrapper {
+  flex: 1;
+  padding: 20px;
 }
 
 /* 历史违约记录弹窗样式 */

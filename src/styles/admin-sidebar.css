@@ -4,11 +4,10 @@
   border-right: 2px solid #eee;
   display: flex;
   flex-direction: column;
-  padding-top: 30px;
-  height: 100vh;
+  height: 400px;
   position: fixed;
   left: 0;
-  top: 0;
+  top: 60px;
 }
 .menu-item {
   font-size: 26px;

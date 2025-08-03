@@ -1,6 +1,6 @@
 <template>
   <div class="page-layout">
-    <AdminSidebarMenu />
+    <AdminMenuBar />
     <div class="page-content">
       <div class="venue-management-container">
     <div class="header-controls">
@@ -86,7 +86,7 @@ import { Search } from '@element-plus/icons-vue';
 import { getVenues, createVenue, updateVenue, deleteVenue } from '../utils/api';
 import '../styles/venue-management.css';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import AdminSidebarMenu from '../components/AdminSidebarMenu.vue';
+import AdminMenuBar from '../components/AdminMenuBar.vue';
 
 const searchKeyword = ref('');
 const loading = ref(true);

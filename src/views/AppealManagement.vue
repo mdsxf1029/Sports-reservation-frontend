@@ -1,6 +1,6 @@
 <template>
   <div class="page-layout">
-    <AdminSidebarMenu />
+    <AdminMenuBar />
     <div class="page-content">
       <div>
         <div class="header-row">
@@ -43,12 +43,12 @@
 </template>
 
 <script>
-import AdminSidebarMenu from '../components/AdminSidebarMenu.vue'
+import AdminMenuBar from '../components/AdminMenuBar.vue'
 import '../styles/appeal-management.css';
 
 export default {
   name: "AppealManagement",
-  components: { AdminSidebarMenu },
+  components: { AdminMenuBar },
   data() {
     return {
       appeals: [
