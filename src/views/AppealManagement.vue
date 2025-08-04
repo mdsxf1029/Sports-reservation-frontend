@@ -116,6 +116,8 @@ export default {
   display: flex;
   flex-direction: row;
   min-height: 100vh;
+  padding-top: 50px;
+  padding-left: 15px;
 }
 .page-content {
   flex: 1;

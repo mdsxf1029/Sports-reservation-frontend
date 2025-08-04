@@ -217,7 +217,10 @@ watch(activeTab, (newTab) => {
   display: flex;
   flex-direction: row;
   min-height: 100vh;
+  padding-top: 35px;
+  padding-left: 15px;
 }
+
 .page-content {
   flex: 1;
   padding: 20px;
