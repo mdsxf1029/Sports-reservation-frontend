@@ -10,23 +10,18 @@
       </el-button>
       <div class="title">{{ venueName }}</div>
     </header>
-
+    
     <!-- 主体区域 -->
     <main class="content-wrapper">
       <!-- 中间主要内容 -->
       <section class="main-panel">
         <!-- 日期选择栏 -->
         <div class="date-bar">
-          <div
-            v-for="(date, index) in weekDates"
-            :key="index"
-            :class="['date-item', { selected: index === selectedDate }]"
-            @click="selectedDate = index"
-          >
+          <div v-for="(date, index) in weekDates" :key="index"
+            :class="['date-item', { selected: index === selectedDate }]" @click="selectDate(index)">
             {{ date.dateLabel }}
           </div>
         </div>
-
         <!-- 表格区域 -->
         <div class="court-grid">
           <div class="header-row">
@@ -35,15 +30,10 @@
           </div>
           <div v-for="time in timeSlots" :key="time" class="row">
             <div class="cell time-cell">{{ time }}</div>
-            <div
-              v-for="court in courts"
-              :key="court + time"
-              :class="['cell', getStatusClass(court, time)]"
-              @click="handleClick(court, time)"
-            >🏸</div>
+            <div v-for="court in courts" :key="court + time" :class="['cell', getStatusClass(court, time)]"
+              @click="handleClick(court, time)">🏸</div>
           </div>
         </div>
-
         <!-- 底部栏 -->
         <footer class="footer">
           <div class="summary">
@@ -51,16 +41,9 @@
           </div>
           <el-button class="confirm-btn" type="primary" @click="confirmBooking">确认预约</el-button>
         </footer>
-
         <!-- 弹窗 -->
-        <el-dialog
-          v-model="showPopup"
-          title="选择成功"
-          width="30%"
-          :center="true" 
-          :close-on-click-modal="false"
-          :show-close="false"
-        >
+        <el-dialog v-model="showPopup" title="选择成功" width="30%" :center="true" :close-on-click-modal="false"
+          :show-close="false">
           <div style="display: flex; justify-content: center; margin-bottom: 10px;">
             <el-icon style="font-size: 72px; color: #2C7BE5;">
               <SuccessFilled />
@@ -79,8 +62,9 @@
     </main>
   </div>
 </template>
-
 <script setup>
+
+//console.log('route.query.date =', route.query.date)
 import { ref } from 'vue'
 import { computed } from 'vue'
 import { watch } from 'vue'
@@ -90,21 +74,19 @@ import { useRouter } from 'vue-router'
 import { ArrowLeft, SuccessFilled } from '@element-plus/icons-vue'
 const router = useRouter()
 const route = useRoute()
-
-
 // 拿到前一页传来的球场名称，没有时显示默认
-const venueName = route.query.venueName|| '未知球类场馆'
+const venueName = route.query.venueName || '未知球类场馆'
 
 // 球场和时间段数据
 //const courts = ref([])         
 // 测试：场地列表
-const courts = ref(['场地1', '场地2', '场地3', '场地4','场地5','场地6','小场地1', '小场地2'])
-
+const courts = ref(['场地1', '场地2', '场地3', '场地4', '场地5', '场地6', '小场地1', '小场地2'])
 const timeSlots = ['09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00', '19:00-20:00', '20:00-21:00']
 const weekLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 // 获取今天的日期
 const today = new Date()
 // 生成从今天开始的连续 7 天（包含今天）
+
 const weekDates = Array.from({ length: 7 }, (_, i) => {
   const date = new Date()
   date.setDate(today.getDate() + i)
@@ -117,6 +99,7 @@ const weekDates = Array.from({ length: 7 }, (_, i) => {
     fullDate: `${yyyy}-${mm}-${dd}`   // 用于传后端
   }
 })
+
 const fullDate = computed(() => weekDates[selectedDate.value].fullDate)
 const lockedCells = ref(new Set())
 const selectedDate = ref(1)
@@ -128,14 +111,21 @@ const totalPrice = ref(0)
 const showPopup = ref(false)
 const countdown = ref(5)
 let timer = null
-let orderId = null 
+let orderId = null
+const hasRouteDateHandled = ref(false)
+
+async function selectDate(index) {
+  selectedDate.value = index
+  selectedCells.value.clear()
+  totalPrice.value = 0
+  //await loadLockedCells()
+}
+
 
 // 模拟接口拦截
 const MOCK_MODE = true
-
 if (MOCK_MODE) {
   const mockData = {}  // 模拟数据库
-
   window.fetch = async (url, options) => {
     // GET /api/get-locked-cells?date=XXXX
     if (url.startsWith('/api/get-locked-cells')) {
@@ -145,7 +135,6 @@ if (MOCK_MODE) {
         locked: mockData[date] || []
       }))
     }
-
     // POST /api/check-and-lock
     if (url === '/api/check-and-lock') {
       const body = JSON.parse(options.body)
@@ -164,7 +153,6 @@ if (MOCK_MODE) {
         return new Response(JSON.stringify({ success: true }))
       }
     }
-
     // POST /api/confirm-booking
     if (url === '/api/confirm-booking') {
       const body = JSON.parse(options.body)
@@ -175,12 +163,10 @@ if (MOCK_MODE) {
       }
       return new Response(JSON.stringify({ success: true }))
     }
-
     // 默认返回
     return new Response(JSON.stringify({ success: false, message: 'Unknown API' }))
   }
 }
-
 //用户限制
 async function loadUserLimitStatus() {
   try {
@@ -194,7 +180,6 @@ async function loadUserLimitStatus() {
     alert('加载预约额度失败')
   }
 }
-
 // 场地列表
 async function loadCourtsFromBackend() {
   try {
@@ -209,7 +194,6 @@ async function loadCourtsFromBackend() {
     alert('网络错误，无法加载场地')
   }
 }
-
 // 时间段列表
 async function loadTimeSlotsFromBackend() {
   try {
@@ -224,7 +208,6 @@ async function loadTimeSlotsFromBackend() {
     alert('网络错误，无法加载时间段')
   }
 }
-
 //预约成功弹窗
 function showSuccessPopup() {
   showPopup.value = true
@@ -237,23 +220,20 @@ function showSuccessPopup() {
     }
   }, 1000)
 }
-
 // 跳转到“订单”页面
 function goToOrders() {
   clearInterval(timer)
   showPopup.value = false
   if (orderId) {
-    router.push(`/order/${orderId}`) 
+    router.push(`/order/${orderId}`)
   } else {
     alert('订单号缺失，跳转失败')
   }
 }
-
 // 返回上一页的函数
 function goBack() {
   window.history.back()
 }
-
 //根据“当前格子是否被选中”来返回对应的 CSS 样式类名
 function getStatusClass(court, time) {
   const key = `${court}-${time}`
@@ -282,7 +262,6 @@ function toggleSelect(court, time) {
   remainingHours.value -= 1
   dailyLimit.value -= 1
 }
-
 //点击场地后显示
 function handleClick(court, time) {
   const key = `${court}-${time}`
@@ -292,7 +271,6 @@ function handleClick(court, time) {
   }
   toggleSelect(court, time)
 }
-
 //调用后端接口检查并锁定选中的场地和时间
 /*async function checkAndLock(court, time) {
   const key = `${court}-${time}`
@@ -327,16 +305,14 @@ async function confirmBooking() {
     alert('请先选择时间段')
     return
   }
-
   const selectedList = Array.from(selectedCells.value).map(key => {
     const [court, time] = key.split('-')
     return {
-      venue_id: court, 
+      venue_id: court,
       date: fullDate.value,
       time_slot: time
     }
   })
-
   try {
     const res = await fetch('/api/confirm-booking', {
       method: 'POST',
@@ -347,13 +323,11 @@ async function confirmBooking() {
     if (data.success) {
       // 存下 orderId
       orderId = data.order_id
-
       // 加入 lockedCells
       selectedList.forEach(item => {
         const key = `${item.venue_id}-${item.time_slot}`
         lockedCells.value.add(key)
       })
-
       selectedCells.value.clear()
       totalPrice.value = 0
       showSuccessPopup()
@@ -364,7 +338,6 @@ async function confirmBooking() {
     alert('网络错误，请稍后再试')
   }
 }
-
 //调用后端接口获取指定日期的预约数据
 async function loadLockedCells() {
   const date = fullDate.value
@@ -386,7 +359,6 @@ async function loadLockedCells() {
     alert('网络错误，加载预约信息失败')
   }
 }
-
 //增加监听 selectedDate 变化，加载当天预约
 watch(selectedDate, async (newVal, oldVal) => {
   await loadLockedCells()
@@ -397,12 +369,16 @@ onMounted(async () => {
   console.log('weekDates:', weekDates)
   console.log('selectedDate:', selectedDate.value)
   console.log('courts:', courts.value)
+  if (!hasRouteDateHandled.value && route.query.date) {
+    const index = weekDates.findIndex(d => d.fullDate === route.query.date)
+    selectedDate.value = index !== -1 ? index : 0
+    hasRouteDateHandled.value = true
+  }
   //await loadTimeSlotsFromBackend()   // 加载开放时间段
   //await loadCourtsFromBackend()     // 先加载场地列表
   //await loadLockedCells()           // 然后加载预约信息
 })
 </script>
-
 <style scoped>
 .court-reservation {
   font-family: "Segoe UI", sans-serif;
@@ -477,7 +453,8 @@ onMounted(async () => {
   margin-bottom: 2rem;
 }
 
-.row, .header-row {
+.row,
+.header-row {
   display: flex;
 }
 
@@ -489,7 +466,8 @@ onMounted(async () => {
   border: 1px solid #eee;
 }
 
-.time-header, .time-cell {
+.time-header,
+.time-cell {
   background: #f0f2f5;
   font-weight: 480;
 }
