@@ -1,21 +1,42 @@
 <template>
   <div class="page-layout">
-    <AdminSidebarMenu />
+    <AdminMenuBar />
     <div class="page-content">
-      <div class="post-management-container">
-        <el-tabs v-model="currentTab">
-          <el-tab-pane label="用户违约记录" name="violation">
-            <el-table :data="users" style="width: 100%">
-              <el-table-column type="index" label="序号" width="80" />
-              <el-table-column prop="userName" label="用户名" />
-              <el-table-column prop="userId" label="用户ID" />
-              <el-table-column prop="violationReason" label="违约原因" />
-              <el-table-column prop="venue" label="预约场馆" />
-              <el-table-column prop="timeSlot" label="预约时间段" />
-              <el-table-column label="操作" width="250">
-                <template #default="scope">
-                  <div class="action-cell">
-                    <a
+      <div class="content-wrapper">
+        <div class="tab-menu">
+        <span
+          :class="{active: currentTab==='violation'}"
+          @click="currentTab='violation'"
+        >用户违约记录</span>
+        <span
+          :class="{active: currentTab==='blacklist'}"
+          @click="currentTab='blacklist'"
+        >黑名单管理</span>
+      </div>
+      <div v-if="currentTab==='violation'">
+        <div class="table-wrapper">
+          <table class="main-table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>用户名</th>
+                <th>用户ID</th>
+                <th>违约原因</th>
+                <th>预约场馆</th>
+                <th>预约时间段</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(user, index) in users" :key="user.userId">
+                <td>{{ index + 1 }}</td>
+                <td>{{ user.userName }}</td>
+                <td>{{ user.userId }}</td>
+                <td>{{ user.violationReason }}</td>
+                <td>{{ user.venue }}</td>
+                <td>{{ user.timeSlot }}</td>
+                <td>
+                  <a
                     href="#"
                     class="action-link"
                     @click.prevent="showViolationHistory(scope.row)"
@@ -56,6 +77,7 @@
             </el-table>
           </el-tab-pane>
         </el-tabs>
+      </div>
       </div>
     </div>
 
@@ -104,12 +126,12 @@
 </template>
 
 <script>
-import AdminSidebarMenu from '../components/AdminSidebarMenu.vue'
+import AdminMenuBar from '../components/AdminMenuBar.vue'
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 export default {
   name: "ViolationManagement",
-  components: { AdminSidebarMenu },
+  components: { AdminMenuBar },
   data() {
     return {
       currentTab: 'violation',
@@ -219,14 +241,22 @@ export default {
 <style scoped>
 .page-layout {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   min-height: 100vh;
 }
 .page-content {
+  display: flex;
+  flex-direction: row;
   flex: 1;
-  padding: 20px;
   background: #fff;
   margin-left: 180px;
+  margin-top: 60px;
+  padding-top: 20px;
+}
+
+.content-wrapper {
+  flex: 1;
+  padding: 20px;
 }
 
 /* 历史违约记录弹窗样式 */

@@ -1,6 +1,6 @@
 <template>
   <div class="page-layout">
-    <AdminSidebarMenu />
+    <AdminMenuBar />
     <div class="page-content">
       <div class="post-management-container">
         <el-table :data="appeals" style="width: 100%">
@@ -31,13 +31,13 @@
 </template>
 
 <script>
-import AdminSidebarMenu from '../components/AdminSidebarMenu.vue'
+import AdminMenuBar from '../components/AdminMenuBar.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'; 
 import '../styles/appeal-management.css';
 
 export default {
   name: "AppealManagement",
-  components: { AdminSidebarMenu },
+  components: { AdminMenuBar },
   data() {
     return {
       appeals: [

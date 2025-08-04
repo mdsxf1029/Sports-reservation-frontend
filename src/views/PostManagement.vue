@@ -4,7 +4,7 @@ src\views\PostManagement.vue
 @@ -1,68 +1,223 @@
 <template>
   <div class="page-layout">
-    <AdminSidebarMenu />
+    <AdminMenuBar />
     <div class="page-content">
       <div class="post-management-container">
     <el-tabs v-model="activeTab">
@@ -59,7 +59,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 // 导入所有需要的API函数
 import { getPendingPosts, approvePost, rejectPost, getPendingReports, processReport } from '../utils/api';
 import '../styles/post-management.css';
-import AdminSidebarMenu from '../components/AdminSidebarMenu.vue';
+import AdminMenuBar from '../components/AdminMenuBar.vue';
 
 const activeTab = ref('pending'); 
 
