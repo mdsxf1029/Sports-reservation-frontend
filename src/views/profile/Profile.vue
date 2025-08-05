@@ -18,6 +18,13 @@
                 <div class="desc">{{ userProfile.email || '加载中...' }} | {{ getRoleText(userProfile.role) || '加载中...' }}</div>
             </div>
             <button class="edit-btn" @click="editProfile">编辑个人资料</button>
+            <button 
+              v-if="['admin', 'manager'].includes(userProfile.role)" 
+              class="edit-btn" 
+              @click="goToAdmin"
+            >
+              进入后台
+            </button>
         </div>
     </div>
     <!-- Tab栏 -->
@@ -71,16 +78,12 @@
                 <div class="info-item">
                   <label>所在地区：</label>
                   <span>{{ userProfile.region || '未设置' }}</span>
-                </div>
-                <div class="info-item">
-                  <label>用户角色：</label>
-                  <span>{{ getRoleText(userProfile.role) }}</span>
-                </div>
+                </div>                
                 <div class="info-item">
                   <label>注册时间：</label>
                   <span>{{ formatDate(userProfile.register_time) || '未知' }}</span>
                 </div>
-                <div class="info-item">
+                <div v-if="userProfile.role === 'normal'" class="info-item">
                   <label>当前积分：</label>
                   <span class="points-highlight">{{ userProfile.points || 0 }}</span>
                 </div>
@@ -981,6 +984,11 @@ export default {
     handleAvatarError(event) {
       console.error('头像加载失败，使用默认头像URL') 
       event.target.src = 'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png'
+    },
+
+    // 跳转到管理后台
+    goToAdmin() {
+      this.$router.push('/venue')
     }
   }
 }
@@ -1174,8 +1182,9 @@ export default {
 /* 信息网格布局 */
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 12px; /* 从16px减少到12px */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* 增加最小宽度 */
+  gap: 20px; /* 增加间距 */
+  row-gap: 16px; /* 行间距稍小一些 */
 }
 
 .info-item {
