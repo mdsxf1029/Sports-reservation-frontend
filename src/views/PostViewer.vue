@@ -167,10 +167,6 @@
 </template>
 
 <script setup>
-<<<<<<< Updated upstream
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-=======
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { fetchPostById } from '../utils/api.js';
@@ -184,7 +180,6 @@ const props = defineProps({
     required: true
   }
 });
->>>>>>> Stashed changes
 
 // 状态初始化
 const isLoading = ref(true);
@@ -195,7 +190,6 @@ const currentUser = ref({
   user_name: '当前用户'
 });
 
-<<<<<<< Updated upstream
 // 模拟当前用户数据
 const currentUser = ref({
   avatar: 'https://example.com/author-avatar.jpg',
@@ -248,7 +242,7 @@ const comments = ref([
     dislike_count: 0
   }
 ]);
-=======
+
 // 折叠相关状态
 const isCommentsExpanded = ref(false);
 
@@ -430,7 +424,6 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
->>>>>>> Stashed changes
 
 // 使用模拟数据初始化
 const initWithMockData = () => {

@@ -1,20 +1,10 @@
-
 <template>
-  <el-menu :default-active='activeIndex' class='header-navbar' mode='horizontal' :ellipsis='false'>
+  <el-menu :default-active='activeIndex' class='admin-header-navbar' mode='horizontal' :ellipsis='false'>
     <el-container>
       <h1>
-        <router-link to="/home"  class="title-link">运动场地预约系统</router-link>
+        <router-link to="/admin"  class="title-link">运动场地预约系统 - 管理后台</router-link>
       </h1>
     </el-container>
-    <el-menu-item class="navbar-item" index="1" @click="$router.push('/community')">
-      运动社区
-    </el-menu-item>
-    <el-menu-item class="navbar-item" index="2" @click="$router.push('/news')">
-      运动新闻
-    </el-menu-item>
-    <el-menu-item class="navbar-item" index="3"@click="$router.push('/venuelist')">
-      运动场地预约
-    </el-menu-item>
 
     <div class="flex-grow"/>
 
@@ -53,17 +43,14 @@
       </el-avatar>
       <template #dropdown>
         <el-dropdown-menu>
-          <el-dropdown-item @click="$router.push('/profile')">
-            个人空间
+          <el-dropdown-item @click="$router.push('/admin/profile')">
+            管理员信息
           </el-dropdown-item>
-          <el-dropdown-item @click="$router.push('/login')">
-            登录
-          </el-dropdown-item>
-          <el-dropdown-item @click="$router.push('/register')">
-            注册
+          <el-dropdown-item @click="$router.push('/admin/settings')">
+            系统设置
           </el-dropdown-item>
           <el-dropdown-item @click="logout">
-            退出账号
+            退出登录
           </el-dropdown-item>
         </el-dropdown-menu>
       </template>
@@ -131,20 +118,21 @@ const logout = () => {
   userAvatar.value = ''
   
   // 跳转到登录页面
-  router.push('/home')
+  router.push('/login')
   
   // 可以添加提示消息
   alert('已退出登录')
 }
 
 const handleScroll = () => {
-  const header = document.querySelector('.header-navbar')
+  const header = document.querySelector('.admin-header-navbar')
   if (window.scrollY > 60) {
     header.classList.add('transparent-header')
   } else {
     header.classList.remove('transparent-header')
   }
 }
+
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
   loadUserAvatar() // 组件挂载时加载用户头像
@@ -154,9 +142,11 @@ onMounted(() => {
 watch(() => route.path, () => {
   loadUserAvatar()
 })
+
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
+
 document.addEventListener('DOMContentLoaded', () => {
   const htmlElement = document.documentElement
   const savedTheme = localStorage.getItem('theme')
@@ -167,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     htmlElement.classList.remove('dark')
   }
 })
+
 const toggleDarkMode = () => {
   const htmlElement = document.documentElement
   localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light')
@@ -194,16 +185,18 @@ const toggleDarkMode = () => {
   --header-shadow-color-2: rgba(255, 255, 255, 0.06);
   --header-text-color: #ffffff;
 }
+
 /* 让 header 里的所有文字都用变量色 */
-.header-navbar,
-.header-navbar h1,
-.header-navbar .navbar-item,
-.header-navbar .el-menu-item,
-.header-navbar .el-menu-item.is-active,
-.header-navbar .el-menu-item:hover {
+.admin-header-navbar,
+.admin-header-navbar h1,
+.admin-header-navbar .navbar-item,
+.admin-header-navbar .el-menu-item,
+.admin-header-navbar .el-menu-item.is-active,
+.admin-header-navbar .el-menu-item:hover {
   color: var(--header-text-color) !important;
 }
-.header-navbar {
+
+.admin-header-navbar {
   align-items: center;
   min-width: 1200px;
   background-color: var(--header-background-initial-color);
@@ -249,5 +242,4 @@ h1 {
 .title-link:active {
   color: inherit;           /* 点击时保持原色 */
 }
-
-</style>
+</style> 

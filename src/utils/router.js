@@ -1,26 +1,31 @@
+
 import { createRouter, createWebHistory } from 'vue-router';
 import App from '../App.vue';
+import Home from '../views/Home.vue';
 import OrderDetail from '../views/OrderDetail.vue';
 import VenueManagement from '../views/VenueManagement.vue';
 import ViolationManagement from '../views/ViolationManagement.vue';
 import PostManagement from '../views/PostManagement.vue';
-import PostEditor from '../views/PostEditor.vue';
-import PostViewer from '../views/PostViewer.vue';
 import AppealManagement from '../views/AppealManagement.vue';
-import ViolationHistory from '../views/ViolationHistory.vue';
+
 import Reservation from '../views/Reservation.vue'
 import VenueDetail from '../views/VenueDetail.vue'
+import CommunityHome from '../views/CommunityHome.vue';
+import PostViewer from '../views/PostViewer.vue';
 import Login from '../views/auth/Login.vue';
 import Register from '../views/auth/Register.vue';
 import Profile from '../views/profile/Profile.vue';
 import CourtReservation from '../views/CourtReservation.vue';
+import VenueList from '../views/VenueList.vue';
+import News from '../views/News.vue';
+import PostEditor from '../views/PostEditor.vue';
 
-const Dummy = { template: '<div style="padding:20px;"><h2>ҳ页面建设中...</h2></div>' }
+const Dummy = { template: '<div style="padding:20px;"><h2>页面建设中...</h2></div>' }
 
 const routes = [
     {
         path: '/',
-        component: App
+        redirect: '/home'
     },
     {
         path: '/login',
@@ -32,32 +37,21 @@ const routes = [
     },
     {
         path: '/profile',
+        name: 'Profile',
         component: Profile
     },
     {
         path: '/venue',
         component: VenueManagement
     },
-
     {
         path: '/violation',
         component: ViolationManagement
     },
-    {
-        path: '/violation/history',
-        component: ViolationHistory
-    },
+
     {
         path: '/post',
         component: PostManagement
-    },
-    {
-        path: '/post/posteditor',
-        component: PostEditor
-    },
-    {
-        path: '/post/postviewer',
-        component: PostViewer
     },
     {
         path: '/appeal',
@@ -69,34 +63,58 @@ const routes = [
         component: OrderDetail
     },
     {
-        path: '/reservation',
-        name: 'Reservation',
-        component: Reservation
+        path: '/home',
+        name: 'Home',
+        component: Home
     },
     {
+        path: '/court-reservation',
+        name: 'CourtReservation',
+        component: CourtReservation,
+    },
+    {
+        path: '/reservation',
+        name: 'Reservation',
+        component: Reservation,
+    },
+    {
+        // 社区首页
         path: '/community',
         name: 'Community',
-        component: () => import('../views/CommunityHome.vue')
+        component: CommunityHome
+    },
+    {
+        // 帖子详情页（占位符）
+        path: '/community/post/postviewer:postId',
+        name: 'PostViewer',
+        component: PostViewer,
+        props: true
+    },
+    {
+        path: '/community/posteditor',
+        component: PostEditor
     },
     {
         path: '/news',
         name: 'News',
-        component: Dummy
+        component: News
     },
     {
         path: '/venue/:id',
         component: VenueDetail
     },
-    /*{
-        path: '/test',
-        component: QrCode
-    }*/
+    {
+        path: '/venuelist',
+        component: VenueList
+    },
 ];
 
 
 const router = createRouter({
     history: createWebHistory(),
     routes
+
 });
 
 export default router;
+
