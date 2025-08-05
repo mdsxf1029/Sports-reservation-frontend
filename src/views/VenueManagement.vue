@@ -655,4 +655,6 @@ const resetFilters = () => {
     justify-content: center;
   }
 }
+
+
 </style>
