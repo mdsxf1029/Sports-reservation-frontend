@@ -85,7 +85,7 @@ const routes = [
     },
     {
         // 帖子详情页（占位符）
-        path: '/community/post/postviewer:postId',
+        path: '/community/post/postviewer/:postId',
         name: 'PostViewer',
         component: PostViewer,
         props: true
