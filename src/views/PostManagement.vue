@@ -1,7 +1,3 @@
-帖子管理第二版
-1839721
-src\views\PostManagement.vue
-@@ -1,68 +1,223 @@
 <template>
   <div class="page-layout">
     <AdminHeaderNavbar />
@@ -457,6 +453,7 @@ watch(activeTab, (newTab) => {
   min-height: 100vh;
   background: #f5f5f5;
 }
+
 .page-content {
   padding: 20px;
   background: #fff;

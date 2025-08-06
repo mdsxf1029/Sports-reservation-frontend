@@ -149,6 +149,94 @@
     </div>
 
     <!-- 违约详情对话框 -->
+      <div class="content-wrapper">
+        <div class="tab-menu">
+        <span
+          :class="{active: currentTab==='violation'}"
+          @click="currentTab='violation'"
+        >用户违约记录</span>
+        <span
+          :class="{active: currentTab==='blacklist'}"
+          @click="currentTab='blacklist'"
+        >黑名单管理</span>
+      </div>
+      <div v-if="currentTab==='violation'">
+        <div class="table-wrapper">
+          <table class="main-table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>用户名</th>
+                <th>用户ID</th>
+                <th>违约原因</th>
+                <th>预约场馆</th>
+                <th>预约时间段</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(user, index) in users" :key="user.userId">
+                <td>{{ index + 1 }}</td>
+                <td>{{ user.userName }}</td>
+                <td>{{ user.userId }}</td>
+                <td>{{ user.violationReason }}</td>
+                <td>{{ user.venue }}</td>
+                <td>{{ user.timeSlot }}</td>
+                <td>
+                  <a
+                    href="#"
+                    class="action-link"
+                    @click.prevent="showViolationHistory(user)"
+                  >历史违约记录</a>
+                  <a
+                    href="#"
+                    class="action-link"
+                    v-if="!user.isBlacklisted"
+                    @click.prevent="addToBlacklist(user)"
+                  >加入黑名单</a>
+                  <span v-else class="blacklist-time"
+                    >黑名单时间：{{ formatDate(user.blacklistTimestamp) }}</span
+                  >
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div v-else>
+        <div class="table-wrapper">
+          <table class="main-table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>用户名</th>
+                <th>用户ID</th>
+                <th>黑名单时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(user, index) in users.filter(u=>u.isBlacklisted)" :key="user.userId">
+                <td>{{ index + 1 }}</td>
+                <td>{{ user.userName }}</td>
+                <td>{{ user.userId }}</td>
+                <td>{{ formatDate(user.blacklistTimestamp) }}</td>
+                <td>
+                  <a
+                    href="#"
+                    class="action-link"
+                    @click.prevent="removeFromBlacklist(user)"
+                  >移除黑名单</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <!-- 历史违约记录弹窗 -->
     <el-dialog
       v-model="detailDialogVisible"
       title="违约记录详情"
