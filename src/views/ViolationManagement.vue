@@ -46,10 +46,10 @@
         <!-- 筛选和搜索区域 -->
         <div class="filter-section">
           <div class="filter-left">
-            <el-select v-model="filterStatus" placeholder="违约状态" clearable style="width: 120px; margin-right: 10px;">
+            <el-select v-model="filterStatus" placeholder="处理状态" clearable style="width: 120px; margin-right: 10px;">
               <el-option label="全部" value="" />
-              <el-option label="已确认" value="confirmed" />
-              <el-option label="已申诉" value="appealed" />
+              <el-option label="已确认违约" value="confirmed" />
+              <el-option label="申诉中" value="appeal_pending" />
               <el-option label="申诉通过" value="appeal_approved" />
               <el-option label="申诉被拒" value="appeal_rejected" />
             </el-select>
@@ -59,6 +59,8 @@
               <el-option label="羽毛球馆" value="羽毛球馆" />
               <el-option label="篮球馆" value="篮球馆" />
               <el-option label="健身房" value="健身房" />
+              <el-option label="网球场" value="网球场" />
+              <el-option label="攀岩馆" value="攀岩馆" />
             </el-select>
             <el-date-picker
               v-model="dateRange"
@@ -106,18 +108,10 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="状态" width="120">
+            <el-table-column prop="status" label="处理状态" width="120">
               <template #default="scope">
-                <el-tag :type="getStatusType(scope.row.status)" size="small">
-                  {{ getStatusText(scope.row.status) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="appealStatus" label="申诉状态" width="120">
-              <template #default="scope">
-                <span v-if="scope.row.appealStatus === 'none'">无申诉</span>
-                <el-tag v-else :type="getAppealStatusType(scope.row.appealStatus)" size="small">
-                  {{ getAppealStatusText(scope.row.appealStatus) }}
+                <el-tag :type="getCombinedStatusType(scope.row)" size="small">
+                  {{ getCombinedStatusText(scope.row) }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -210,8 +204,8 @@
             <div class="detail-item">
               <span class="label">申诉状态：</span>
               <span class="value">
-                <el-tag :type="getAppealStatusType(selectedViolation.appealStatus)" size="small">
-                  {{ getAppealStatusText(selectedViolation.appealStatus) }}
+                <el-tag :type="getCombinedStatusType(selectedViolation)" size="small">
+                  {{ getCombinedStatusText(selectedViolation) }}
                 </el-tag>
               </span>
             </div>
@@ -333,6 +327,38 @@ export default {
           rejectReason: "理由不充分，无法证明特殊情况",
           userViolationCount: 1,
           lastViolationTime: ""
+        },
+        {
+          id: 5,
+          userName: "陈华",
+          userId: "987654",
+          violationTime: "2024-01-19 09:00",
+          venue: "网球场",
+          timeSlot: "9:00-10:00",
+          violationType: "late_checkin",
+          status: "confirmed",
+          appealStatus: "none",
+          appealTime: "",
+          appealReason: "",
+          rejectReason: "",
+          userViolationCount: 2,
+          lastViolationTime: "2024-01-15 14:00"
+        },
+        {
+          id: 6,
+          userName: "刘强",
+          userId: "567890",
+          violationTime: "2024-01-20 15:00",
+          venue: "攀岩馆",
+          timeSlot: "15:00-16:00",
+          violationType: "no_checkin",
+          status: "confirmed",
+          appealStatus: "pending",
+          appealTime: "2024-01-20 16:00",
+          appealReason: "设备故障，无法正常使用",
+          rejectReason: "",
+          userViolationCount: 1,
+          lastViolationTime: ""
         }
       ]
     };
@@ -361,7 +387,15 @@ export default {
       
       // 状态筛选
       if (this.filterStatus) {
-        filtered = filtered.filter(v => v.status === this.filterStatus);
+        if (this.filterStatus === 'confirmed') {
+          filtered = filtered.filter(v => v.appealStatus === 'none');
+        } else if (this.filterStatus === 'appeal_pending') {
+          filtered = filtered.filter(v => v.appealStatus === 'pending');
+        } else if (this.filterStatus === 'appeal_approved') {
+          filtered = filtered.filter(v => v.appealStatus === 'approved');
+        } else if (this.filterStatus === 'appeal_rejected') {
+          filtered = filtered.filter(v => v.appealStatus === 'rejected');
+        }
       }
       
       // 场馆筛选
@@ -408,42 +442,30 @@ export default {
       return tagMap[type] || 'info';
     },
     
-    // 状态相关方法
-    getStatusText(status) {
-      const statusMap = {
-        'confirmed': '已确认',
-        'pending': '待确认',
-        'cancelled': '已取消'
-      };
-      return statusMap[status] || '未知';
+    // 综合状态相关方法
+    getCombinedStatusText(violation) {
+      if (violation.appealStatus === 'none') {
+        return '已确认违约';
+      } else if (violation.appealStatus === 'pending') {
+        return '申诉中';
+      } else if (violation.appealStatus === 'approved') {
+        return '申诉通过';
+      } else if (violation.appealStatus === 'rejected') {
+        return '申诉被拒';
+      }
+      return '未知';
     },
-    getStatusType(status) {
-      const typeMap = {
-        'confirmed': 'danger',
-        'pending': 'warning',
-        'cancelled': 'info'
-      };
-      return typeMap[status] || 'info';
-    },
-    
-    // 申诉状态相关方法
-    getAppealStatusText(status) {
-      const statusMap = {
-        'none': '无申诉',
-        'pending': '申诉中',
-        'approved': '申诉通过',
-        'rejected': '申诉被拒'
-      };
-      return statusMap[status] || '未知';
-    },
-    getAppealStatusType(status) {
-      const typeMap = {
-        'none': 'info',
-        'pending': 'warning',
-        'approved': 'success',
-        'rejected': 'danger'
-      };
-      return typeMap[status] || 'info';
+    getCombinedStatusType(violation) {
+      if (violation.appealStatus === 'none') {
+        return 'danger';
+      } else if (violation.appealStatus === 'pending') {
+        return 'warning';
+      } else if (violation.appealStatus === 'approved') {
+        return 'success';
+      } else if (violation.appealStatus === 'rejected') {
+        return 'danger';
+      }
+      return 'info';
     },
     
     // 查看详情
@@ -571,9 +593,19 @@ export default {
 /* 表格区域样式 */
 .table-section {
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.table-section .el-table {
+  width: 100%;
+  max-width: 1200px;
 }
 
 .table-header {
+  width: 100%;
+  max-width: 1200px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -594,6 +626,8 @@ export default {
   padding: 40px;
   color: #999;
   font-size: 16px;
+  width: 100%;
+  max-width: 1200px;
 }
 
 /* 分页样式 */
@@ -601,6 +635,8 @@ export default {
   display: flex;
   justify-content: center;
   margin-top: 20px;
+  width: 100%;
+  max-width: 1200px;
 }
 
 /* 详情对话框样式 */

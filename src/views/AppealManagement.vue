@@ -92,6 +92,15 @@
                     <el-option label="羽毛球馆" value="羽毛球馆" />
                     <el-option label="篮球馆" value="篮球馆" />
                     <el-option label="健身房" value="健身房" />
+                    <el-option label="网球场" value="网球场" />
+                    <el-option label="攀岩馆" value="攀岩馆" />
+                  </el-select>
+                  
+                  <el-select v-model="processorFilter" placeholder="处理人" clearable style="width: 120px; margin-right: 10px;">
+                    <el-option label="全部" value="" />
+                    <el-option label="管理员A" value="管理员A" />
+                    <el-option label="管理员B" value="管理员B" />
+                    <el-option label="管理员C" value="管理员C" />
                   </el-select>
                   
                   <el-input
@@ -116,7 +125,7 @@
                   </el-button>
                 </div>
                 
-                <el-table :data="filteredAppeals" style="width: 100%">
+                <el-table :data="paginatedAppeals" style="width: 100%">
                   <el-table-column type="selection" width="55" />
                   <el-table-column prop="userName" label="用户名" width="120">
                     <template #default="scope">
@@ -148,6 +157,18 @@
                     </template>
                   </el-table-column>
                   <el-table-column prop="appealTime" label="申诉时间" width="180" />
+                  <el-table-column prop="processor" label="处理人" width="120">
+                    <template #default="scope">
+                      <span v-if="scope.row.processor">{{ scope.row.processor }}</span>
+                      <span v-else style="color: #999;">未处理</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="processTime" label="处理时间" width="180">
+                    <template #default="scope">
+                      <span v-if="scope.row.processTime">{{ scope.row.processTime }}</span>
+                      <span v-else style="color: #999;">未处理</span>
+                    </template>
+                  </el-table-column>
                   <el-table-column prop="appealStatus" label="申诉状态" width="120">
                     <template #default="scope">
                       <el-tag :type="getAppealStatusType(scope.row.appealStatus)" size="small">
@@ -198,6 +219,19 @@
                     <el-button type="primary" @click="refreshData">刷新数据</el-button>
                   </el-empty>
                 </div>
+                
+                <!-- 分页 -->
+                <div class="pagination-section" v-if="filteredAppeals.length > 0">
+                  <el-pagination
+                    v-model:current-page="appealCurrentPage"
+                    v-model:page-size="appealPageSize"
+                    :page-sizes="[10, 20, 50, 100]"
+                    :total="filteredAppeals.length"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    @size-change="handleAppealSizeChange"
+                    @current-change="handleAppealCurrentChange"
+                  />
+                </div>
               </div>
             </el-tab-pane>
             
@@ -205,10 +239,16 @@
               <div class="tab-content">
                 <div class="tab-header">
                   <h3>黑名单用户管理</h3>
-                  <el-tag type="danger" size="small">{{ blacklistUsers.length }} 人在黑名单</el-tag>
+                  <div class="header-actions">
+                    <el-tag type="danger" size="small">{{ blacklistUsers.length }} 人在黑名单</el-tag>
+                    <el-button type="danger" size="small" @click="showAddBlacklistDialog">
+                      <el-icon><User /></el-icon>
+                      加入黑名单
+                    </el-button>
+                  </div>
                 </div>
                 
-                <el-table :data="blacklistUsers" style="width: 100%">
+                <el-table :data="paginatedBlacklistUsers" style="width: 100%">
                   <el-table-column type="selection" width="55" />
                   <el-table-column prop="userName" label="用户名" width="120">
                     <template #default="scope">
@@ -254,12 +294,120 @@
                     <el-button type="primary" @click="refreshData">刷新数据</el-button>
                   </el-empty>
                 </div>
+                
+                <!-- 分页 -->
+                <div class="pagination-section" v-if="blacklistUsers.length > 0">
+                  <el-pagination
+                    v-model:current-page="blacklistCurrentPage"
+                    v-model:page-size="blacklistPageSize"
+                    :page-sizes="[10, 20, 50, 100]"
+                    :total="blacklistUsers.length"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    @size-change="handleBlacklistSizeChange"
+                    @current-change="handleBlacklistCurrentChange"
+                  />
+                </div>
               </div>
             </el-tab-pane>
           </el-tabs>
         </div>
       </div>
     </div>
+
+    <!-- 申诉详情查看对话框 -->
+    <el-dialog
+      v-model="detailDialogVisible"
+      title="申诉详情"
+      width="700px"
+      :close-on-click-modal="false"
+    >
+      <div v-if="selectedAppeal" class="appeal-detail">
+        <div class="detail-section">
+          <h4>申诉信息</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="label">用户：</span>
+              <span class="value">{{ selectedAppeal.userName }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">违约时间：</span>
+              <span class="value">{{ selectedAppeal.violationTime }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">预约场馆：</span>
+              <span class="value">{{ selectedAppeal.venue }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">预约时间段：</span>
+              <span class="value">{{ selectedAppeal.timeSlot }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">申诉时间：</span>
+              <span class="value">{{ selectedAppeal.appealTime }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">申诉理由：</span>
+              <span class="value">{{ selectedAppeal.appealReason }}</span>
+            </div>
+            <div class="detail-item" v-if="selectedAppeal.processor">
+              <span class="label">处理人：</span>
+              <span class="value">{{ selectedAppeal.processor }}</span>
+            </div>
+            <div class="detail-item" v-if="selectedAppeal.processTime">
+              <span class="label">处理时间：</span>
+              <span class="value">{{ selectedAppeal.processTime }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">申诉状态：</span>
+              <span class="value">
+                <el-tag :type="getAppealStatusType(selectedAppeal.appealStatus)" size="small">
+                  {{ getAppealStatusText(selectedAppeal.appealStatus) }}
+                </el-tag>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="detailDialogVisible = false">关 闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 加入黑名单对话框 -->
+    <el-dialog
+      v-model="addBlacklistDialogVisible"
+      title="加入黑名单"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="addBlacklistForm" label-width="100px">
+        <el-form-item label="用户名">
+          <el-input v-model="addBlacklistForm.userName" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item label="用户ID">
+          <el-input v-model="addBlacklistForm.userId" placeholder="请输入用户ID" />
+        </el-form-item>
+        <el-form-item label="违约次数">
+          <el-input-number v-model="addBlacklistForm.violationCount" :min="1" :max="99" />
+        </el-form-item>
+        <el-form-item label="加入原因">
+          <el-input 
+            v-model="addBlacklistForm.blacklistReason" 
+            type="textarea" 
+            :rows="3"
+            placeholder="请输入加入黑名单的原因"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="addBlacklistDialogVisible = false">取 消</el-button>
+          <el-button type="danger" @click="confirmAddBlacklist">确 定</el-button>
+        </span>
+      </template>
+    </el-dialog>
 
     <!-- 申诉处理确认对话框 -->
     <el-dialog
@@ -295,6 +443,14 @@
             <div class="detail-item">
               <span class="label">申诉理由：</span>
               <span class="value">{{ selectedAppeal?.appealReason }}</span>
+            </div>
+            <div class="detail-item" v-if="selectedAppeal?.processor">
+              <span class="label">处理人：</span>
+              <span class="value">{{ selectedAppeal?.processor }}</span>
+            </div>
+            <div class="detail-item" v-if="selectedAppeal?.processTime">
+              <span class="label">处理时间：</span>
+              <span class="value">{{ selectedAppeal?.processTime }}</span>
             </div>
           </div>
         </div>
@@ -369,13 +525,30 @@ export default {
     return {
       currentTab: 'pending',
       appealDialogVisible: false,
+      detailDialogVisible: false,
+      addBlacklistDialogVisible: false,
       appealAction: '',
       selectedAppeal: null,
       rejectReason: '',
       
+      // 分页
+      appealCurrentPage: 1,
+      appealPageSize: 20,
+      blacklistCurrentPage: 1,
+      blacklistPageSize: 20,
+      
+      // 加入黑名单表单
+      addBlacklistForm: {
+        userName: '',
+        userId: '',
+        violationCount: 1,
+        blacklistReason: ''
+      },
+      
       // 筛选条件
       appealStatusFilter: '',
       venueFilter: '',
+      processorFilter: '',
       searchKeyword: '',
       
       // 模拟数据 - 待处理申诉
@@ -402,6 +575,30 @@ export default {
           timeSlot: "14:00-15:00",
           appealReason: "家中有急事，申请取消违约",
           appealTime: "2024-01-16 15:00",
+          appealStatus: "pending"
+        },
+        {
+          id: 5,
+          userName: "陈华",
+          userId: "987654",
+          userAvatar: "",
+          violationTime: "2024-01-17 09:00",
+          venue: "网球场",
+          timeSlot: "9:00-10:00",
+          appealReason: "天气原因，场地湿滑，申请取消违约",
+          appealTime: "2024-01-17 10:30",
+          appealStatus: "pending"
+        },
+        {
+          id: 6,
+          userName: "刘强",
+          userId: "567890",
+          userAvatar: "",
+          violationTime: "2024-01-18 15:00",
+          venue: "攀岩馆",
+          timeSlot: "15:00-16:00",
+          appealReason: "设备故障，无法正常使用，申请取消违约",
+          appealTime: "2024-01-18 16:00",
           appealStatus: "pending"
         }
       ],
@@ -433,6 +630,80 @@ export default {
           appealStatus: "rejected",
           processTime: "2024-01-12 11:00",
           processor: "管理员B"
+        },
+        {
+          id: 7,
+          userName: "孙丽",
+          userId: "234567",
+          userAvatar: "",
+          violationTime: "2024-01-13 14:00",
+          venue: "网球场",
+          timeSlot: "14:00-15:00",
+          appealReason: "天气原因，场地湿滑，申请取消违约",
+          appealStatus: "approved",
+          processTime: "2024-01-13 15:30",
+          processor: "管理员A"
+        },
+        {
+          id: 8,
+          userName: "周杰",
+          userId: "456789",
+          userAvatar: "",
+          violationTime: "2024-01-14 16:00",
+          venue: "攀岩馆",
+          timeSlot: "16:00-17:00",
+          appealReason: "设备维护，无法使用，申请取消违约",
+          appealStatus: "approved",
+          processTime: "2024-01-14 17:00",
+          processor: "管理员C"
+        },
+        {
+          id: 9,
+          userName: "吴敏",
+          userId: "567890",
+          userAvatar: "",
+          violationTime: "2024-01-19 10:00",
+          venue: "网球场",
+          timeSlot: "10:00-11:00",
+          appealReason: "天气原因，场地湿滑，申请取消违约",
+          appealStatus: "rejected",
+          processTime: "2024-01-19 11:30",
+          processor: "管理员B"
+        },
+        {
+          id: 10,
+          userName: "陈静",
+          userId: "678901",
+          userAvatar: "",
+          violationTime: "2024-01-20 15:00",
+          venue: "乒乓球馆",
+          timeSlot: "15:00-16:00",
+          appealReason: "身体不适，申请取消违约",
+          appealStatus: "approved",
+          processTime: "2024-01-20 16:00",
+          processor: "管理员A"
+        },
+        {
+          id: 11,
+          userName: "刘伟",
+          userId: "789012",
+          userAvatar: "",
+          violationTime: "2024-01-21 14:00",
+          venue: "羽毛球馆",
+          timeSlot: "14:00-15:00",
+          appealReason: "家中有急事，申请取消违约",
+          appealStatus: "pending"
+        },
+        {
+          id: 12,
+          userName: "孙芳",
+          userId: "890123",
+          userAvatar: "",
+          violationTime: "2024-01-22 09:00",
+          venue: "健身房",
+          timeSlot: "9:00-10:00",
+          appealReason: "设备故障，无法正常使用，申请取消违约",
+          appealStatus: "pending"
         }
       ],
       
@@ -446,6 +717,33 @@ export default {
           violationCount: 3,
           blacklistTime: "2024-01-01 10:00",
           blacklistReason: "连续3次违约，自动加入黑名单"
+        },
+        {
+          id: 2,
+          userName: "李华",
+          userId: "222222",
+          userAvatar: "",
+          violationCount: 5,
+          blacklistTime: "2024-01-05 14:30",
+          blacklistReason: "恶意违约，影响其他用户使用"
+        },
+        {
+          id: 3,
+          userName: "王明",
+          userId: "333333",
+          userAvatar: "",
+          violationCount: 4,
+          blacklistTime: "2024-01-10 09:15",
+          blacklistReason: "多次无故违约，违反使用规定"
+        },
+        {
+          id: 4,
+          userName: "张丽",
+          userId: "444444",
+          userAvatar: "",
+          violationCount: 2,
+          blacklistTime: "2024-01-15 16:45",
+          blacklistReason: "严重违约，造成场地资源浪费"
         }
       ]
     };
@@ -478,6 +776,11 @@ export default {
         allAppeals = allAppeals.filter(a => a.venue === this.venueFilter);
       }
       
+      // 处理人筛选
+      if (this.processorFilter) {
+        allAppeals = allAppeals.filter(a => a.processor === this.processorFilter);
+      }
+      
       // 关键词搜索
       if (this.searchKeyword) {
         const keyword = this.searchKeyword.toLowerCase();
@@ -488,6 +791,20 @@ export default {
       }
       
       return allAppeals;
+    },
+    
+    // 分页后的申诉数据
+    paginatedAppeals() {
+      const start = (this.appealCurrentPage - 1) * this.appealPageSize;
+      const end = start + this.appealPageSize;
+      return this.filteredAppeals.slice(start, end);
+    },
+    
+    // 分页后的黑名单数据
+    paginatedBlacklistUsers() {
+      const start = (this.blacklistCurrentPage - 1) * this.blacklistPageSize;
+      const end = start + this.blacklistPageSize;
+      return this.blacklistUsers.slice(start, end);
     }
   },
   methods: {
@@ -560,11 +877,10 @@ export default {
       return typeMap[status] || 'info';
     },
     
-    // 新增功能
+    // 查看申诉详情
     viewAppealDetail(appeal) {
       this.selectedAppeal = appeal;
-      this.appealAction = '';
-      this.appealDialogVisible = true;
+      this.detailDialogVisible = true;
     },
     
     handleBatchApprove() {
@@ -608,12 +924,64 @@ export default {
     resetFilters() {
       this.appealStatusFilter = '';
       this.venueFilter = '';
+      this.processorFilter = '';
       this.searchKeyword = '';
       ElMessage.success('筛选已重置');
     },
     
     refreshData() {
       ElMessage.success('数据已刷新');
+    },
+    
+    // 加入黑名单相关方法
+    showAddBlacklistDialog() {
+      this.addBlacklistForm = {
+        userName: '',
+        userId: '',
+        violationCount: 1,
+        blacklistReason: ''
+      };
+      this.addBlacklistDialogVisible = true;
+    },
+    
+    confirmAddBlacklist() {
+      if (!this.addBlacklistForm.userName || !this.addBlacklistForm.userId || !this.addBlacklistForm.blacklistReason) {
+        ElMessage.warning('请填写完整信息');
+        return;
+      }
+      
+      const newBlacklistUser = {
+        id: Date.now(), // 临时ID
+        userName: this.addBlacklistForm.userName,
+        userId: this.addBlacklistForm.userId,
+        userAvatar: "",
+        violationCount: this.addBlacklistForm.violationCount,
+        blacklistTime: new Date().toLocaleString(),
+        blacklistReason: this.addBlacklistForm.blacklistReason
+      };
+      
+      this.blacklistUsers.unshift(newBlacklistUser);
+      this.addBlacklistDialogVisible = false;
+      ElMessage.success('已成功加入黑名单');
+    },
+    
+    // 分页处理方法
+    handleAppealSizeChange(val) {
+      this.appealPageSize = val;
+      this.appealCurrentPage = 1;
+    },
+    
+    handleAppealCurrentChange(val) {
+      this.appealCurrentPage = val;
+    },
+    
+    handleBlacklistSizeChange(val) {
+      this.blacklistPageSize = val;
+      this.blacklistCurrentPage = 1;
+    },
+    
+    handleBlacklistCurrentChange(val) {
+      this.blacklistCurrentPage = val;
     }
   }
 };
@@ -750,6 +1118,36 @@ export default {
   gap: 8px;
 }
 
+/* 表格区域样式 */
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tab-content .el-table {
+  width: 100%;
+  max-width: 1200px;
+}
+
+.tab-header {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* 头部操作区域样式 */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* 筛选区域 */
 .filter-section {
   display: flex;
@@ -760,6 +1158,8 @@ export default {
   border-radius: 8px;
   flex-wrap: wrap;
   gap: 10px;
+  width: 100%;
+  max-width: 1200px;
 }
 
 /* 用户信息样式 */
@@ -793,7 +1193,20 @@ export default {
 .no-data {
   text-align: center;
   padding: 40px;
+  width: 100%;
+  max-width: 1200px;
 }
+
+/* 分页样式 */
+.pagination-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+
 
 /* 申诉详情样式 */
 .appeal-detail {
