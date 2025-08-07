@@ -1,6 +1,20 @@
 <template>
     <!-- 顶部导航栏 -->
     <HeaderNavbar />
+    <!-- 登录弹窗 -->
+    <el-dialog v-model="showLoginDialog"
+               title="登录"
+               width="400px"
+               class="login-dialog">
+        <div class="login-content">
+            <img src="@/assets/LogosAndIcons/Tongji.png" alt="login" class="login-img" />
+            <p class="login-text">请先登录后再进行预约操作</p>
+            <el-button type="primary" class="login-btn" @click="login">登录</el-button>
+        </div>
+    </el-dialog>
+
+
+
     <div class="venue-list-page">
         <!-- 筛选区域 -->
         <div class="filter-bar">
@@ -61,6 +75,7 @@
             </div>
         </div>
     </div>
+
 </template>
 
 <script setup>
@@ -69,6 +84,8 @@
     import { ArrowLeft } from '@element-plus/icons-vue'
     import TopNavbar from '../components/TopNavbar.vue'
     import axios from 'axios'
+    import { AuthService } from '@/utils/auth.js' // 路径根据你项目调整
+
 
     const router = useRouter()
 
@@ -78,14 +95,28 @@
     const selectedType = ref('羽毛球')
     const searchQuery = ref('')
     const venues = ref([])
+    const isLoggedIn = ref(false)
+    const showLoginDialog = ref(false)
+
+    function login() {
+        showLoginDialog.value = false
+        router.push('/login')
+    }
+
 
     function goBack() {
         router.back()
     }
 
     function goToDetail(id) {
+        const result = AuthService.checkLoginStatus()
+        if (!result.isValid) {
+            showLoginDialog.value = true // 用你自己的 el-dialog 弹窗
+            return
+        }
         router.push(`/venue/${id}`)
     }
+
 
     function doSearch() {
         loadVenues()
@@ -153,6 +184,31 @@
         display: flex;
         flex-wrap: wrap;
         gap: 16px;
+    }
+    :global(.login-dialog) {
+        border-radius: 24px !important;
+        overflow: hidden; /* 防止标题栏溢出 */
+    }
+    .login-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+    .login-img {
+        width: 120px;
+        margin-bottom: 50px; /* 图片和文字间隔 */
+    }
+
+    .login-text {
+        font-size: 16px;
+        margin-bottom: 50px; /* 文字和按钮间隔 */
+    }
+
+    .login-btn {
+        border-radius: 20px;
+        padding: 8px 24px;
     }
 
     /* 筛选按钮样式 */
