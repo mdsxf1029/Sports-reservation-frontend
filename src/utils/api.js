@@ -149,7 +149,92 @@ export const fetchUserNotifications = (userId, params = {}) => {
   });
 };
 
+/* 违约管理相关API */
 
+// 获取违约记录列表
+export const getViolationRecords = (params = {}) => {
+  return instance.get('/api/violations', {
+    params: {
+      ...params // 支持传入page、pageSize、status、venue、dateRange等参数
+    }
+  });
+};
+
+// 获取违约详情
+export const getViolationDetail = (violationId) => {
+  return instance.get(`/api/violations/${violationId}`);
+};
+
+// 确认违约
+export const confirmViolation = (violationId) => {
+  return instance.put(`/api/violations/${violationId}/confirm`);
+};
+
+// 取消违约
+export const cancelViolation = (violationId) => {
+  return instance.put(`/api/violations/${violationId}/cancel`);
+};
+
+/* 申诉管理相关API */
+
+// 获取申诉列表
+export const getAppealRecords = (params = {}) => {
+  return instance.get('/api/appeals', {
+    params: {
+      ...params // 支持传入page、pageSize、status、venue等参数
+    }
+  });
+};
+
+// 获取申诉详情
+export const getAppealDetail = (appealId) => {
+  return instance.get(`/api/appeals/${appealId}`);
+};
+
+// 处理申诉（通过或拒绝）
+export const processAppeal = (appealId, action, reason = '') => {
+  return instance.put(`/api/appeals/${appealId}/process`, {
+    action, // 'approve' 或 'reject'
+    reason  // 拒绝理由（可选）
+  });
+};
+
+// 批量处理申诉
+export const batchProcessAppeals = (appealIds, action, reason = '') => {
+  return instance.put('/api/appeals/batch-process', {
+    appealIds,
+    action,
+    reason
+  });
+};
+
+/* 黑名单管理相关API */
+
+// 获取黑名单用户列表
+export const getBlacklistUsers = (params = {}) => {
+  return instance.get('/api/blacklist', {
+    params: {
+      ...params // 支持传入page、pageSize等参数
+    }
+  });
+};
+
+// 添加用户到黑名单
+export const addUserToBlacklist = (userData) => {
+  return instance.post('/api/blacklist/add', userData);
+};
+
+// 从黑名单移除用户
+export const removeUserFromBlacklist = (userId) => {
+  return instance.delete(`/api/blacklist/${userId}`);
+};
+
+// 批量移除黑名单用户
+export const batchRemoveFromBlacklist = (userIds) => {
+  return instance.put('/api/blacklist/batch-remove', {
+    userIds
+  });
+};
 
 /* 用户账户与信息相关结束 */
 
