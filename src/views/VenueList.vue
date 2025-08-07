@@ -1,83 +1,91 @@
 <template>
-    <div>
-        <HeaderNavbar />
-        <div class="venue-list-page">
+    <!-- 顶部导航栏 -->
+    <HeaderNavbar />
+    <!-- 登录弹窗 -->
+    <el-dialog v-model="showLoginDialog"
+               title="登录"
+               width="400px"
+               class="login-dialog">
+        <div class="login-content">
+            <img src="@/assets/LogosAndIcons/Tongji.png" alt="login" class="login-img" />
+            <p class="login-text">请先登录后再进行预约操作</p>
+            <el-button type="primary" class="login-btn" @click="login">登录</el-button>
+        </div>
+    </el-dialog>
 
 
 
+    <div class="venue-list-page">
+        <!-- 筛选区域 -->
+        <div class="filter-bar">
+            <h3 class="section-title">个人预约</h3>
 
-            <!-- 顶部导航栏 -->
-            <!--<div class="top-navbar">
-                <el-icon class="back-icon" @click="goBack"><ArrowLeft /></el-icon>
-                <span class="title">运动场地预约</span>
-            </div>-->
-            <!-- 筛选区域 -->
-            <div class="filter-bar">
-                <h3 class="section-title">个人预约</h3>
-
-                <!-- 校区筛选 -->
-                <div class="filter-group">
-                    <span class="label">校区：</span>
-                    <div class="button-group">
-                        <el-button v-for="campus in campuses"
-                                   :key="campus"
-                                   :class="['filter-btn', selectedCampus === campus ? 'active' : '']"
-                                   size="small"
-                                   @click="selectedCampus = campus">
-                            {{ campus }}
-                        </el-button>
-                    </div>
-                </div>
-
-                <!-- 类型筛选 -->
-                <div class="filter-group">
-                    <span class="label">类型：</span>
-                    <div class="button-group">
-                        <el-button v-for="type in types"
-                                   :key="type"
-                                   :class="['filter-btn', selectedType === type ? 'active' : '']"
-                                   size="small"
-                                   @click="selectedType = type">
-                            {{ type }}
-                        </el-button>
-                    </div>
+            <!-- 校区筛选 -->
+            <div class="filter-group">
+                <span class="label">校区：</span>
+                <div class="button-group">
+                    <el-button v-for="campus in campuses"
+                               :key="campus"
+                               :class="['filter-btn', selectedCampus === campus ? 'active' : '']"
+                               size="small"
+                               @click="selectedCampus = campus">
+                        {{ campus }}
+                    </el-button>
                 </div>
             </div>
 
-            <!-- 搜索框 -->
-            <div class="search-section">
-                <div class="search-input-group">
-                    <el-input v-model="searchQuery"
-                              placeholder="请输入场馆名称或运动类型名称"
-                              class="search-input"
-                              clearable />
-                    <el-button class="search-btn" @click="doSearch">搜索</el-button>
-                </div>
-            </div>
-
-            <!-- 场馆卡片列表 -->
-            <div class="venue-card-list">
-                <div v-for="venue in venues"
-                     :key="venue.id"
-                     class="venue-card">
-                    <img :src="venue.image" class="venue-img" />
-                    <div class="venue-info">
-                        <h4>{{ venue.name }}</h4>
-                        <p class="ellipsis">地址：{{ venue.address }}</p>
-                        <p>时间：{{ venue.hours }}</p>
-                    </div>
-                    <el-button class="reserve-btn" size="small" @click="goToDetail(venue.id)">预约</el-button>
+            <!-- 类型筛选 -->
+            <div class="filter-group">
+                <span class="label">类型：</span>
+                <div class="button-group">
+                    <el-button v-for="type in types"
+                               :key="type"
+                               :class="['filter-btn', selectedType === type ? 'active' : '']"
+                               size="small"
+                               @click="selectedType = type">
+                        {{ type }}
+                    </el-button>
                 </div>
             </div>
         </div>
+
+        <!-- 搜索框 -->
+        <div class="search-section">
+            <div class="search-input-group">
+                <el-input v-model="searchQuery"
+                          placeholder="请输入场馆名称或运动类型名称"
+                          class="search-input"
+                          clearable />
+                <el-button class="search-btn" @click="doSearch">搜索</el-button>
+            </div>
+        </div>
+
+        <!-- 场馆卡片列表 -->
+        <div class="venue-card-list">
+            <div v-for="venue in venues"
+                 :key="venue.id"
+                 class="venue-card">
+                <img :src="venue.image" class="venue-img" />
+                <div class="venue-info">
+                    <h4>{{ venue.name }}</h4>
+                    <p class="ellipsis">地址：{{ venue.address }}</p>
+                    <p>时间：{{ venue.hours }}</p>
+                </div>
+                <el-button class="reserve-btn" size="small" @click="goToDetail(venue.id)">预约</el-button>
+            </div>
+        </div>
     </div>
+
 </template>
 
 <script setup>
     import { ref, onMounted, watch } from 'vue'
     import { useRouter } from 'vue-router'
     import { ArrowLeft } from '@element-plus/icons-vue'
+    import TopNavbar from '../components/TopNavbar.vue'
     import axios from 'axios'
+    import { AuthService } from '@/utils/auth.js' // 路径根据你项目调整
+
 
     const router = useRouter()
 
@@ -87,14 +95,28 @@
     const selectedType = ref('羽毛球')
     const searchQuery = ref('')
     const venues = ref([])
+    const isLoggedIn = ref(false)
+    const showLoginDialog = ref(false)
+
+    function login() {
+        showLoginDialog.value = false
+        router.push('/login')
+    }
+
 
     function goBack() {
         router.back()
     }
 
     function goToDetail(id) {
+        const result = AuthService.checkLoginStatus()
+        if (!result.isValid) {
+            showLoginDialog.value = true // 用你自己的 el-dialog 弹窗
+            return
+        }
         router.push(`/venue/${id}`)
     }
+
 
     function doSearch() {
         loadVenues()
@@ -123,25 +145,8 @@
 
 <style scoped>
     .venue-list-page {
-        padding: 76px 40px 40px 80px; /* 顶部预留导航栏高度 + 左侧留白 */
+        padding: 20px 40px 40px 80px; /* 顶部预留导航栏高度 + 左侧留白 */
     }
-
-    /* 顶部导航栏固定吸顶，左对齐 */
-/*    .top-navbar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 56px;
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        font-size: 18px;
-        font-weight: bold;
-        background-color: #ffffff;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-        z-index: 1000;
-    }*/
 
     .back-icon {
         margin-right: 12px;
@@ -179,6 +184,31 @@
         display: flex;
         flex-wrap: wrap;
         gap: 16px;
+    }
+    :global(.login-dialog) {
+        border-radius: 24px !important;
+        overflow: hidden; /* 防止标题栏溢出 */
+    }
+    .login-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+    .login-img {
+        width: 120px;
+        margin-bottom: 50px; /* 图片和文字间隔 */
+    }
+
+    .login-text {
+        font-size: 16px;
+        margin-bottom: 50px; /* 文字和按钮间隔 */
+    }
+
+    .login-btn {
+        border-radius: 20px;
+        padding: 8px 24px;
     }
 
     /* 筛选按钮样式 */

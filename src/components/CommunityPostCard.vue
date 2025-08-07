@@ -8,38 +8,64 @@
       </div>
     </div>
 
-    <h3 class="post-title">{{ post.title }}</h3>
-    <p class="post-content">{{ post.content }}</p>
+    <router-link :to="{ name: 'PostViewer', params: { postId: post.postId } }" class="post-link">
+      <h3 class="post-title">{{ post.title }}</h3>
+      <p class="post-content">{{ post.content }}</p>
+    </router-link>
 
     <div class="post-actions">
       <div class="action-item" @click="handleLike">
         <span class="icon">{{ post.currentUserInteraction.hasLiked ? '❤️' : '♡' }}</span>
         <span>{{ post.stats.likeCount }}</span>
       </div>
-      <div class="action-item">
-        <span class="icon">💬</span>
-        <span>{{ post.stats.commentCount }} 条评论</span>
-      </div>
       <div class="action-item" @click="handleCollect">
         <span class="icon">{{ post.currentUserInteraction.hasCollected ? '⭐' : '☆' }}</span>
         <span>收藏</span>
       </div>
-      <div class="action-item">
+      <div class="action-item" @click="openReportDialog">
         <span class="icon">🚩</span>
         <span>举报</span>
       </div>
     </div>
   </div>
+<el-dialog v-model="reportDialogVisible" title="举报帖子" width="400px">
+  <el-form label-position="top">
+    <el-form-item label="举报类别（必选）">
+      <el-select v-model="reportForm.category" placeholder="请选择举报类别">
+        <el-option
+          v-for="item in reportCategories"
+          :key="item"
+          :label="item"
+          :value="item"
+        />
+      </el-select>
+    </el-form-item>
+    <el-form-item label="举报理由（可选，最多500字节）">
+      <el-input
+        v-model="reportForm.reason"
+        type="textarea"
+        maxlength="500"
+        show-word-limit
+        placeholder="请描述举报原因（选填）"
+      />
+    </el-form-item>
+  </el-form>
+  <template #footer>
+    <el-button @click="reportDialogVisible = false">取消</el-button>
+    <el-button type="primary" @click="submitReport">提交</el-button>
+  </template>
+</el-dialog>
 </template>
 
 <script setup>
-import { defineProps, computed, ref } from 'vue';
+import { defineProps, computed, ref, reactive } from 'vue';
 // 引入所有需要用到的 API 函数
 import { 
   likeCommunityPost, 
   unlikeCommunityPost,
   collectCommunityPost,
-  uncollectCommunityPost
+  uncollectCommunityPost,
+  reportCommunityPost
 } from '../utils/api.js';
 
 const props = defineProps({
@@ -83,7 +109,7 @@ const handleLike = async () => {
   }
 };
 
-// [修改] 实现完整的收藏/取消收藏逻辑
+// 实现完整的收藏/取消收藏逻辑
 const handleCollect = async () => {
   if (isCollecting.value) return;
   isCollecting.value = true;
@@ -104,9 +130,64 @@ const handleCollect = async () => {
     isCollecting.value = false;
   }
 };
+
+import { ElDialog, ElSelect, ElOption, ElInput, ElMessageBox, ElMessage } from 'element-plus'; // 使用 Element Plus
+
+// 举报表单相关状态
+const reportDialogVisible = ref(false);
+const reportForm = reactive({
+  category: '',
+  reason: '',
+});
+
+const reportCategories = ['广告', '色情低俗', '欺诈', '侵权', '其它原因'];
+
+// 打开举报表单
+const openReportDialog = () => {
+  reportForm.category = '';
+  reportForm.reason = '';
+  reportDialogVisible.value = true;
+};
+
+// 提交举报逻辑
+const submitReport = async () => {
+  if (!reportForm.category) {
+    ElMessage.warning('请选择举报类别');
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      '你确认要提交举报吗？',
+      '确认举报',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+
+    // 向后端发送举报请求
+    await reportCommunityPost(props.post.postId, {
+      category: reportForm.category,
+      reason: reportForm.reason,
+    });
+
+    ElMessage.success('举报已提交');
+    reportDialogVisible.value = false;
+  } catch (err) {
+    if (err !== 'cancel') {
+      ElMessage.error('举报失败，请稍后重试');
+    }
+  }
+};
 </script>
 
 <style scoped>
+.post-link {
+  color: inherit;
+  text-decoration: none;
+}
 .post-card {
   background-color: #fff;
   padding: 20px;
