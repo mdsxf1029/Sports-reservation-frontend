@@ -58,12 +58,12 @@ export function uploadAvatar(formData) {
   const headers = {
     'Content-Type': 'multipart/form-data'
   };
-  
+
   // 如果有token就添加到headers中
   if (token) {
     headers['token'] = token;
   }
-  
+
   return instance.post('/api/upload/avatar', formData, {
     headers: headers
   });
@@ -72,12 +72,12 @@ export function uploadAvatar(formData) {
 // 获取用户信息 用于个人中心
 export function getUserInfo(userId) {
   const token = localStorage.getItem('token');
-  
+
   // 如果没有token，抛出错误
   if (!token) {
     return Promise.reject(new Error('用户未登录，无法获取用户信息'));
   }
-  
+
   return instance.get(`/api/user/${userId}`, {
     headers: {
       'token': token
@@ -98,7 +98,7 @@ export function updateUserInfo(userId, userData) {
 // 获取我的订单信息（根据用户ID和其他参数）
 export const fetchMyOrderSummary = (userId, params = {}) => {
   return instance.get(`/api/appointments`, {
-    params: { 
+    params: {
       userId,
       ...params // 支持传入额外的查询参数，如page、appointmentStatus、beginTime、endTime等
     }
@@ -202,3 +202,6 @@ export const rejectPost = (id) => instance.put(`/api/posts/${id}/reject`)
 //举报管理相关
 export const getPendingReports = () => instance.get('/api/reports/pending');
 export const processReport = (id, data) => instance.put(`/api/reports/${id}/process`, data);
+
+//管理员发布公告
+export const publishAnnouncement = (data) => instance.post('/api/announcements', data);
