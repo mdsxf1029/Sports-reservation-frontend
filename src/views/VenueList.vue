@@ -2,18 +2,11 @@
     <!-- 顶部导航栏 -->
     <HeaderNavbar />
     <!-- 登录弹窗 -->
-    <el-dialog v-model="showLoginDialog"
-               title="登录"
-               width="400px"
-               class="login-dialog">
-        <div class="login-content">
-            <img src="@/assets/LogosAndIcons/Tongji.png" alt="login" class="login-img" />
-            <p class="login-text">请先登录后再进行预约操作</p>
-            <el-button type="primary" class="login-btn" @click="login">登录</el-button>
-        </div>
-    </el-dialog>
-
-
+    <LoginPrompt
+        v-model="showLoginDialog"
+        message="登录后可进行预约操作"
+        @login="handleLogin"
+    />
 
     <div class="venue-list-page">
         <!-- 筛选区域 -->
@@ -81,8 +74,9 @@
 <script setup>
     import { ref, onMounted, watch } from 'vue'
     import { useRouter } from 'vue-router'
-    import { ArrowLeft } from '@element-plus/icons-vue'
+    import { ArrowLeft, Lock } from '@element-plus/icons-vue'
     import TopNavbar from '../components/TopNavbar.vue'
+    import LoginPrompt from '../components/LoginPrompt.vue'
     import axios from 'axios'
     import { AuthService } from '@/utils/auth.js' // 路径根据你项目调整
 
@@ -184,31 +178,6 @@
         display: flex;
         flex-wrap: wrap;
         gap: 16px;
-    }
-    :global(.login-dialog) {
-        border-radius: 24px !important;
-        overflow: hidden; /* 防止标题栏溢出 */
-    }
-    .login-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-    }
-    .login-img {
-        width: 120px;
-        margin-bottom: 50px; /* 图片和文字间隔 */
-    }
-
-    .login-text {
-        font-size: 16px;
-        margin-bottom: 50px; /* 文字和按钮间隔 */
-    }
-
-    .login-btn {
-        border-radius: 20px;
-        padding: 8px 24px;
     }
 
     /* 筛选按钮样式 */
