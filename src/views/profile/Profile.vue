@@ -19,7 +19,7 @@
             </div>
             <button class="edit-btn" @click="editProfile">编辑个人资料</button>
             <button 
-              v-if="['admin', 'manager'].includes(userProfile.role)" 
+              v-if="['manager'].includes(userProfile.role)" 
               class="edit-btn" 
               @click="goToAdmin"
             >
@@ -30,10 +30,10 @@
     <!-- Tab栏 -->
     <div class="tab-card">
         <div class="tabs">
-        <span v-if="['normal', 'admin', 'manager'].includes(userProfile.role)" class="tab" :class="{active: activeTab === 'profile'}" @click="activeTab = 'profile'">个人资料</span>
+        <span v-if="['normal', 'manager'].includes(userProfile.role)" class="tab" :class="{active: activeTab === 'profile'}" @click="activeTab = 'profile'">个人资料</span>
         <span v-if="userProfile.role === 'normal'" class="tab" :class="{active: activeTab === 'reservation'}" @click="activeTab = 'reservation'">预约</span>
         <span v-if="userProfile.role === 'normal'" class="tab" :class="{active: activeTab === 'points'}" @click="activeTab = 'points'">积分</span>
-        <span v-if="['normal', 'admin', 'manager'].includes(userProfile.role)" class="tab" :class="{active: activeTab === 'notification'}" @click="activeTab = 'notification'">信息通知中心</span>
+        <span v-if="['normal', 'manager'].includes(userProfile.role)" class="tab" :class="{active: activeTab === 'notification'}" @click="activeTab = 'notification'">信息通知中心</span>
 
     </div>
         <div class="tab-content">
