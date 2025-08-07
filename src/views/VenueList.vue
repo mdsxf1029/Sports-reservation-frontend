@@ -1,6 +1,13 @@
 <template>
     <!-- 顶部导航栏 -->
     <HeaderNavbar />
+    <!-- 登录弹窗 -->
+    <LoginPrompt
+        v-model="showLoginDialog"
+        message="登录后可进行预约操作"
+        @login="handleLogin"
+    />
+
     <div class="venue-list-page">
         <!-- 筛选区域 -->
         <div class="filter-bar">
@@ -61,14 +68,18 @@
             </div>
         </div>
     </div>
+
 </template>
 
 <script setup>
     import { ref, onMounted, watch } from 'vue'
     import { useRouter } from 'vue-router'
-    import { ArrowLeft } from '@element-plus/icons-vue'
+    import { ArrowLeft, Lock } from '@element-plus/icons-vue'
     import TopNavbar from '../components/TopNavbar.vue'
+    import LoginPrompt from '../components/LoginPrompt.vue'
     import axios from 'axios'
+    import { AuthService } from '@/utils/auth.js' // 路径根据你项目调整
+
 
     const router = useRouter()
 
@@ -78,14 +89,28 @@
     const selectedType = ref('羽毛球')
     const searchQuery = ref('')
     const venues = ref([])
+    const isLoggedIn = ref(false)
+    const showLoginDialog = ref(false)
+
+    function login() {
+        showLoginDialog.value = false
+        router.push('/login')
+    }
+
 
     function goBack() {
         router.back()
     }
 
     function goToDetail(id) {
+        const result = AuthService.checkLoginStatus()
+        if (!result.isValid) {
+            showLoginDialog.value = true // 用你自己的 el-dialog 弹窗
+            return
+        }
         router.push(`/venue/${id}`)
     }
+
 
     function doSearch() {
         loadVenues()

@@ -58,12 +58,12 @@ export function uploadAvatar(formData) {
   const headers = {
     'Content-Type': 'multipart/form-data'
   };
-  
+
   // 如果有token就添加到headers中
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;  // ✅ 标准Bearer格式
   }
-  
+
   return instance.post('/api/upload/avatar', formData, {
     headers: headers
   });
