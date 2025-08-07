@@ -25,7 +25,7 @@ const Dummy = { template: '<div style="padding:20px;"><h2>页面建设中...</h2
 const routes = [
     {
         path: '/',
-        redirect: '/violation'
+        redirect: '/home'
     },
     {
         path: '/login',

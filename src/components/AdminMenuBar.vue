@@ -60,19 +60,25 @@
     </div>
 
     <!-- 侧边栏菜单部分 -->
-    <div class="sidebar-menu">
-      <div class="menu-item" :class="{selected: $route.path==='/venue'}" @click="$router.push('/venue')">场地管理</div>
-      <div class="menu-item" :class="{selected: $route.path==='/violation'}" @click="$router.push('/violation')">违约管理</div>
-      <div class="menu-item" :class="{selected: $route.path==='/post'}" @click="$router.push('/post')">帖子管理</div>
-      <div class="menu-item" :class="{selected: $route.path==='/appeal'}" @click="$router.push('/appeal')">申诉管理</div>
-    </div>
+    <aside class="sidebar-menu">
+      <router-link
+        v-for="item in menuList"
+        :key="item.path"
+        :to="item.path"
+        class="menu-item"
+        :class="{ active: route.path === item.path }"
+      >
+        <el-icon class="menu-icon"><component :is="item.icon" /></el-icon>
+        <span class="menu-label">{{ item.label }}</span>
+      </router-link>
+    </aside>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Operation, Avatar, Sunny, Moon, Edit, } from '@element-plus/icons-vue'
+import { Operation, Avatar, Sunny, Moon, Edit, Location, Warning, Document, Message } from '@element-plus/icons-vue'
 import { getUserInfo } from '@/utils/api'
 
 const router = useRouter()
@@ -80,6 +86,13 @@ const route = useRoute()
 const activeIndex = ref('0')
 const isDarkMode = ref(false)
 const userAvatar = ref('') // 用户头像URL
+
+const menuList = [
+  { label: '场地管理', path: '/venue', icon: Location },
+  { label: '违约管理', path: '/violation', icon: Warning },
+  { label: '帖子管理', path: '/post', icon: Document },
+  { label: '申诉管理', path: '/appeal', icon: Message }
+];
 
 // 加载用户头像 - 通过API获取
 const loadUserAvatar = async () => {
@@ -129,7 +142,7 @@ const logout = () => {
   userAvatar.value = ''
   
   // 跳转到登录页面
-  router.push('/login')
+  router.push('/home')
   
   // 可以添加提示消息
   alert('已退出登录')
@@ -204,7 +217,7 @@ const toggleDarkMode = () => {
   width: 100%;
   height: 100vh;
   z-index: 1000;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .top-navbar {
@@ -250,31 +263,50 @@ const toggleDarkMode = () => {
 }
 
 .sidebar-menu {
-  position: absolute;
-  top: 60px;
+  position: fixed;
+  top: 63px; /* 脱开顶部导航 */
   left: 0;
-  width: 180px;
-  background: #fafafa;
-  border-right: 2px solid #eee;
+  height: calc(100vh - 60px);
+  width: 220px;
+  background: linear-gradient(180deg, #f8f9fa, #ffffff);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+  border-right: 1px solid #eee;
   display: flex;
   flex-direction: column;
-  height: 400px;
-  pointer-events: auto;
+  padding: 12px 0;
+  z-index: 999;
 }
 
 .menu-item {
-  font-size: 26px;
-  font-weight: bold;
-  color: #222;
-  padding: 32px 0 32px 30px;
-  cursor: pointer;
-  border-bottom: 2px solid #eee;
-  transition: background 0.2s;
-  background: #fff;
+  display: flex;
+  align-items: center;
+  padding: 14px 24px;
+  color: #444;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+  border-left: 4px solid transparent;
 }
 
-.menu-item.selected {
-  background: #f0f0f0;
-  color: #111;
+.menu-item:hover {
+  background-color: #f0f4ff;
+  color: #0056b3;
+}
+
+.menu-item.active {
+  background-color: #e6f0ff;
+  color: #0056b3;
+  border-left: 4px solid #0056b3;
+  font-weight: bold;
+}
+
+.menu-icon {
+  margin-right: 12px;
+  font-size: 18px;
+  color: inherit;
+}
+
+.menu-label {
+  flex: 1;
+  font-size: 15px;
 }
 </style> 

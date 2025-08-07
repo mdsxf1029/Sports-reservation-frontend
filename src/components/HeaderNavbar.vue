@@ -131,7 +131,7 @@ const logout = () => {
   userAvatar.value = ''
   
   // 跳转到登录页面
-  router.push('/login')
+  router.push('/home')
   
   // 可以添加提示消息
   alert('已退出登录')
