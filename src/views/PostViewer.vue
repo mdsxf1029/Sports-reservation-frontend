@@ -183,16 +183,9 @@ const props = defineProps({
 
 // 状态初始化
 const isLoading = ref(true);
-const post = ref({ author: {}, publish_time: '' });
-const comments = ref([]);
-const currentUser = ref({
-  avatar: 'https://picsum.photos/id/64/200',
-  user_name: '当前用户'
-});
-
 // 模拟当前用户数据
 const currentUser = ref({
-  avatar: 'https://example.com/author-avatar.jpg',
+  avatar: 'https://picsum.photos/id/64/200',
   user_name: '当前用户'
 });
 
@@ -203,7 +196,8 @@ const post = ref({
   author: {
     avatar: 'https://th.bing.com/th/id/OIP.JCEcaQJVR_vC2kgt6BGZlAAAAA?w=216&h=220&c=7&r=0&o=7&dpr=1.8&pid=1.7&rm=3', // 替换为实际的头像链接
     user_name: '作者昵称'
-  }
+  },
+  publish_time: ''
 });
 
 // 模拟评论数据
