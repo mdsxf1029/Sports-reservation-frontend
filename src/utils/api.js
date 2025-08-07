@@ -61,7 +61,7 @@ export function uploadAvatar(formData) {
 
   // 如果有token就添加到headers中
   if (token) {
-    headers['token'] = token;
+    headers['Authorization'] = `Bearer ${token}`;  // ✅ 标准Bearer格式
   }
 
   return instance.post('/api/upload/avatar', formData, {
@@ -72,63 +72,80 @@ export function uploadAvatar(formData) {
 // 获取用户信息 用于个人中心
 export function getUserInfo(userId) {
   const token = localStorage.getItem('token');
-
-  // 如果没有token，抛出错误
-  if (!token) {
-    return Promise.reject(new Error('用户未登录，无法获取用户信息'));
+  const headers = {};
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;  // ✅ 标准Bearer格式
   }
-
-  return instance.get(`/api/user/${userId}`, {
-    headers: {
-      'token': token
-    }
-  });
+  
+  return instance.get(`/api/user/${userId}`, { headers });
 }
 
 // 更新用户信息
 export function updateUserInfo(userId, userData) {
   const token = localStorage.getItem('token');
   return instance.put(`/api/user/${userId}`, userData, {
-    headers: {
-      'token': token
-    }
+    headers: { 'Authorization': `Bearer ${token}` }  // ✅ 标准Bearer格式
   });
 }
 
 // 获取我的订单信息（根据用户ID和其他参数）
 export const fetchMyOrderSummary = (userId, params = {}) => {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   return instance.get(`/api/appointments`, {
-    params: {
-      userId,
-      ...params // 支持传入额外的查询参数，如page、appointmentStatus、beginTime、endTime等
-    }
+    params: { userId, ...params },
+    headers
   });
 };
 
 // 获取用户积分记录
 export const fetchUserPoints = (userId, params = {}) => {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   return instance.get(`/api/user/${userId}/points`, {
-    params: {
-      ...params // 支持传入page、pageSize、type等参数
-    }
+    params: { ...params },
+    headers
   });
 };
 
 // 获取积分变化记录
 export const fetchPointsHistory = (userId, params = {}) => {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   return instance.get(`/api/user/${userId}/points/history`, {
-    params: {
-      ...params // 支持传入page、pageSize、beginTime、endTime等参数
-    }
+    params: { ...params },
+    headers
   });
 };
 
 // 获取用户通知列表
 export const fetchUserNotifications = (userId, params = {}) => {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   return instance.get(`/api/user/${userId}/notifications`, {
-    params: {
-      ...params // 支持传入page、pageSize、isRead、type等参数
-    }
+    params: { ...params },
+    headers
   });
 };
 
