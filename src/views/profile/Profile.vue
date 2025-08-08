@@ -1018,8 +1018,7 @@ export default {
 }
 /* 主内容区域 */
 .main-content {
-  
-  padding-top: 4px; /* 顶栏高度 */
+  padding-top: 1px; /* 顶栏高度 */
 }
 /* 顶部工具栏 */
 .top-bar {
@@ -1277,7 +1276,7 @@ footer {
   margin-top: auto;
   width: 100%;
   text-align: center;
-  padding: 8px 0 4px 0; /* 上下各10px和8px的内边距 */
+  padding: 4px 0 2px 0; 
   background: #FFF;
   font-size: 14px;
 }

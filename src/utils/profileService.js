@@ -88,7 +88,7 @@ export class UserProfileService {
       avatarUrl: '', // 置空，让getAvatarUrl()方法处理
       region: '上海市',
       profile: '热爱运动的大学生',
-      role: 'admin',
+      role: 'manager',
       register_time: '2024-01-01T00:00:00Z',
       points: 1250
     }
