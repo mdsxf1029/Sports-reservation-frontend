@@ -230,9 +230,9 @@
     </div>
     </div>
     <BackToTop/>
-    <footer>
-        <FooterNavbar/>
-    </footer>
+    
+    <!-- 固定底部导航 -->
+    <FooterNavbar/>
     
     <!-- 编辑个人资料弹窗 -->
     <EditProfileDialog
@@ -1005,6 +1005,7 @@ export default {
   background: #F5F5F5;
   flex-direction: column;
   padding-top: 90px;   /* 顶栏高度+适当间距 */
+  padding-bottom: 90px; /* 底部间距，避免被固定footer遮挡 */
   overflow-x: hidden; /* 防止水平溢出 */
   box-sizing: border-box; /* 确保padding计算在宽度内 */
 } 
@@ -1269,16 +1270,6 @@ export default {
 .empty-desc {
   font-size: 14px;
   color: #999;
-}
-
-/* 底部footer */
-footer {
-  margin-top: auto;
-  width: 100%;
-  text-align: center;
-  padding: 4px 0 2px 0; 
-  background: #FFF;
-  font-size: 14px;
 }
 
 /* 分页容器样式 */
