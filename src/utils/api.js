@@ -53,17 +53,16 @@ export function loginUser(credentials) {
 }
 
 // 上传头像（注册时无需token，登录后需要token）
+// 改进版本的前端代码
 export function uploadAvatar(formData) {
   const token = localStorage.getItem('token');
-  const headers = {
-    'Content-Type': 'multipart/form-data'
-  };
+  const headers = {};
 
   // 如果有token就添加到headers中
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;  // ✅ 标准Bearer格式
+    headers['Authorization'] = `Bearer ${token}`;
   }
-
+ 
   return instance.post('/api/upload/avatar', formData, {
     headers: headers
   });
