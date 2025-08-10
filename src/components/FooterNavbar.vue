@@ -1,4 +1,3 @@
-
 <template>
   <div class="footer-navbar">
     <a href="https://cs.tongji.edu.cn/" target="_blank">
@@ -16,31 +15,17 @@
     </a>
 
     <div class='footer-content'>
-      <p>
-        <el-link :underline='false' class='footer-link' @click='showAboutUs=true'>
-          关于我们
-        </el-link>
+        <el-link :underline='false' class='footer-link' @click='showAboutUs=true'>关于我们</el-link>
         <span class="separator">|</span>
-        <el-link :underline='false' class='footer-link' @click='showPrivacyPolicy=true'>
-          隐私政策
-        </el-link>
+        <el-link :underline="false" class="footer-link" @click="showPrivacyPolicy = true">隐私政策</el-link>
         <span class="separator">|</span>
-        <el-link :underline='false' class='footer-link' @click='showDisclaimer=true'>
-          免责声明
-        </el-link>
+        <el-link :underline="false" class="footer-link" @click="showDisclaimer = true">免责声明</el-link>
         <span class="separator">|</span>
-        <el-link :underline='false' class='footer-link' @click='showCodeOfConduct=true'>
-          行为准则
-        </el-link>
+        <el-link :underline="false" class="footer-link" @click="showCodeOfConduct = true">行为准则</el-link>
         <span class="separator">|</span>
-        <el-link :underline='false' class='footer-link' @click='showContactUs=true'>
-          联系我们
-        </el-link>
+        <el-link :underline="false" class="footer-link" @click="showContactUs = true">联系我们</el-link>
         <span class="separator">|</span>
-        <el-link :underline='false' class='footer-link' @click='showFeedback=true'>
-          反馈
-        </el-link>
-      </p>
+        <el-link :underline="false" class="footer-link" @click="showFeedback = true">反馈</el-link>
     </div>
   </div>
 
@@ -516,4 +501,5 @@ const submitFeedback = () => {
   justify-content: flex-end;
   gap: 10px;
 }
+
 </style>
