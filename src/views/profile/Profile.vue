@@ -1004,16 +1004,18 @@ export default {
   margin: 0 auto;
   background: #F5F5F5;
   flex-direction: column;
-  padding-top: 90px;   /* 顶栏高度+适当间距 */
-  padding-bottom: 90px; /* 底部间距，避免被固定footer遮挡 */
+  padding-top: 60px;   /* 顶栏高度+适当间距 */
+  padding-bottom: 50px; /* 底部间距，避免被固定footer遮挡 */
   overflow-x: hidden; /* 防止水平溢出 */
   box-sizing: border-box; /* 确保padding计算在宽度内 */
 } 
 /* 顶栏导航 */
 .navbar {
-  width: 100%; /* 改为100%而不是99vw */
+  width: 100%; 
   position: fixed;
   margin: 0 auto;
+  left: 0;
+  right: 0;
   top: 0; 
   z-index: 100; /* 顶层 */
 }
