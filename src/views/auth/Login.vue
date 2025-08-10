@@ -6,7 +6,7 @@
         </router-link>
         <hr style="margin: 4px 0; width: 200px;"> 
     </div>
-    <div class="responsive-container page-content">
+    <div class="responsive-container">
       <!-- 左侧：图片 -->
       <div class="responsive-left">
         <img :src="Humans1" alt="login-background" class="responsive-image" />
@@ -46,7 +46,6 @@ import '@/styles/responsive.css'
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 5vw;
   padding: 0 3vw;
   box-sizing: border-box;
   max-height: calc(100vh - 180px); /* 减去标题和底部导航 */
