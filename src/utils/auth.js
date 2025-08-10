@@ -57,4 +57,19 @@ export class AuthService {
       console.log('设置了测试用的登录信息')
     }
   }
+
+  // 邮箱验证器
+  static validateEmail(rule, value, callback) {
+    if (value === '') {
+      callback(new Error('邮箱不能为空'))
+    } else {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailPattern.test(value)) {
+        callback(new Error('请输入正确的邮箱格式'))
+      } else {
+        callback()
+      }
+    }
+  } 
+ 
 }

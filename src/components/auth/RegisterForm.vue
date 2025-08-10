@@ -165,6 +165,7 @@ import { registerUser } from '@/utils/api'
 import { useRouter } from 'vue-router'
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import { ElMessage } from 'element-plus'
+import { AuthService } from '@/utils/auth'
 
 const router = useRouter()  // 路由实例
 const registerFormRef = ref()  // 引用表单实例
@@ -183,20 +184,7 @@ const form = ref({
   profile: '',        // 个人简介
   role: 'normal'      // 角色，默认为普通用户
 })
-
-// 自定义邮箱校验
-const validateEmail = (rule, value, callback) => {
-  if (value === '') {
-    callback(new Error('邮箱不能为空'))
-  } else {
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailPattern.test(value)) {
-      callback(new Error('请输入正确的邮箱格式'))
-    } else {
-      callback()
-    }
-  }
-}
+ 
 
 // 自定义电话号码校验
 const validatePhone = (rule, value, callback) => {
@@ -230,7 +218,7 @@ const rules = {
     { required: true, validator: validatePhone, trigger: 'blur' }
   ],
   email: [
-    { required: true, validator: validateEmail, trigger: 'blur' }
+    { required: true, validator: AuthService.validateEmail, trigger: 'blur' }
   ],
   password: [
     { required: true, message: '密码不能为空', trigger: 'blur' },
@@ -261,10 +249,10 @@ const register = async () => {
       email: form.value.email,
       password: form.value.password,
       gender: form.value.gender,
-      birthday: form.value.birthday ? new Date(form.value.birthday).toISOString().split('T')[0] : null,
+      birthday: form.value.birthday || '1990-01-01', // 提供默认日期而不是 null
       avatarUrl: form.value.avatarUrl,
-      region: form.value.region || null,
-      profile: form.value.profile || null,
+      region: form.value.region || '其他',
+      profile: form.value.profile || '这个用户很懒，什么都没有留下。',
       role: form.value.role,
       registerTime: new Date().toISOString().split('T')[0], // 当前日期 
       points: 0 // 新用户初始积分为0
@@ -272,12 +260,13 @@ const register = async () => {
     }
     
     // 校验通过后发起请求
-    const res = await registerUser(userData)
-    
+    const r = await registerUser(userData)
+    const res = r.data
     if (res && res.code === 0) {
       // 注册成功
-      ElMessage.success(res.msg || '注册成功！')
-      
+      ElMessage.success(res.msg)
+      ElMessage.success('即将跳转到登录页')
+      console.log('注册成功!')
       // 清空密码字段以提高安全性
       form.value.password = ''
       form.value.confirmPassword = ''
@@ -286,18 +275,12 @@ const register = async () => {
       if (res.data && res.data.userId) {
         console.log('新用户ID:', res.data.userId)
         console.log('用户名:', res.data.userName)
-
-        // 可选：存储用户信息到本地存储
-        // localStorage.setItem('lastRegisteredUser', JSON.stringify({
-        //   userid: res.data.userid,
-        //   username: res.data.username,
-        //   registerTime: new Date().toISOString()
-        // }))
+         
       }
       // 延迟跳转，让用户看到成功提示
       setTimeout(() => {
         router.push('/login')
-      }, 1500)
+      }, 500)
     } else {
       // 注册失败 - 直接使用后端返回的错误消息
       const errorMsg = res?.msg || '注册失败，请重试'
