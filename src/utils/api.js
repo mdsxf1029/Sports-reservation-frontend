@@ -19,8 +19,8 @@ export function addToBlacklist(userId) {
 }
 
 //获取场地信息
-export const getVenues = () => {
-  return instance.get('/api/venues');
+export const getVenues = (params) => {
+  return instance.get('/api/venues', { params });
 };
 
 //发布场地
@@ -36,6 +36,11 @@ export const updateVenue = (id, data) => {
 //删除场地
 export const deleteVenue = (id) => {
   return instance.delete(`/api/venues/${id}`);
+};
+
+//批量更新场地状态
+export const batchUpdateVenueStatus = (ids, status) => {
+    return instance.put('/api/venues/batch-status', { ids, status });
 };
 
 // 你可以根据需要继续添加其他接口方法
@@ -297,13 +302,22 @@ export const fetchConfirmInfo = (appointmentId) => {
 };
 
 //帖子管理相关
-export const getPendingPosts = () => instance.get('/api/posts/pending');
-export const approvePost = (id) => instance.put(`/api/posts/${id}/approve`);
-export const rejectPost = (id) => instance.put(`/api/posts/${id}/reject`)
+export const getPosts = (params) => {
+  /*  params - 包含过滤和分页参数的对象
+      e.g., { page: 1, pageSize: 10, status: 'pending', keyword: 'Vue' } */
+    return instance.get('/api/posts', { params });
+};
+export const approvePost = (id) => {
+    return instance.put(`/api/posts/${id}/approve`);
+};
+export const rejectPost = (id) => {
+    return instance.put(`/api/posts/${id}/reject`);
+};
 
 //举报管理相关
-export const getPendingReports = () => instance.get('/api/reports/pending');
-export const processReport = (id, data) => instance.put(`/api/reports/${id}/process`, data);
-
-//管理员发布公告
-export const publishAnnouncement = (data) => instance.post('/api/announcements', data);
+export const getReports = (params) => {
+  return instance.get('/api/reports', { params });
+};
+export const processReport = (reportId, data) => {
+  return instance.put(`/api/reports/${reportId}/process`, data);
+};
