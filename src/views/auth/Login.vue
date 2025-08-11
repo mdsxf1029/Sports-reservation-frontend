@@ -35,7 +35,40 @@ import '@/styles/responsive.css'
   background: #fff;
   min-height: calc(100vh - 20px); /* 减去导航栏高度 */
   overflow-x: hidden; /* 防止水平溢出 */
-  overflow-y: auto; /* 允许垂直滚动 */
+  overflow-y: hidden; /* 防止垂直溢出 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 主容器 - 完美居中 */
+.responsive-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5vw;
+  padding: 0 3vw;
+  box-sizing: border-box;
+  max-height: calc(100vh - 180px); /* 减去标题和底部导航 */
+}
+
+/* 左侧图片区域 */
+.responsive-left {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+/* 右侧表单区域 */
+.responsive-right {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  margin-top: 0; /* 移除margin */
 }
 
 .top-left-text {     
@@ -84,7 +117,7 @@ import '@/styles/responsive.css'
 @media (max-width: 1200px) {
   .responsive-image {
     max-width: 420px;
-    max-height: 320px;
+    max-height: 320px; 
   }
 }
 
@@ -93,8 +126,8 @@ import '@/styles/responsive.css'
     max-width: 320px;
     max-height: 180px;
   }
-}
-
+  }
+  
 .responsive-right {
   margin-top: 35px;
 }

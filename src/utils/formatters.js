@@ -14,7 +14,7 @@ export const getGenderText = (gender) => {
   const genderMap = {
     'male': '男',
     'female': '女',
-    'unknown': '未设置'
+    'unknown': '未知',
   }
   return genderMap[gender] || '未设置'
 }
@@ -23,8 +23,7 @@ export const getGenderText = (gender) => {
 export const getRoleText = (role) => {
   const roleMap = {
     'normal': '普通用户',
-    'manager': '管理员',
-    'admin': '管理员'
+    'manager': '管理员'
   }
   return roleMap[role] || role || '未设置'
 }

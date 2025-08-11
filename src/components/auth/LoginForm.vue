@@ -230,6 +230,26 @@ const openDialog = () => {
       padding : 0 0 0 20px; /* 指定左内边距 */
   }
 
+  /* 统一router-link样式 */
+  .login-form p router-link,
+  .login-form p a {
+      color: #409eff !important; /* Element Plus 主色调 */
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+  }
+
+  .login-form p router-link:hover,
+  .login-form p a:hover {
+      color: #337ecc !important; /* 悬停时的深蓝色 */
+      text-decoration: underline;
+  }
+
+  .login-form p router-link:visited,
+  .login-form p a:visited {
+      color: #409eff !important; /* 访问后保持主色调 */
+  }
+
   .login-form .space-below {
       margin-bottom: 26px;
   }
