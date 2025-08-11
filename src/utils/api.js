@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // 创建 axios 实例
 const instance = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: '',
   timeout: 5000
 });
 
@@ -18,29 +18,47 @@ export function addToBlacklist(userId) {
   return instance.post('/api/blacklist/add', { userId });
 }
 
-//获取场地信息
+// 获取场地信息
 export const getVenues = (params) => {
-  return instance.get('/api/venues', { params });
+  const token = localStorage.getItem('token');
+  return instance.get('/api/venues', { 
+    params,
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
-//发布场地
+// 发布场地
 export const createVenue = (data) => {
-  return instance.post('/api/venues', data);
+  const token = localStorage.getItem('token');
+  // 对于 POST 和 PUT 请求, headers 是第三个参数
+  return instance.post('/api/venues', data, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
-//更新场地
+// 更新场地
 export const updateVenue = (id, data) => {
-  return instance.put(`/api/venues/${id}`, data);
+  const token = localStorage.getItem('token');
+  return instance.put(`/api/venues/${id}`, data, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
-//删除场地
+// 删除场地
 export const deleteVenue = (id) => {
-  return instance.delete(`/api/venues/${id}`);
+  const token = localStorage.getItem('token');
+  // 对于 DELETE 请求, headers 在第二个参数对象中
+  return instance.delete(`/api/venues/${id}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
-//批量更新场地状态
+// 批量更新场地状态
 export const batchUpdateVenueStatus = (ids, status) => {
-    return instance.put('/api/venues/batch-status', { ids, status });
+  const token = localStorage.getItem('token');
+  return instance.put('/api/venues/batch-status', { ids, status }, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
 // 你可以根据需要继续添加其他接口方法
