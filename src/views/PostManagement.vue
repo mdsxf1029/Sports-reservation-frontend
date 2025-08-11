@@ -36,7 +36,7 @@
               <el-icon><Warning /></el-icon>
             </div>
             <div class="stat-content">
-              <div class="stat-number">{{ allReports.filter(r => r.status === 'pending').length }}</div>
+              <div class="stat-number">{{ pendingReportsCount }}</div>
               <div class="stat-label">待处理举报</div>
             </div>
           </div>
@@ -91,7 +91,7 @@
                   </el-button>
                 </div>
                 
-                <el-table :data="paginatedPosts" v-loading="postLoading" style="width: 100%">
+                <el-table :data="tablePosts" v-loading="postLoading" style="width: 100%">
                   <el-table-column prop="post_title" label="帖子标题" min-width="250">
                     <template #default="scope">
                       <div class="post-title-cell">
@@ -108,13 +108,13 @@
                       <span v-else class="text-placeholder">--</span>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="status" label="审核状态" width="120">
+                  <el-table-column prop="review_status" label="审核状态" width="120">
                     <template #default="scope">
-                      <el-tag :type="getStatusType(scope.row.status)" size="small" effect="light">
-                        <el-icon v-if="scope.row.status === 'pending'"><Clock /></el-icon>
-                        <el-icon v-else-if="scope.row.status === 'approved'"><CircleCheck /></el-icon>
-                        <el-icon v-else-if="scope.row.status === 'rejected'"><CircleClose /></el-icon>
-                        <span class="status-text">{{ getStatusText(scope.row.status, 'post') }}</span>
+                      <el-tag :type="getStatusType(scope.row.review_status)" size="small" effect="light">
+                        <el-icon v-if="scope.row.review_status === 'pending'"><Clock /></el-icon>
+                        <el-icon v-else-if="scope.row.review_status === 'approved'"><CircleCheck /></el-icon>
+                        <el-icon v-else-if="scope.row.review_status === 'rejected'"><CircleClose /></el-icon>
+                        <span class="status-text">{{ getStatusText(scope.row.review_status, 'post') }}</span>
                       </el-tag>
                     </template>
                   </el-table-column>
@@ -125,14 +125,14 @@
                           <el-icon><View /></el-icon>
                           详情
                         </el-button>
-                        <template v-if="scope.row.status === 'pending'">
+                        <template v-if="scope.row.review_status === 'pending'">
                           <el-button size="small" type="success" @click="handleApprove(scope.row)">通过</el-button>
                           <el-button size="small" type="danger" @click="handleReject(scope.row)">拒绝</el-button>
                         </template>
-                        <template v-else-if="scope.row.status === 'approved'">
+                        <template v-else-if="scope.row.review_status === 'approved'">
                           <el-button size="small" type="danger" @click="handleReject(scope.row)">置为不通过</el-button>
                         </template>
-                        <template v-else-if="scope.row.status === 'rejected'">
+                        <template v-else-if="scope.row.review_status === 'rejected'">
                            <el-button size="small" type="success" @click="handleApprove(scope.row)">重新通过</el-button>
                         </template>
                       </div>
@@ -140,16 +140,16 @@
                   </el-table-column>
                 </el-table>
                 
-                <div v-if="!postLoading && paginatedPosts.length === 0" class="no-data">
+                <div v-if="!postLoading && tablePosts.length === 0" class="no-data">
                   <el-empty description="暂无匹配的帖子记录" />
                 </div>
 
-                <div class="pagination-section" v-if="filteredPosts.length > 0">
+                <div class="pagination-section" v-if="postTotal > 0">
                   <el-pagination
                     v-model:current-page="postCurrentPage"
                     v-model:page-size="postPageSize"
                     :page-sizes="[5, 10, 20, 50]"
-                    :total="filteredPosts.length"
+                    :total="postTotal"
                     layout="total, sizes, prev, pager, next, jumper"
                   />
                 </div>
@@ -199,7 +199,7 @@
                   </el-button>
                 </div>
                 
-                <el-table :data="paginatedReports" v-loading="reportsLoading" style="width: 100%">
+                <el-table :data="tableReports" v-loading="reportsLoading" style="width: 100%">
                   <el-table-column prop="type" label="类型" width="100">
                     <template #default="scope">
                       <el-tag :type="scope.row.type === '帖子' ? 'primary' : 'success'" size="small">
@@ -248,19 +248,17 @@
                   </el-table-column>
                 </el-table>
                 
-                <div v-if="!reportsLoading && paginatedReports.length === 0" class="no-data">
+                <div v-if="!reportsLoading && tableReports.length === 0" class="no-data">
                   <el-empty description="暂无匹配的举报记录" />
                 </div>
 
-                <div class="pagination-section" v-if="filteredReports.length > 0">
+                <div class="pagination-section" v-if="reportTotal > 0">
                   <el-pagination
                     v-model:current-page="reportCurrentPage"
                     v-model:page-size="reportPageSize"
                     :page-sizes="[5, 10, 20, 50]"
-                    :total="filteredReports.length"
+                    :total="reportTotal"
                     layout="total, sizes, prev, pager, next, jumper"
-                    @update:current-page="val => reportCurrentPage = val"
-                    @update:page-size="val => reportPageSize = val"
                   />
                 </div>
               </div>
@@ -293,7 +291,7 @@
             <p><strong>标题：</strong>{{ currentContent.reported_post_data.post_title }}</p>
             <p><strong>作者：</strong>{{ currentContent.reported_post_data.author }}</p>
             <hr>
-            <p>{{ currentContent.reported_post_data.post_content }}</p>
+            <p v-html="currentContent.reported_post_data.post_content"></p>
           </div>
 
           <div v-else-if="currentContent.type === '评论'" >
@@ -328,190 +326,224 @@ import {
   Refresh
 } from '@element-plus/icons-vue';
 import AdminHeaderNavbar from '../components/AdminHeaderNavbar.vue';
+import { 
+  getPosts, 
+  approvePost,
+  rejectPost,
+  getReports,
+  processReport,
+  fetchPostID
+} from '../utils/api.js'; 
 
 const activeTab = ref('review');
 
 // --- 帖子管理状态 ---
 const postLoading = ref(true);
-const allPosts = ref([]);
-const filteredPosts = ref([]);
+const tablePosts = ref([]);
+const postTotal = ref(0); 
 const filters = ref({ status: '', processor: '', keyword: '' });
 const postCurrentPage = ref(1);
 const postPageSize = ref(5);
 
 // --- 举报管理状态 ---
 const reportsLoading = ref(true);
-const allReports = ref([]);
-const filteredReports = ref([]);
+const tableReports = ref([]);
+const reportTotal = ref(0);
 const reportFilters = ref({ type: '', status: '', keyword: '' });
 const reportCurrentPage = ref(1);
 const reportPageSize = ref(5);
 
-// =================================================================
-// START: MOCK DATA & API (后端API完成后，请删除或注释掉此部分)
-// =================================================================
+// --- 顶部统计卡片状态 ---
+const pendingCount = ref(0);
+const approvedCount = ref(0);
+const rejectedCount = ref(0);
+const pendingReportsCount = ref(0);
 
-const mockDatabase = {
-  posts: [
-    { post_id: 1, post_title: '关于我的思考', post_content: '我觉得要自律', author: '张三', post_time: '2025-08-10 10:00:00', status: 'pending', processor: null },
-    { post_id: 2, post_title: '今天健身房人好多啊', post_content: '胸肌日，人山人海。', author: '李四', post_time: '2025-08-10 11:30:00', status: 'pending', processor: null },
-    { post_id: 5, post_title: '求一份新手友好的蛋白粉推荐', post_content: '刚开始健身，求大佬推荐一款入门蛋白粉。', author: '王二麻', post_time: '2025-08-10 14:00:00', status: 'pending', processor: null },
-    { post_id: 3, post_title: '羽毛球场地预约攻略', post_content: '周末想打球，场地总是约不到？教你几招。', author: '王五', post_time: '2025-08-09 09:00:00', status: 'approved', processor: '管理员A' },
-    { post_id: 6, post_title: '【测评】新款筋膜枪深度体验', post_content: '对比了市面上三款主流筋膜枪，这是我的体验报告。', author: '测评家', post_time: '2025-08-08 20:15:00', status: 'approved', processor: '管理员B' },
-    { post_id: 7, post_title: '篮球爱好者交流区', post_content: '明天下午有人一起组队打球吗？', author: '篮球小子', post_time: '2025-08-08 18:00:00', status: 'approved', processor: '管理员C' },
-    { post_id: 4, post_title: '一个包含广告信息的帖子', post_content: '违规广告内容', author: '赵六', post_time: '2025-08-07 15:00:00', status: 'rejected', processor: '管理员A' },
-    { post_id: 8, post_title: '寻狗启事：我的爱犬昨天走丢了', post_content: '违规，因为这是体育论坛。', author: '焦急的主人', post_time: '2025-08-06 12:00:00', status: 'rejected', processor: '管理员C' },
-  ],
-  reports: [
-    { report_id: 101, type: '帖子', post_id: 4, content_summary: '一个包含广告信息的帖子', reporter: '热心用户A', reported_user: '赵六', report_reason: '垃圾广告', report_time: '2025-08-10 16:00:00', status: 'pending', processor: null },
-    { report_id: 102, type: '评论', content_summary: '你懂个锤子，乱说！', reporter: '用户B', reported_user: '杠精', report_reason: '人身攻击', report_time: '2025-08-10 15:30:00', status: 'pending', processor: null },
-    { report_id: 103, type: '帖子', post_id: 3, content_summary: '羽毛球场地预约攻略', reporter: '小报告', reported_user: '王五', report_reason: '', report_time: '2025-08-09 10:00:00', status: 'accepted', processor: '管理员A' },
-    { report_id: 104, type: '评论', content_summary: '这个蛋白粉不好用，别买。', reporter: '体验者C', reported_user: '王二麻', report_reason: '虚假信息', report_time: '2025-08-09 11:00:00', status: 'rejected', processor: '管理员B' },
-  ]
-};
+// --- 详情弹窗状态 ---
+const dialogVisible = ref(false);
+const dialogTitle = ref('');
+const currentContent = ref({});
 
-// 帖子API
+// 获取帖子列表数据
 const fetchPosts = async () => {
   postLoading.value = true;
-  await new Promise(resolve => setTimeout(resolve, 500));
-  allPosts.value = JSON.parse(JSON.stringify(mockDatabase.posts));
-  applyFilters(); 
-  postLoading.value = false;
-};
-const approvePost = async (postId) => {
-  const post = allPosts.value.find(p => p.post_id === postId);
-  if (post) { post.status = 'approved'; post.processor = '管理员x'; }
-  return Promise.resolve({ data: { code: 200 } });
-};
-const rejectPost = async (postId) => {
-  const post = allPosts.value.find(p => p.post_id === postId);
-  if (post) { post.status = 'rejected'; post.processor = '管理员x'; }
-  return Promise.resolve({ data: { code: 200 } });
+  try {
+    const params = {
+      page: postCurrentPage.value,
+      pageSize: postPageSize.value,
+      review_status: filters.value.status || undefined, // 如果为空字符串，则不传递该参数
+      processor: filters.value.processor || undefined,
+      keyword: filters.value.keyword || undefined,
+    };
+    const res = await getPosts(params);
+    if (res.data.code === 200) {
+      tablePosts.value = res.data.data.list;
+      postTotal.value = res.data.data.total;
+    } else {
+      ElMessage.error(res.data.message || '获取帖子列表失败');
+    }
+  } catch (error) {
+    console.error("请求帖子列表失败:", error);
+    ElMessage.error('请求帖子列表时发生错误');
+  } finally {
+    postLoading.value = false;
+  }
 };
 
-// 举报API
+// 获取举报列表数据
 const fetchReports = async () => {
   reportsLoading.value = true;
-  await new Promise(resolve => setTimeout(resolve, 500));
-  allReports.value = JSON.parse(JSON.stringify(mockDatabase.reports));
-  applyReportFilters(); 
-  reportsLoading.value = false;
-};
-const processReport = async (reportId, action) => {
-  const report = allReports.value.find(r => r.report_id === reportId);
-  if (report) { report.status = action; report.processor = '管理员x'; }
-  return Promise.resolve({ data: { code: 200 } });
+  try {
+    const params = {
+      page: reportCurrentPage.value,
+      pageSize: reportPageSize.value,
+      type: reportFilters.value.type || undefined,
+      status: reportFilters.value.status || undefined,
+      keyword: reportFilters.value.keyword || undefined,
+    };
+    const res = await getReports(params);
+    if (res.data.code === 200) {
+      tableReports.value = res.data.data.list;
+      reportTotal.value = res.data.data.total;
+    } else {
+      ElMessage.error(res.data.message || '获取举报列表失败');
+    }
+  } catch (error) {
+    console.error("请求举报列表失败:", error);
+    ElMessage.error('请求举报列表时发生错误');
+  } finally {
+    reportsLoading.value = false;
+  }
 };
 
-// =================================================================
-// END: MOCK DATA & API
-// =================================================================
+// 获取顶部统计卡片的数据
+const fetchStats = async () => {
+  try {
+    const [pendingRes, approvedRes, rejectedRes, reportsRes] = await Promise.all([
+      getPosts({ review_status: 'pending', pageSize: 1 }),
+      getPosts({ review_status: 'approved', pageSize: 1 }),
+      getPosts({ review_status: 'rejected', pageSize: 1 }),
+      getReports({ status: 'pending', pageSize: 1 })
+    ]);
+    if (pendingRes.data.code === 200) pendingCount.value = pendingRes.data.data.total;
+    if (approvedRes.data.code === 200) approvedCount.value = approvedRes.data.data.total;
+    if (rejectedRes.data.code === 200) rejectedCount.value = rejectedRes.data.data.total;
+    if (reportsRes.data.code === 200) pendingReportsCount.value = reportsRes.data.data.total;
+  } catch (error) {
+    console.error("获取统计数据失败:", error);
+  }
+};
 
 
 //计算属性
-
+//page
 const availableProcessors = computed(() => {
-  const processors = allPosts.value.map(post => post.processor).filter(p => p);
+  const processors = tablePosts.value.map(post => post.processor).filter(p => p);
   return [...new Set(processors)];
 });
 
-const pendingCount = computed(() => allPosts.value.filter(p => p.status === 'pending').length);
-const approvedCount = computed(() => allPosts.value.filter(p => p.status === 'approved').length);
-const rejectedCount = computed(() => allPosts.value.filter(p => p.status === 'rejected').length);
+// --- 事件处理 ---
 
-const paginatedPosts = computed(() => {
-  const start = (postCurrentPage.value - 1) * postPageSize.value;
-  return filteredPosts.value.slice(start, start + postPageSize.value);
-});
-
-const paginatedReports = computed(() => {
-  const start = (reportCurrentPage.value - 1) * reportPageSize.value;
-  return filteredReports.value.slice(start, start + reportPageSize.value);
-});
-
-
-// 事件处理
-
+// 统一处理帖子审核通过/重新通过操作
 const handleApprove = (post) => {
-  const confirmMessage = post.status === 'rejected' ? `确定要将已拒绝的帖子【${post.post_title}】重新设置为通过吗？` : `确定要通过帖子【${post.post_title}】吗？`;
-  ElMessageBox.confirm(confirmMessage, '确认操作', { type: 'warning' }).then(() => handleReviewAction('approved', post));
-};
-
-const handleReject = (post) => {
-  const confirmMessage = post.status === 'approved' ? `确定要将已通过的帖子【${post.post_title}】重新置为不通过吗？` : `确定要拒绝帖子【${post.post_title}】吗？`;
-  ElMessageBox.confirm(confirmMessage, '确认操作', { type: 'warning' }).then(() => handleReviewAction('rejected', post));
-};
-
-const handleReviewAction = async (action, post) => {
-  const apiCall = action === 'approved' ? approvePost : rejectPost;
-  try {
-    const res = await apiCall(post.post_id);
-    if (res.data.code === 200) { ElMessage.success('操作成功'); applyFilters(); }
-  } catch (e) { ElMessage.error('操作失败'); }
-};
-
-const applyFilters = () => {
-  let temp = [...allPosts.value];
-  if (filters.value.status) { temp = temp.filter(p => p.status === filters.value.status); }
-  if (filters.value.processor) { temp = temp.filter(p => p.processor === filters.value.processor); }
-  if (filters.value.keyword) {
-    const keyword = filters.value.keyword.toLowerCase();
-    temp = temp.filter(p => p.post_title.toLowerCase().includes(keyword) || p.author.toLowerCase().includes(keyword));
-  }
-  filteredPosts.value = temp;
-  postCurrentPage.value = 1;
-};
-
-const resetFilters = () => {
-  filters.value = { status: '', processor: '', keyword: '' };
-  applyFilters();
-};
-
-const handleProcessReport = (action, report) => {
-  const actionText = action === 'accepted' ? '接受' : '驳回';
-  const confirmMessage = `确定要"${actionText}"这条关于【${report.content_summary}】的举报吗?`;
-  ElMessageBox.confirm(confirmMessage, '确认操作', { type: 'warning' }).then(async () => {
-    try {
-      const res = await processReport(report.report_id, action);
-      if (res.data.code === 200) { ElMessage.success('操作成功'); applyReportFilters(); }
-    } catch (e) { ElMessage.error('操作失败'); }
+  const confirmMessage = post.review_status === 'rejected' 
+    ? `确定要将已拒绝的帖子【${post.post_title}】重新设置为通过吗？` 
+    : `确定要通过帖子【${post.post_title}】吗？`;
+  ElMessageBox.confirm(confirmMessage, '确认操作', { type: 'warning' }).then(() => {
+    handleReviewAction(approvePost, post.post_id);
   });
 };
 
-const applyReportFilters = () => {
-  let temp = [...allReports.value];
-  if (reportFilters.value.type) { temp = temp.filter(r => r.type === reportFilters.value.type); }
-  if (reportFilters.value.status) { temp = temp.filter(r => r.status === reportFilters.value.status); }
-  if (reportFilters.value.keyword) {
-    const keyword = reportFilters.value.keyword.toLowerCase();
-    temp = temp.filter(r => 
-      r.content_summary.toLowerCase().includes(keyword) ||
-      r.reporter.toLowerCase().includes(keyword) ||
-      (r.report_reason && r.report_reason.toLowerCase().includes(keyword))
-    );
-  }
-  filteredReports.value = temp;
-  reportCurrentPage.value = 1;
+// 统一处理帖子拒绝/置为不通过操作
+const handleReject = (post) => {
+  const confirmMessage = post.review_status === 'approved' 
+    ? `确定要将已通过的帖子【${post.post_title}】重新置为不通过吗？` 
+    : `确定要拒绝帖子【${post.post_title}】吗？`;
+  ElMessageBox.confirm(confirmMessage, '确认操作', { type: 'warning' }).then(() => {
+    handleReviewAction(rejectPost, post.post_id);
+  });
 };
 
+// 执行帖子审核的API调用
+const handleReviewAction = async (apiCall, postId) => {
+  try {
+    const res = await apiCall(postId);
+    if (res.data.code === 200) {
+      ElMessage.success(res.data.message || '操作成功');
+      fetchPosts(); // 重新加载当前页的帖子列表
+      fetchStats(); // 更新顶部的统计数据
+    } else {
+      ElMessage.error(res.data.message || '操作失败');
+    }
+  } catch (e) {
+    console.error("帖子审核操作失败:", e);
+    ElMessage.error('操作请求失败');
+  }
+};
+
+// 应用帖子筛选
+const applyFilters = () => {
+  postCurrentPage.value = 1; // 每次筛选都回到第一页
+  fetchPosts();
+};
+
+// 重置帖子筛选
+const resetFilters = () => {
+  filters.value = { status: '', processor: '', keyword: '' };
+  applyFilters(); // 重置后重新加载数据
+};
+
+// 处理举报
+const handleProcessReport = (action, report) => {
+  const actionText = action === 'accepted' ? '接受' : '驳回';
+  const confirmMessage = `确定要"${actionText}"这条关于【${report.content_summary}】的举报吗?`;
+  
+  ElMessageBox.confirm(confirmMessage, '确认操作', { type: 'warning' }).then(async () => {
+    try {
+      const res = await processReport(report.report_id, { action });
+      if (res.data.code === 200) {
+        ElMessage.success(res.data.message || '操作成功');
+        fetchReports(); // 重新加载举报列表
+        fetchStats();   // 更新统计数据
+      } else {
+        ElMessage.error(res.data.message || '操作失败');
+      }
+    } catch (e) {
+      console.error("处理举报失败:", e);
+      ElMessage.error('处理举报请求失败');
+    }
+  });
+};
+
+// 应用举报筛选
+const applyReportFilters = () => {
+  reportCurrentPage.value = 1; // 每次筛选都回到第一页
+  fetchReports();
+};
+
+// 重置举报筛选
 const resetReportFilters = () => {
   reportFilters.value = { type: '', status: '', keyword: '' };
   applyReportFilters();
 };
 
-const dialogVisible = ref(false);
-const dialogTitle = ref('');
-const currentContent = ref({});
-const viewDetails = (item, type) => {
+// 查看详情弹窗
+const viewDetails = async (item, type) => {
   dialogTitle.value = type === 'post' ? '帖子内容详情' : '举报内容详情';
   
   let content = { view_type: type, ...item };
 
-  // 如果是查看举报，并且举报类型是帖子，则查找并附加完整的帖子数据
   if (type === 'report' && item.type === '帖子' && item.post_id) {
-    const fullPost = allPosts.value.find(p => p.post_id === item.post_id);
-    if (fullPost) {
-      content.reported_post_data = fullPost; // 将找到的帖子数据附加到要显示的内容上
+    try {
+      const res = await fetchPostID(item.post_id); 
+      if (res && res.data) { 
+          content.reported_post_data = res.data; 
+      } else {
+          content.reported_post_data = { post_title: '帖子详情加载失败', post_content: '无法获取内容。' };
+      }
+    } catch (e) {
+      console.error("获取被举报的帖子详情失败:", e);
+      content.reported_post_data = { post_title: '帖子详情加载失败', post_content: '网络错误或接口异常。' };
     }
   }
   
@@ -519,20 +551,29 @@ const viewDetails = (item, type) => {
   dialogVisible.value = true;
 };
 
+
 onMounted(() => {
+  // 页面加载时，初始化所有数据
+  fetchStats();
   fetchPosts();
   fetchReports();
 });
 
-// 辅助函数 
+// 侦听分页变化，自动重新加载数据
+watch([postCurrentPage, postPageSize], fetchPosts);
+watch([reportCurrentPage, reportPageSize], fetchReports);
+
+
+// --- 辅助函数 ---
 const getStatusText = (status, type) => {
   const postMap = { 'pending': '待审核', 'approved': '已通过', 'rejected': '已拒绝' };
   const reportMap = { 'pending': '待处理', 'accepted': '已接受', 'rejected': '已驳回' };
-  return type === 'post' ? postMap[status] : reportMap[status];
+  return type === 'post' ? (postMap[status] || '未知') : (reportMap[status] || '未知');
 };
+
 const getStatusType = (status) => {
-  const typeMap = { 'pending': 'warning', 'approved': 'success', 'accepted': 'success', 'rejected': 'danger', 'info': 'info' };
-  return typeMap[status] || 'primary';
+  const typeMap = { 'pending': 'warning', 'approved': 'success', 'accepted': 'success', 'rejected': 'danger' };
+  return typeMap[status] || 'info';
 };
 </script>
 

@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // 创建 axios 实例
 const instance = axios.create({
-  baseURL: '',
+  baseURL: 'http://localhost:3000',
   timeout: 5000
 });
 
@@ -305,19 +305,36 @@ export const fetchConfirmInfo = (appointmentId) => {
 export const getPosts = (params) => {
   /*  params - 包含过滤和分页参数的对象
       e.g., { page: 1, pageSize: 10, status: 'pending', keyword: 'Vue' } */
-    return instance.get('/api/posts', { params });
+    return instance.get('/api/posts', { 
+        params, 
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
 };
 export const approvePost = (id) => {
-    return instance.put(`/api/posts/${id}/approve`);
+    return instance.put(`/api/posts/${id}/approve`, null, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
 };
 export const rejectPost = (id) => {
-    return instance.put(`/api/posts/${id}/reject`);
+    return instance.put(`/api/posts/${id}/reject`, null, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
 };
 
 //举报管理相关
 export const getReports = (params) => {
-  return instance.get('/api/reports', { params });
+  return instance.get('/api/reports', { 
+    params,
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
 };
 export const processReport = (reportId, data) => {
-  return instance.put(`/api/reports/${reportId}/process`, data);
+  return instance.put(`/api/reports/${reportId}/process`, data, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
+};
+export const fetchPostID = (postId) => {
+  return instance.get(`/api/posts/${postId}`, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
 };
