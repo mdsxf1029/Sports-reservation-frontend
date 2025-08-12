@@ -38,11 +38,35 @@
         </div>
       </div>
 
+      <!-- --- 修改：创作中心容器 --- -->
       <div class="creation-center-container">
         <div class="creation-card">
-          <button class="create-button">创作中心</button>
+          <!-- 1. 标题 -->
+          <h3 class="creation-title">创作中心</h3>
+          
+          <!-- 2. 提示语和插图 -->
+          <div class="creation-prompt">
+            <div class="prompt-text">
+              <h4>开启你的创作之旅</h4>
+              <p>分享你的运动心得，<br>成为社区的焦点吧！</p>
+            </div>
+            <!-- 一个简单的SVG插图 -->
+            <svg class="prompt-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <path d="M85,35 A15,15 0 0,1 70,50 L30,50 A15,15 0 0,1 15,35 L15,20 A15,15 0 0,1 30,5 L70,5 A15,15 0 0,1 85,20 Z" fill="#e0f2fe"/>
+              <path d="M80,40 A10,10 0 0,1 70,50 L30,50 A10,10 0 0,1 20,40 L20,25 A10,10 0 0,1 30,15 L70,15 A10,10 0 0,1 80,25 Z" fill="#60a5fa"/>
+              <line x1="35" y1="25" x2="65" y2="25" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+              <line x1="35" y1="35" x2="55" y2="35" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="85" cy="20" r="5" fill="#ef4444"/>
+            </svg>
+          </div>
+
+          <!-- 3. 开始创作按钮 -->
+          <button class="create-button" @click="navigateToEditor">
+            <span class="plus-icon">+</span> 开始创作
+          </button>
         </div>
       </div>
+      <!-- --- 修改结束 --- -->
     </div>
 
     <!-- 登录提示弹窗 -->
@@ -58,24 +82,23 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
-// 引入新增的 API 函数
+// 引入组件和 API
 import HeaderNavbar from '../components/HeaderNavbar.vue';
 import CommunityPostCard from '../components/CommunityPostCard.vue';
 import { fetchCommunityPosts, fetchMyCollectedPosts } from '../utils/api.js';
 import { AuthService } from '../utils/auth.js';
 import LoginPrompt from '../components/LoginPrompt.vue';
 
-// 2. 引入样式文件
+// 引入样式文件
 import '../styles/community-home.css';
 
-// 3. 定义组件状态
+// 定义组件状态
 const posts = ref([]);
 const isLoading = ref(true);
 const pagination = ref({
   page: 1,
   pageSize: 10,
 });
-// 用于管理当前激活的 Tab
 const activeTab = ref('recommend'); 
 
 // 登录提示弹窗相关状态
@@ -84,62 +107,68 @@ const showLoginDialog = ref(false);
 const loginPromptMessage = ref('');
 
 const handleLoginRedirect = () => {
-  router.push('/login'); // 跳转到登录页
+  router.push('/login');
 };
 
 const getPosts = async () => {
   isLoading.value = true;
   try {
     let response;
-    // 根据当前的 Tab 调用不同的 API
     if (activeTab.value === 'recommend') {
       console.log("正在获取推荐帖子...");
       response = await fetchCommunityPosts(pagination.value);
-    } else { // activeTab.value === 'collections'
+    } else {
       console.log("正在获取我的收藏...");
       response = await fetchMyCollectedPosts(pagination.value);
     }
     
     if (response.data && response.data.code === 200) {
       posts.value = response.data.data.list;
-      console.log("成功获取到帖子:", posts.value);
     } else {
-      // 如果API返回非200状态码，也清空列表
       posts.value = [];
     }
   } catch (error) {
     console.error('获取帖子列表失败:', error);
-    posts.value = []; // 发生错误时清空列表，防止显示旧数据
+    posts.value = [];
   } finally {
     isLoading.value = false;
   }
 };
 
-// 切换 Tab 时增加登录判断
 const switchTab = (tabName) => {
-  // 如果点击的是当前已激活的 Tab，则不执行任何操作
   if (activeTab.value === tabName) {
     return;
   }
   
-  // 如果目标是“我的收藏”，则检查登录状态
   if (tabName === 'collections') {
     const authStatus = AuthService.checkLoginStatus();
     if (!authStatus.isValid) {
       loginPromptMessage.value = '登录后才能查看我的收藏哦～';
       showLoginDialog.value = true;
-      return; // 阻止切换
+      return;
     }
   }
   
-  activeTab.value = tabName; // 切换激活状态
-  pagination.value.page = 1; // 切换 Tab 时重置到第一页
-  getPosts(); // 调用方法重新获取数据
+  activeTab.value = tabName;
+  pagination.value.page = 1;
+  getPosts();
 };
 
+// --- 新增：跳转到帖子编辑页的方法 ---
+const navigateToEditor = () => {
+  // 同样可以增加登录检查
+  const authStatus = AuthService.checkLoginStatus();
+  if (!authStatus.isValid) {
+    loginPromptMessage.value = '登录后才能开始创作哦～';
+    showLoginDialog.value = true;
+    return;
+  }
+  router.push({ name: 'PostEditor' }); // 假设你的路由配置中，帖子编辑页的 name 是 'PostEditor'
+};
+// --- 新增结束 ---
 
 onMounted(() => {
-  getPosts(); // 页面首次加载时，获取默认的“推荐”列表
+  getPosts();
 });
 </script>
 
@@ -150,5 +179,79 @@ onMounted(() => {
   padding: 80px 50px;
   color: #888;
   font-size: 16px;
+}
+
+/* --- 新增/修改：创作中心卡片的样式 --- */
+.creation-card {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  display: flex; /* 使用flex布局 */
+  flex-direction: column; /* 垂直排列 */
+  gap: 16px; /* 元素间距 */
+}
+
+.creation-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  text-align: left; /* 左对齐 */
+  border-bottom: 1px solid #f0f2f5;
+  padding-bottom: 12px;
+}
+
+.creation-prompt {
+  background-color: #f7f8fa;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.prompt-text h4 {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  color: #1d2129;
+}
+
+.prompt-text p {
+  font-size: 13px;
+  color: #8a919f;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.prompt-icon {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0; /* 防止图标被压缩 */
+}
+
+.create-button {
+  width: 100%;
+  padding: 10px 0;
+  font-size: 15px;
+  color: #1e80ff;
+  background-color: #fff;
+  border: 1px solid #1e80ff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.create-button:hover {
+  background-color: #eaf2ff;
+}
+
+.plus-icon {
+  font-size: 20px;
+  font-weight: bold;
 }
 </style>

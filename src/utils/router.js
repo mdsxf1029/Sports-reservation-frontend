@@ -92,6 +92,7 @@ const routes = [
     },
     {
         path: '/community/posteditor',
+        name: 'PostEditor',
         component: PostEditor
     },
     {
