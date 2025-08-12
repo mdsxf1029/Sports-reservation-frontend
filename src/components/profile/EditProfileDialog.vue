@@ -159,6 +159,7 @@
 
 <script>
 import { getUserInfo, updateUserInfo } from '@/utils/api'
+import { AuthService } from '@/utils/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import AvatarUpload from '@/components/AvatarUpload.vue'
@@ -184,39 +185,6 @@ export default {
   emits: ['update:modelValue', 'success'],
   
   data() {
-    // 自定义验证规则
-    const validateEmail = (rule, value, callback) => {
-      if (!value) {
-        return callback(new Error('请输入邮箱地址'))
-      }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(value)) {
-        return callback(new Error('请输入有效的邮箱地址'))
-      }
-      callback()
-    }
-
-    const validatePhone = (rule, value, callback) => {
-      if (!value) {
-        return callback(new Error('请输入电话号码'))
-      }
-      const phoneRegex = /^1[3-9]\d{9}$/
-      if (!phoneRegex.test(value)) {
-        return callback(new Error('请输入有效的手机号码'))
-      }
-      callback()
-    }
-
-    const validateConfirmPassword = (rule, value, callback) => {
-      if (this.editForm.newPassword && !value) {
-        return callback(new Error('请确认新密码'))
-      }
-      if (value && value !== this.editForm.newPassword) {
-        return callback(new Error('两次输入的密码不一致'))
-      }
-      callback()
-    }
-
     return {
       loading: false,
       saving: false,
@@ -238,27 +206,7 @@ export default {
       },
       
       // 原始数据，用于重置
-      originalData: {},
-      
-      // 表单验证规则
-      formRules: {
-        userName: [
-          { required: true, message: '请输入用户名', trigger: 'blur' },
-          { min: 2, max: 20, message: '用户名长度在 2 到 20 个字符', trigger: 'blur' }
-        ],
-        telephone: [
-          { validator: validatePhone, trigger: 'blur' }
-        ],
-        email: [
-          { validator: validateEmail, trigger: 'blur' }
-        ],
-        newPassword: [
-          { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' }
-        ],
-        confirmPassword: [
-          { validator: validateConfirmPassword, trigger: 'blur' }
-        ]
-      }
+      originalData: {...this.userProfile}
     }
   },
   
@@ -269,6 +217,32 @@ export default {
       },
       set(value) {
         this.$emit('update:modelValue', value)
+      }
+    },
+    
+    // 动态获取表单验证规则
+    formRules() {
+      const baseRules = AuthService.getFormRules(this.editForm.newPassword)
+      
+      // 自定义确认密码验证器，绑定当前组件的newPassword
+      const validateConfirmPassword = (rule, value, callback) => {
+        if (this.editForm.newPassword && !value) {
+          return callback(new Error('请确认新密码'))
+        }
+        if (value && value !== this.editForm.newPassword) {
+          return callback(new Error('两次输入的密码不一致'))
+        }
+        callback()
+      }
+      
+      return {
+        userName: baseRules.userName,
+        telephone: baseRules.telephone,
+        email: baseRules.email,
+        newPassword: baseRules.newPassword,
+        confirmPassword: [
+          { validator: validateConfirmPassword, trigger: 'blur' }
+        ]
       }
     }
   },
@@ -343,6 +317,7 @@ export default {
     
     // 重置表单数据
     resetFormData() {
+      // 真正的清理：清空所有数据
       this.editForm = {
         userName: '',
         userId: '',
@@ -357,9 +332,11 @@ export default {
         newPassword: '',
         confirmPassword: ''
       }
+      
+      // 清空原始数据引用
       this.originalData = {}
       
-      // 清除表单验证
+      // 清除表单验证状态
       this.$nextTick(() => {
         if (this.$refs.profileForm) {
           this.$refs.profileForm.clearValidate()
@@ -388,7 +365,9 @@ export default {
     async saveProfile() {
       try {
         // 表单验证
+        console.log('开始表单验证...')
         await this.$refs.profileForm.validate()
+        console.log('表单验证通过')
         
         this.saving = true
         
@@ -411,11 +390,11 @@ export default {
         }
         
         const userId = localStorage.getItem('userId')
-        const response = await updateUserInfo(userId, updateData)
-        
+        const res = await updateUserInfo(userId, updateData) 
+        const response = res.data
         if (response && response.code === 0) {
           ElMessage.success('个人资料更新成功')
-          
+          console.log('个人资料更新成功')
           // 更新本地存储的用户信息
           if (this.editForm.userName) {
             localStorage.setItem('userName', this.editForm.userName)
@@ -432,7 +411,8 @@ export default {
           this.resetFormData()
           
         } else {
-          ElMessage.error(response.message || '更新失败')
+          console.error('更新个人资料失败:', response.msg)  
+          ElMessage.error(response.msg || '个人资料更新失败')
         }
         
       } catch (error) {

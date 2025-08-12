@@ -186,19 +186,7 @@ const form = ref({
 })
  
 
-// 自定义电话号码校验
-const validatePhone = (rule, value, callback) => {
-  if (value === '') {
-    callback(new Error('电话号码不能为空'))
-  } else {
-    const phonePattern = /^1[3-9]\d{9}$/
-    if (!phonePattern.test(value)) {
-      callback(new Error('请输入正确的手机号码'))
-    } else {
-      callback()
-    }
-  }
-}
+// 自定义确认密码校验（绑定当前组件的 password）
 const validateConfirmPassword = (rule, value, callback) => {
   if (value === '') {
     callback(new Error('请确认密码'))
@@ -211,18 +199,16 @@ const validateConfirmPassword = (rule, value, callback) => {
 
 const rules = { 
   userName: [
-    { required: true, message: '用户名不能为空', trigger: 'blur' },
-    { min: 2, max: 20, message: '用户名长度在 2 到 20 个字符', trigger: 'blur' }
+    { required: true, validator: AuthService.validateUserName, trigger: 'blur' }
   ],
   telephone: [
-    { required: true, validator: validatePhone, trigger: 'blur' }
+    { required: true, validator: AuthService.validatePhone, trigger: 'blur' }
   ],
   email: [
     { required: true, validator: AuthService.validateEmail, trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '密码不能为空', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' }
+    { required: true, validator: AuthService.validatePassword, trigger: 'blur' }
   ],
   confirmPassword: [
     { required: true, validator: validateConfirmPassword, trigger: 'blur' }
@@ -250,7 +236,7 @@ const register = async () => {
       password: form.value.password,
       gender: form.value.gender,
       birthday: form.value.birthday || '1990-01-01', // 提供默认日期而不是 null
-      avatarUrl: form.value.avatarUrl,
+      avatarUrl: form.value.avatarUrl || 'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png',
       region: form.value.region || '其他',
       profile: form.value.profile || '这个用户很懒，什么都没有留下。',
       role: form.value.role,

@@ -110,7 +110,7 @@ const rules = {
     { required: true, validator: AuthService.validateEmail, trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '密码不能为空', trigger: 'blur' }
+    { required: true, validator: AuthService.validatePassword, trigger: 'blur' }
   ]
 }
 const login = () => {

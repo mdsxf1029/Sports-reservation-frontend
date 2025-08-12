@@ -7,6 +7,36 @@ const instance = axios.create({
   timeout: 5000
 });
 
+// 在 api.js 中添加响应拦截器
+instance.interceptors.response.use(
+  response => {
+    return response;
+  },
+  error => {
+    // 处理401未授权错误（通常表示token过期）
+    if (error.response && error.response.status === 401) {
+      const errorMsg = error.response.data?.msg || error.response.data?.message;
+      
+      // 如果后端明确返回token过期信息
+      if (errorMsg && errorMsg.includes('过期')) {
+        ElMessage.warning('登录已过期，请重新登录');
+        
+        // 清除本地存储
+        AuthService.clearLoginData();
+        
+        // 跳转到登录页
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500);
+      } else {
+        ElMessage.error('认证失败，请重新登录');
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
 
 // 获取用户违约记录
 export function getViolations() {
