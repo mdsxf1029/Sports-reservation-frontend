@@ -1,38 +1,37 @@
 <template>
+  <TopNavbar title="运动社区 / 帖子详情" />
   <div class="app-container">
-    <!-- 固定页头 -->
-    <div class="fixed-header">
-      <div class="header-content">
-        <!-- 返回键在页头左侧 -->
-        <button class="back-btn header-back-btn" @click="handleBack">
-          <span>&lt;</span>
-        </button>
-        运动社区 / {{ post.title }}
-      </div>
-    </div>
-
-    <!-- 内容区域 -->
     <div class="content-wrapper">
-      <!-- 帖子作者信息（包含举报按钮） -->
-      <div class="author-info">
-        <img :src="post.author.avatar" alt="作者头像" class="author-avatar">
-        <div class="author-details">
-          <span class="author-user_name">{{ post.author.user_name }}</span>
-          <span class="author-post-time">{{ post.publish_time }}</span>
-        </div>
-      </div>
 
-      <!-- 帖子内容区域 -->
-      <div class="post-box">
-        <h3 class="post-title">{{ post.title }}</h3>
+      <!-- 作者信息 + 发布时间 + 内容 -->
+      <div class="post-card">
+        <!-- 帖子标题，居中大字 -->
+        <h1 class="post-main-title">{{ post.title }}</h1>
+        <div class="post-header">
+          <div class="author-info">
+            <img :src="post.author.avatar" alt="作者头像" class="author-avatar" />
+            <div class="post-info">
+              <span class="author-name">{{ post.author.user_name }}</span>
+              <span class="post-time">发表于 {{ post.publish_time }}</span>
+            </div>
+          </div>
+          <el-dropdown>
+            <el-button class="post-report-btn" title="更多操作">
+              <MoreFilled class="rotated-icon" />
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="openReportModal">举报帖子</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+
+        <!-- 帖子正文 -->
         <p class="post-content">{{ post.content }}</p>
-        
-        <!-- 帖子举报按钮（放在左下角） -->
-        <button class="post-report-btn" @click="openReportModal" title="举报帖子">
-          <span class="post-report-icon">⚠</span>
-        </button>
-        
-        <!-- 帖子操作图标（右侧） -->
+
+
+        <!-- 操作图标 -->
         <div class="post-icons">
           <i
             :class="{ 'fa-solid': isFavorited, 'fa-regular': !isFavorited }"
@@ -53,23 +52,21 @@
 
       <!-- 评论区域（带折叠功能） -->
       <div class="comments-box">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-          <h4 class="comments-title">帖子评论 ({{ comments.length }})</h4>
-          <div class="sort-container">
-            <select 
+          <div class="comments-box-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 class="comments-title">帖子评论 ({{ comments.length }})</h4>
+            <el-select 
               v-model="sortType" 
-              class="sort-select"
+              placeholder="排序方式" 
+              style="margin-left: 12px; width: 100px;"
             >
-              <option 
-                v-for="option in sortOptions" 
-                :key="option.value" 
-                :value="option.value"
-              >
-                {{ option.label }}
-              </option>
-            </select>
+              <el-option
+                v-for="option in sortOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value">
+              </el-option>
+            </el-select>
           </div>
-        </div>
         
         <!-- 评论列表 -->
         <div 
@@ -112,13 +109,14 @@
         </div>
         
         <!-- 折叠/展开按钮 -->
-        <button 
-          v-if="comments.length > 5" 
+        <el-button
+          v-if="comments.length > 5"
+          type="text"
           class="toggle-comments-btn"
           @click="isCommentsExpanded = !isCommentsExpanded"
         >
           {{ isCommentsExpanded ? '收起评论' : `显示全部 ${comments.length} 条评论` }}
-        </button>
+        </el-button>
       </div>
     </div>
 
@@ -153,7 +151,7 @@
     <div v-if="showReportModal" class="modal-overlay" @click.self="closeReportModal">
       <div class="report-modal">
         <div class="modal-header">
-          <h3>举报帖子</h3>
+          <h3>举报</h3>
           <button class="close-btn" @click="closeReportModal">×</button>
         </div>
         <div class="modal-body">
@@ -198,6 +196,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { fetchPostById } from '../utils/api.js';
+import { ElDropdown, ElDropdownMenu, ElDropdownItem, ElButton } from 'element-plus'
+import { MoreFilled } from '@element-plus/icons-vue'
 import BackToTop from '../components/BackToTop.vue';
 
 const router = useRouter();
@@ -548,89 +548,263 @@ const submitReport = () => {
 </script>
 
 <style scoped>
-/* 举报按钮样式 */
+.app-container {
+  min-height: 100vh;
+  background-color: #f5f6fa !important;
+  padding-top: 20px !important;
+  padding-bottom: 80px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+  color: #1f2937;
+}
+
+.content-wrapper {
+  width: 82%;
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  box-sizing: border-box;
+  padding: 20px 0;
+}
+
+
+.post-main-title {
+  font-size: 32px;
+  font-weight: 700;
+  text-align: left;
+  color: black; 
+  margin-bottom: 40px;
+}
+
+/* 帖子卡片整体 */
+.post-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 32px 70px;
+  position: relative;
+}
+
+/* 帖子头部：作者 + 时间 */
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgb(224, 221, 221) !important;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+}
+
 .author-info {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
-  padding: 15px 0;
-  justify-content: space-between;
+  gap: 18px;
 }
 
-/* 返回按钮样式 */
-.header-back-btn {
-  margin-right: 10px;
-  padding: 8px 12px; /* 增大点击区域 */
-  font-size: 20px;
-  background-color: transparent;
-  border: 1px solid transparent; /* 预留边框空间 */
-  border-radius: 6px; /* 圆角处理 */
-  color: #4b5563;
+.author-avatar {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 6px #fff; /* 白色光晕 */
+}
+
+.post-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.author-name {
+  font-weight: 600;
+  font-size: 24px;
+  color: #000000; 
+}
+
+.post-time {
+  font-size: 14px;
+  color: #95a5a6; /* 灰色 */
+}
+
+/* 举报按钮 */
+.post-report-btn {
+  position: relative;
+  left: -40px !important;
+  bottom: -12px !important;
+  background: transparent !important;
+  border: none !important;
   cursor: pointer;
-  transition: all 0.2s ease; /* 统一过渡效果 */
+  color: grey !important;
+  font-size: 24px;
+  padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.2s ease, color 0.2s ease;
+  outline: none;
+  box-shadow: none;
 }
 
-.header-back-btn:hover {
-  background-color: #f3f4f6; /* 悬停背景色 */
-  color: #1f2937;
-  border-color: #e5e7eb; /* 悬停时显示边框 */
-  transform: translateX(-2px); /* 轻微左移增强交互感 */
+/* :focus 时取消默认蓝色框 */
+.post-report-btn:focus,
+.post-report-btn.el-button:focus {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
-.header-back-btn:active {
-  background-color: #e5e7eb; /* 点击状态背景色 */
-  transform: translateX(0); /* 点击时复位 */
+/* :hover 保持偏移，放大，颜色变深 */
+.post-report-btn:hover {
+  transform: scale(1.1);
 }
 
-/* 评论区域样式 */
+/* 图标旋转 */
+.rotated-icon {
+  transform: rotate(90deg);
+  display: block; 
+  width: 1em;
+  height: 1em;
+  color: inherit;
+}
+
+/* 帖子正文 */
+.post-content {
+  font-size: 18px !important;
+  line-height: 1.8;
+  color: #333;
+  white-space: pre-wrap;
+  margin-bottom: 48px;
+}
+
+
+
+/* 操作图标 */
+.post-icons {
+  position: absolute;
+  bottom: 24px;
+  right: 40px;
+  display: flex;
+  gap: 22px;
+  font-size: 20px;
+  color: #7f8c8d; /* 灰蓝 */
+}
+
+.post-icons i {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.post-icons i:hover {
+  color: #2980b9; /* 亮蓝色 hover */
+}
+
+.post-icons .fa-star.fa-solid {
+  color: #3498db; /* 蓝色 */
+}
+
+.post-icons .fa-heart.fa-solid {
+  color: #e74c3c; /* 红色 */
+}
+
+
+/* 评论区域整体容器 */
+.comments-box {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 32px 70px !important;
+  position: relative;
+}
+
+/* 评论头部：标题和排序选择 */
+.comments-box > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.comments-title {
+  font-size: 22px !important;
+  font-weight: 700;
+  color: black;
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #969696;
+}
+
+.sort-select {
+  width: 150px !important;
+}
+
+/* 单条评论容器 */
 .comment-item {
   display: flex;
-  margin-bottom: 20px;
-  padding: 15px 0;
-  border-bottom: 1px solid #dee0e4;
+  gap: 30px;
+  border-bottom: 1px solid #e5e7eb; /* 浅灰分割线 */
+  padding-bottom: 20px;
+  padding-top: 20px;
 }
 
+/* 评论内容外层 */
 .comment-content-wrapper {
   flex: 1;
-  margin-left: 15px;
   display: flex;
   flex-direction: column;
+}
+
+/* 评论头部，通常放用户名、头像可扩展 */
+.comment-avatar {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 6px #fff; /* 白色光晕 */
 }
 
 .comment-header {
   margin-bottom: 8px;
 }
 
-.comment-content {
-  font-size: 14px;
-  line-height: 1.6;
-  color: #374151;
-  margin: 0 0 10px 0;
+.comment-user_name {
+  font-weight: 600 !important;
+  color: rgb(21, 96, 189) !important;
+  font-size: 18px !important;
 }
 
-/* 评论底部区域：时间、赞、踩放在评论最下方 */
+/* 评论正文 */
+.comment-content {
+  font-size: 18px;
+  line-height: 1.6;
+  color: black;
+  margin: 0 0 8px 0;
+  white-space: pre-wrap;
+}
+
+/* 评论底部信息区域 */
 .comment-footer {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-top: auto;
-  font-size: 12px;
-  color: #9ca3af;
-  justify-content: space-between; /* 新增：两端对齐 */
+  font-size: 13px;
+  color: #6b7280; /* 中灰 */
 }
 
+/* 时间 */
 .comment-time {
-  margin-right: 15px;
   white-space: nowrap;
+  color: #95a5a6; 
+  font-size: 14px;
 }
 
+/* 评论操作按钮（点赞、踩） */
 .comment-actions {
   display: flex;
-  gap: 15px;
-  font-size: 14px;
-  color: #4b5563;
+  gap: 20px;
+  color: #6b7280;
 }
 
 .comment-actions i {
@@ -639,32 +813,39 @@ const submitReport = () => {
 }
 
 .comment-actions i:hover {
-  color: #1f2937;
+  color: #2563eb; /* 互动蓝 */
 }
 
 .comment-actions .fa-thumbs-up.fa-solid {
-  color: #ff4218;
+  color: #ef4444; /* 红色点赞 */
 }
 
 .comment-actions .fa-thumbs-down.fa-solid {
-  color: #0d8bf2;
+  color: #3b82f6; /* 蓝色点踩 */
 }
 
-/* 评论输入框样式调整 - 移除横向滚动条 */
+/* 评论输入框 */
 .comment-input {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #c5c5c5;
-  border-radius: 8px;
-  font-size: 15px;
+  padding: 14px 18px;
+  font-size: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background-color: #f9fafb;
   resize: none;
+  line-height: 1.6;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+  min-height: 120px;
   outline: none;
-  min-height: 100px; /* 增加初始高度 */
-  transition: all 0.3s ease; /* 统一过渡效果 */
-  line-height: 2; /* 优化行高 */
-  background-color: #fcfcfc;
-  box-sizing: border-box; /* 确保padding不影响宽度 */
 }
+
+.comment-input:focus {
+  border-color: #3b82f6;
+  background-color: #ffffff;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+}
+
 
 /* 举报说明文本框 */
 .report-description {
@@ -719,177 +900,20 @@ const submitReport = () => {
 
 .toggle-comments-btn {
   width: 100%;
-  padding: 8px 0;
-  margin-top: 15px;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+  padding: 25px 0;
+  margin-top: 30px;
+  font-size: 16px;
+  color: #fff;
+  background-color: #3b82f6; /* 蓝色 */
   border-radius: 6px;
-  color: #4b5563;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  text-align: center;
+  border: none;
+  transition: background-color 0.2s ease;
 }
 
 .toggle-comments-btn:hover {
-  background-color: #f3f4f6;
-  color: #ff4218;
-}
-
-.app-container {
-  min-height: 100vh;
-  background-color: #fafafa;
-  padding-top: 60px;
-  padding-bottom: 60px;
-  box-sizing: border-box;
-}
-
-.fixed-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0; /* 新增：确保右侧紧贴屏幕边缘 */
-  width: 100% !important; /* 强制占满宽度 */
-  height: 60px;
-  background-color: #fff;
-  border-bottom: 1px solid #eee;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  padding: 0; /* 移除默认内边距 */
-  margin: 0; /* 移除默认外边距 */
-  box-sizing: border-box; /* 确保边框和内边距不影响总宽度 */
-}
-
-.content-wrapper {
-  width: 75%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px 0;
-  box-sizing: border-box;
-}
-
-.author-avatar {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  margin-right: 12px;
-}
-
-.author-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-}
-
-.author-user_name {
-  font-size: 18px;
-  color: #374151;
-  font-weight: 500;
-}
-
-.author-post-time {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-.post-box {
-  padding: 25px 20px;
-  background-color: #fff;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  position: relative;
-  min-height: 120px;
-}
-
-.post-title {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 15px;
-  color: #1f2937;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #d7dbe0;
-}
-
-.post-content {
-  font-size: 16px;
-  line-height: 1.8;
-  color: #374151;
-  white-space: pre-wrap;
-  margin-bottom: 40px;
-}
-
-.post-icons {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  gap: 15px;
-  font-size: 18px;
-  color: #4b5563;
-}
-
-.post-icons i {
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.post-icons i:hover {
-  color: #1f2937;
-}
-
-.post-icons .fa-star.fa-solid {
-  color: #ffc107;
-}
-
-.post-icons .fa-heart.fa-solid {
-  color: #ff4218;
-}
-
-.comments-box {
-  padding: 25px 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.comments-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 15px;
-  color: #1f2937;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #969696;
-}
-
-.comment-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-}
-
-.comment-user_name {
-  font-size: 14px;
-  color: #1f2937;
-  font-weight: 500;
-}
-
-.back-btn {
-  padding: 9px 18px;
-  border: none;
-  border-radius: 6px;
-  background-color: #f3f4f6;
-  color: #4b5563;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.back-btn:hover {
-  background-color: #e5e7eb;
+  background-color: #2563eb; /* 深蓝色 */
+  color: #fff;
 }
 
 .tip {
@@ -1046,97 +1070,5 @@ const submitReport = () => {
   .footer-content {
     width: 95%;
   }
-}
-
-/* 排序按钮样式 */
-.sort-buttons {
-  display: flex;
-  margin: 0 0 15px auto;
-  width: 160px; /* 固定宽度使按钮组更整齐 */
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.sort-btn {
-  flex: 1;
-  padding: 8px 0;
-  background-color: #fff;
-  border: none;
-  color: #4b5563;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.sort-btn.active {
-  background-color: #1890ff;
-  color: white;
-  font-weight: 500;
-}
-
-.sort-btn:not(.active):hover {
-  background-color: #f9fafb;
-  color: #1f2937;
-}
-
-.comments-title {
-  display: inline-block;
-  margin-bottom: 15px;
-}
-
-/* 排序容器样式 */
-.sort-container {
-  position: relative;
-  width: 100px;
-}
-
-/* 排序选择器样式 */
-.sort-select {
-  width: 100%;
-  padding: 6px 30px 6px 12px;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #374151;
-  appearance: none; /* 移除默认箭头 */
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.sort-container::after {
-  content: "\f078";
-  font-family: "Font Awesome 6 Free";
-  font-weight: 900;
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: #6b7280;
-  font-size: 12px;
-}
-
-.sort-select:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.sort-select:focus {
-  outline: none;
-  border-color: #ff4218;
-  box-shadow: 0 0 0 3px rgba(255, 66, 24, 0.1);
-}
-
-.sort-select option {
-  padding: 8px;
-  background-color: #ffffff;
-  color: #374151;
-}
-
-.sort-select option:hover {
-  background-color: #f9fafb;
 }
 </style>
