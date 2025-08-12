@@ -22,39 +22,53 @@
         <span class="icon">{{ post.currentUserInteraction.hasCollected ? '⭐' : '☆' }}</span>
         <span>收藏</span>
       </div>
-      <div class="action-item" @click="openReportDialog">
+      <div class="action-item" @click="openReportModal">
         <span class="icon">🚩</span>
         <span>举报</span>
       </div>
     </div>
   </div>
-<el-dialog v-model="reportDialogVisible" title="举报帖子" width="400px">
-  <el-form label-position="top">
-    <el-form-item label="举报类别（必选）">
-      <el-select v-model="reportForm.category" placeholder="请选择举报类别">
-        <el-option
-          v-for="item in reportCategories"
-          :key="item"
-          :label="item"
-          :value="item"
-        />
-      </el-select>
-    </el-form-item>
-    <el-form-item label="举报理由（可选，最多500字节）">
-      <el-input
-        v-model="reportForm.reason"
-        type="textarea"
-        maxlength="500"
-        show-word-limit
-        placeholder="请描述举报原因（选填）"
-      />
-    </el-form-item>
-  </el-form>
-  <template #footer>
-    <el-button @click="reportDialogVisible = false">取消</el-button>
-    <el-button type="primary" @click="submitReport">提交</el-button>
-  </template>
-</el-dialog>
+
+  <div v-if="showReportTip" class="tip">{{ reportTip }}</div>
+
+  <div v-if="showReportModal" class="modal-overlay" @click.self="closeReportModal">
+    <div class="report-modal">
+      <div class="modal-header">
+        <h3>举报帖子</h3>
+        <button class="close-btn" @click="closeReportModal">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="report-desc">请选择举报原因：</p>
+        <div class="report-reasons">
+          <label class="reason-item" v-for="reason in reportReasons" :key="reason.value">
+            <input 
+              type="radio" 
+              v-model="selectedReportReason" 
+              :value="reason.label"
+            >
+            {{ reason.label }}
+          </label>
+        </div>
+        <textarea 
+          v-model="reportDescription" 
+          placeholder="请输入详细说明（可选，最多500字节）..." 
+          rows="3"
+          maxlength="500"
+          class="report-description"
+        ></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="cancel-btn" @click="closeReportModal">取消</button>
+        <button 
+          class="submit-btn" 
+          @click="submitReport" 
+          :disabled="!selectedReportReason"
+        >
+          提交举报
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -67,6 +81,7 @@ import {
   uncollectCommunityPost,
   reportCommunityPost
 } from '../utils/api.js';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps({
   post: {
@@ -131,59 +146,65 @@ const handleCollect = async () => {
   }
 };
 
-import { ElDialog, ElSelect, ElOption, ElInput, ElMessageBox, ElMessage } from 'element-plus'; // 使用 Element Plus
+// 举报模态框相关状态
+const showReportModal = ref(false);
+const reportReasons = [
+  { label: '广告', value: 'spam' },
+  { label: '色情低俗', value: 'pornography' },
+  { label: '欺诈', value: 'fraud' },
+  { label: '侵权', value: 'infringement' },
+  { label: '其它原因', value: 'other' }
+];
+const selectedReportReason = ref('');
+const reportDescription = ref('');
 
-// 举报表单相关状态
-const reportDialogVisible = ref(false);
-const reportForm = reactive({
-  category: '',
-  reason: '',
-});
+// 举报成功提示相关状态
+const showReportTip = ref(false);
+const reportTip = ref('');
 
-const reportCategories = ['广告', '色情低俗', '欺诈', '侵权', '其它原因'];
+// 打开举报模态框
+const openReportModal = () => {
+  selectedReportReason.value = '';
+  reportDescription.value = '';
+  showReportModal.value = true;
+};
 
-// 打开举报表单
-const openReportDialog = () => {
-  reportForm.category = '';
-  reportForm.reason = '';
-  reportDialogVisible.value = true;
+// 关闭举报模态框
+const closeReportModal = () => {
+  showReportModal.value = false;
 };
 
 // 提交举报逻辑
 const submitReport = async () => {
-  if (!reportForm.category) {
+  if (!selectedReportReason.value) {
     ElMessage.warning('请选择举报类别');
     return;
   }
 
   try {
-    await ElMessageBox.confirm(
-      '你确认要提交举报吗？',
-      '确认举报',
-      {
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    );
-
     // 向后端发送举报请求
     await reportCommunityPost(props.post.postId, {
-      category: reportForm.category,
-      reason: reportForm.reason,
+      category: selectedReportReason.value,
+      reason: reportDescription.value,
     });
 
-    ElMessage.success('举报已提交');
-    reportDialogVisible.value = false;
+    // 显示举报成功提示
+    reportTip.value = '举报已提交，感谢您的反馈';
+    showReportTip.value = true;
+    setTimeout(() => {
+      showReportTip.value = false;
+    }, 2000);
+
+    closeReportModal();
   } catch (err) {
-    if (err !== 'cancel') {
-      ElMessage.error('举报失败，请稍后重试');
-    }
+    ElMessage.error('举报失败，请稍后重试');
+    console.error("举报失败:", err);
   }
 };
 </script>
 
 <style scoped>
+/* 原有样式保留 */
 .post-link {
   color: inherit;
   text-decoration: none;
@@ -192,6 +213,7 @@ const submitReport = async () => {
   background-color: #fff;
   padding: 20px;
   border-bottom: 1px solid #f0f2f5;
+  position: relative; /* 为提示框定位 */
 }
 .post-card:last-child {
   border-bottom: none;
@@ -255,5 +277,135 @@ const submitReport = async () => {
 .action-item .icon {
   margin-right: 6px;
   font-size: 16px;
+}
+
+/* --- 与 PostViewer.vue 统一的模态框和提示框样式 --- */
+
+/* 提示框样式 */
+.tip {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  z-index: 1001;
+  font-size: 14px;
+}
+
+/* 模态框遮罩层 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* 举报模态框本体 */
+.report-modal {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 模态框头部 */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+}
+
+/* 模态框主体 */
+.modal-body .report-desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.report-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.reason-item {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.reason-item input[type="radio"] {
+  margin-right: 5px;
+}
+
+.report-description {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  resize: vertical;
+  box-sizing: border-box; /* 保证 padding 不会撑大宽度 */
+}
+
+/* 模态框脚部 */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.cancel-btn, .submit-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cancel-btn {
+  background-color: #f0f0f0;
+}
+
+.submit-btn {
+  background-color: #1e80ff;
+  color: white;
+  border-color: #1e80ff;
+}
+
+.submit-btn:disabled {
+  background-color: #a0cfff;
+  border-color: #a0cfff;
+  cursor: not-allowed;
 }
 </style>
