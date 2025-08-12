@@ -18,29 +18,47 @@ export function addToBlacklist(userId) {
   return instance.post('/api/blacklist/add', { userId });
 }
 
-//获取场地信息
+// 获取场地信息
 export const getVenues = (params) => {
-  return instance.get('/api/venues', { params });
+  const token = localStorage.getItem('token');
+  return instance.get('/api/venues', { 
+    params,
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
-//发布场地
+// 发布场地
 export const createVenue = (data) => {
-  return instance.post('/api/venues', data);
+  const token = localStorage.getItem('token');
+  // 对于 POST 和 PUT 请求, headers 是第三个参数
+  return instance.post('/api/venues', data, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
-//更新场地
+// 更新场地
 export const updateVenue = (id, data) => {
-  return instance.put(`/api/venues/${id}`, data);
+  const token = localStorage.getItem('token');
+  return instance.put(`/api/venues/${id}`, data, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
-//删除场地
+// 删除场地
 export const deleteVenue = (id) => {
-  return instance.delete(`/api/venues/${id}`);
+  const token = localStorage.getItem('token');
+  // 对于 DELETE 请求, headers 在第二个参数对象中
+  return instance.delete(`/api/venues/${id}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
-//批量更新场地状态
+// 批量更新场地状态
 export const batchUpdateVenueStatus = (ids, status) => {
-    return instance.put('/api/venues/batch-status', { ids, status });
+  const token = localStorage.getItem('token');
+  return instance.put('/api/venues/batch-status', { ids, status }, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
 // 你可以根据需要继续添加其他接口方法
@@ -305,19 +323,36 @@ export const fetchConfirmInfo = (appointmentId) => {
 export const getPosts = (params) => {
   /*  params - 包含过滤和分页参数的对象
       e.g., { page: 1, pageSize: 10, status: 'pending', keyword: 'Vue' } */
-    return instance.get('/api/posts', { params });
+    return instance.get('/api/posts', { 
+        params, 
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
 };
 export const approvePost = (id) => {
-    return instance.put(`/api/posts/${id}/approve`);
+    return instance.put(`/api/posts/${id}/approve`, null, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
 };
 export const rejectPost = (id) => {
-    return instance.put(`/api/posts/${id}/reject`);
+    return instance.put(`/api/posts/${id}/reject`, null, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
 };
 
 //举报管理相关
 export const getReports = (params) => {
-  return instance.get('/api/reports', { params });
+  return instance.get('/api/reports', { 
+    params,
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
 };
 export const processReport = (reportId, data) => {
-  return instance.put(`/api/reports/${reportId}/process`, data);
+  return instance.put(`/api/reports/${reportId}/process`, data, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
+};
+export const fetchPostID = (postId) => {
+  return instance.get(`/api/posts/${postId}`, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
 };

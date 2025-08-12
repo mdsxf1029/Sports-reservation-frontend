@@ -251,137 +251,10 @@ import {
   Search, Location, CircleCheck, CircleClose, Menu,
   Plus, Unlock, Lock, Filter, Refresh, Edit, Delete, View
 } from '@element-plus/icons-vue';
-// import { getVenues, createVenue, updateVenue, deleteVenue, batchUpdateVenueStatus } from '../utils/api'; // 真实API
+import { getVenues, createVenue, updateVenue, deleteVenue, batchUpdateVenueStatus } from '../utils/api'; 
 import '../styles/venue-management.css';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import AdminHeaderNavbar from '../components/AdminHeaderNavbar.vue';
-
-// =================================================================
-// START: MOCK DATA & API (后端API完成后，请删除或注释掉此部分)
-// =================================================================
-
-const mockDatabase = {
-  venues: Array.from({ length: 38 }, (_, i) => {
-    const types = ['篮球场', '羽毛球场', '乒乓球场', '网球场', '健身房', '瑜伽室'];
-    const type = types[i % types.length];
-    const prices = [50, 30, 20, 40, 25, 60];
-    return {
-      id: i + 1,
-      name: `${type} #${Math.floor(i / types.length) + 1}`,
-      type: type,
-      location: `体育馆 ${['A', 'B', 'C'][i % 3]}区`,
-      openingHours: '08:00-22:00',
-      bookingHours: '08:00-22:00',
-      price: prices[i % types.length],
-      price_unit: '小时',
-      maxOccupancy: [12, 4, 4, 4, 30, 15][i % types.length],
-      status: i % 5 === 0 ? '关闭' : '开放',
-    };
-  }),
-};
-
-// 模拟获取所有场地类型
-const getMockVenueTypes = () => {
-  const types = new Set(mockDatabase.venues.map(v => v.type));
-  return Array.from(types);
-};
-
-// 模拟API调用
-const getVenues = (params) => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      let { page, pageSize, keyword, status, type } = params;
-      let filteredData = [...mockDatabase.venues];
-
-      // 筛选
-      if (keyword) {
-        filteredData = filteredData.filter(v => v.name.includes(keyword));
-      }
-      if (status) {
-        filteredData = filteredData.filter(v => v.status === status);
-      }
-      if (type) {
-        filteredData = filteredData.filter(v => v.type === type);
-      }
-
-      const total = filteredData.length;
-      const start = (page - 1) * pageSize;
-      const end = start + pageSize;
-      const list = filteredData.slice(start, end);
-      
-      resolve({
-        data: {
-          code: 200,
-          data: {
-            list: list,
-            total: total,
-            types: getMockVenueTypes(), // 动态返回所有类型
-          }
-        }
-      });
-    }, 500); // 模拟网络延迟
-  });
-};
-
-const createVenue = (data) => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      const newVenue = {
-        ...data,
-        id: Math.max(0, ...mockDatabase.venues.map(v => v.id)) + 1,
-        price_unit: '小时', // 确保新创建的单位正确
-      };
-      mockDatabase.venues.unshift(newVenue);
-      resolve({ data: { code: 200, message: '创建成功' } });
-    }, 300);
-  });
-};
-
-const updateVenue = (id, data) => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      const index = mockDatabase.venues.findIndex(v => v.id === id);
-      if (index !== -1) {
-        mockDatabase.venues[index] = { ...mockDatabase.venues[index], ...data, price_unit: '小时' };
-        resolve({ data: { code: 200, message: '更新成功' } });
-      } else {
-        resolve({ data: { code: 500, message: '未找到场地' } });
-      }
-    }, 300);
-  });
-};
-
-const deleteVenue = (id) => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      const index = mockDatabase.venues.findIndex(v => v.id === id);
-      if (index !== -1) {
-        mockDatabase.venues.splice(index, 1);
-        resolve({ data: { code: 200, message: '删除成功' } });
-      } else {
-        resolve({ data: { code: 500, message: '未找到场地' } });
-      }
-    }, 300);
-  });
-};
-
-const batchUpdateVenueStatus = (ids, status) => {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            mockDatabase.venues.forEach(venue => {
-                if (ids.includes(venue.id)) {
-                    venue.status = status;
-                }
-            });
-            resolve({ data: { code: 200, message: '批量更新成功' } });
-        }, 300);
-    });
-};
-
-// =================================================================
-// END: MOCK DATA & API
-// =================================================================
-
 
 // 筛选和搜索响应式引用
 const searchKeyword = ref('');
@@ -391,13 +264,13 @@ const venueTypeFilter = ref('');
 // 表格和分页数据
 const loading = ref(true);
 const tableData = ref([]);
-const venueTypes = ref([]); // 动态场地类型列表
+const venueTypes = ref([]); // 动态场地类型列表, 由后端提供
 const selectedVenues = ref([]); // 用于存储表格中选中的行数据
 
 // 分页状态
 const currentPage = ref(1);
 const pageSize = ref(10);
-const totalVenues = ref(0); // 总场地数，由API提供
+const totalVenues = ref(0); // 总场地数
 
 // 对话框状态
 const dialogVisible = ref(false);
@@ -408,26 +281,38 @@ const currentVenueId = ref(null);
 const selectedVenue = ref(null);
 
 const form = ref({
-  name: '', type: '', location: '', openingHours: '',
-  bookingHours: '', maxOccupancy: 0, status: '开放',
-  price: 0
+  name: '',
+  type: '',
+  price: 0,
+  location: '',
+  openingHours: '',
+  bookingHours: '',
+  maxOccupancy: 0,
+  status: '开放',
+  price_unit: '小时' // 默认单位
 });
 
-// 统计计算
-const allVenuesList = ref([]); // 存储所有场地的列表，用于统计
-const openVenues = computed(() => allVenuesList.value.filter(v => v.status === '开放').length);
-const closedVenues = computed(() => allVenuesList.value.filter(v => v.status === '关闭').length);
+// 统计数据
+const openVenues = ref(0);
+const closedVenues = ref(0);
 
+// 重置表单
 const resetForm = () => {
   form.value = {
-    name: '', type: '', location: '', openingHours: '',
-    bookingHours: '', maxOccupancy: 0, status: '开放',
-    price: 0
+    name: '',
+    type: '',
+    price: 0,
+    location: '',
+    openingHours: '',
+    bookingHours: '',
+    maxOccupancy: 0,
+    status: '开放',
+    price_unit: '小时'
   };
   currentVenueId.value = null;
 };
 
-// 获取场地数据 (核心逻辑修改)
+// 获取场地数据
 const fetchVenueData = async () => {
   loading.value = true;
   try {
@@ -441,21 +326,25 @@ const fetchVenueData = async () => {
     const response = await getVenues(params);
     if (response && response.data && response.data.code === 200) {
       const apiData = response.data.data;
+      
+      // 更新表格数据和总数
       tableData.value = apiData?.list ?? [];
       totalVenues.value = apiData?.total ?? 0;
-      if (apiData?.types) {
-        venueTypes.value = apiData.types;
+
+      // 更新统计数据和场地类型列表
+      if (apiData?.summary) {
+        openVenues.value = apiData.summary.open_venues ?? 0;
+        closedVenues.value = apiData.summary.closed_venues ?? 0;
+        venueTypes.value = apiData.summary.venue_types ?? [];
       }
-      // 为了精确统计，可以请求所有数据一次，或者后端直接返回统计数据
-      // 这里我们用模拟数据中的全量数据来统计
-      allVenuesList.value = mockDatabase.venues;
     } else {
       ElMessage.error(response?.data?.message || "获取场地列表失败");
       tableData.value = [];
       totalVenues.value = 0;
     }
   } catch (error) {
-    ElMessage.error("请求失败，请检查网络");
+    ElMessage.error("请求失败，请检查网络或联系管理员");
+    console.error("Fetch venue data error:", error);
     tableData.value = [];
     totalVenues.value = 0;
   } finally {
@@ -472,12 +361,13 @@ const handleApiRequest = async (apiCall, successMessage) => {
         if (response && response.data && response.data.code === 200) {
             ElMessage.success(successMessage);
             dialogVisible.value = false;
-            await fetchVenueData();
+            await fetchVenueData(); // 操作成功后刷新列表
         } else {
             ElMessage.error(response?.data?.message || "操作失败");
         }
     } catch (error) {
-        ElMessage.error("请求失败");
+        ElMessage.error("请求执行异常，请稍后重试");
+        console.error("API request error:", error);
     }
 }
 
@@ -501,6 +391,11 @@ const handleSubmit = () => {
       ElMessage.warning('场地名称和类型不能为空');
       return;
   }
+  
+  // 确保价格和容量是数字
+  form.value.price = Number(form.value.price) || 0;
+  form.value.maxOccupancy = Number(form.value.maxOccupancy) || 0;
+
   if (dialogMode.value === 'create') {
     handleApiRequest(createVenue(form.value), '发布成功');
   } else {
@@ -509,10 +404,12 @@ const handleSubmit = () => {
 };
 
 const handleDelete = (row) => {
-  ElMessageBox.confirm(`确定要删除场地【${row.name}】吗？`, '警告', {
+  ElMessageBox.confirm(`确定要删除场地【${row.name}】吗？此操作不可恢复。`, '警告', {
     confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'warning',
   }).then(() => {
     handleApiRequest(deleteVenue(row.id), '删除成功');
+  }).catch(() => {
+    // 用户取消操作
   });
 };
 
@@ -544,7 +441,7 @@ const handleBatchUpdateStatus = (status) => {
 
 // 筛选和分页功能
 const applyFilters = () => {
-  currentPage.value = 1;
+  currentPage.value = 1; // 每次应用新筛选时，都应该回到第一页
   fetchVenueData();
 };
 
@@ -557,6 +454,7 @@ const resetFilters = () => {
 
 const handleSizeChange = (newSize) => {
   pageSize.value = newSize;
+  currentPage.value = 1; // 更改每页大小时，也回到第一页
   fetchVenueData();
 };
 
