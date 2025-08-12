@@ -44,16 +44,26 @@
         </div>
       </div>
     </div>
+
+    <!-- 登录提示弹窗 -->
+    <LoginPrompt
+      v-model="showLoginDialog"
+      :message="loginPromptMessage"
+      @login="handleLoginRedirect"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
 // 引入新增的 API 函数
 import HeaderNavbar from '../components/HeaderNavbar.vue';
 import CommunityPostCard from '../components/CommunityPostCard.vue';
 import { fetchCommunityPosts, fetchMyCollectedPosts } from '../utils/api.js';
+import { AuthService } from '../utils/auth.js';
+import LoginPrompt from '../components/LoginPrompt.vue';
 
 // 2. 引入样式文件
 import '../styles/community-home.css';
@@ -67,6 +77,15 @@ const pagination = ref({
 });
 // 用于管理当前激活的 Tab
 const activeTab = ref('recommend'); 
+
+// 登录提示弹窗相关状态
+const router = useRouter();
+const showLoginDialog = ref(false);
+const loginPromptMessage = ref('');
+
+const handleLoginRedirect = () => {
+  router.push('/login'); // 跳转到登录页
+};
 
 const getPosts = async () => {
   isLoading.value = true;
@@ -96,11 +115,21 @@ const getPosts = async () => {
   }
 };
 
-// 
+// 切换 Tab 时增加登录判断
 const switchTab = (tabName) => {
   // 如果点击的是当前已激活的 Tab，则不执行任何操作
   if (activeTab.value === tabName) {
     return;
+  }
+  
+  // 如果目标是“我的收藏”，则检查登录状态
+  if (tabName === 'collections') {
+    const authStatus = AuthService.checkLoginStatus();
+    if (!authStatus.isValid) {
+      loginPromptMessage.value = '登录后才能查看我的收藏哦～';
+      showLoginDialog.value = true;
+      return; // 阻止切换
+    }
   }
   
   activeTab.value = tabName; // 切换激活状态

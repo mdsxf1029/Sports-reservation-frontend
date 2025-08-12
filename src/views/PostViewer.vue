@@ -212,11 +212,11 @@ const props = defineProps({
 
 // 状态初始化
 const isLoading = ref(true);
-/*const post = ref({ author: {}, publish_time: '' });
+const post = ref({ author: {}, publish_time: '' });
 const comments = ref([]);
 
 // 模拟当前用户数据
-const currentUser = ref({
+/*const currentUser = ref({
   avatar: 'https://picsum.photos/id/64/200',
   user_name: '当前用户'
 });*/
