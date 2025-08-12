@@ -78,17 +78,17 @@ export class UserProfileService {
   // 默认用户资料
   static getDefaultUserProfile() {
     return {
-      userName: '示例用户',
+      userName: '示例',
       userId: '20240001',
       telephone: '138****8888',
-      email: 'example@university.edu.cn',
+      email: 'example@uni.edu.cn',
       password: '',
       gender: 'male',
       birthday: '1995-06-15',
       avatarUrl: '', // 置空，让getAvatarUrl()方法处理
       region: '上海市',
       profile: '热爱运动的大学生',
-      role: 'normal',
+      role: 'manager',
       register_time: '2024-01-01T00:00:00Z',
       points: 1250
     }
