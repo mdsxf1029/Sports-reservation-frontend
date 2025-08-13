@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // 创建 axios 实例
 const instance = axios.create({
-  baseURL: 'http://127.0.0.1:4523/m1/6780458-6492819-default',
+  baseURL: '',
   timeout: 5000
 });
 
@@ -16,14 +16,14 @@ instance.interceptors.response.use(
     // 处理401未授权错误（通常表示token过期）
     if (error.response && error.response.status === 401) {
       const errorMsg = error.response.data?.msg || error.response.data?.message;
-      
+
       // 如果后端明确返回token过期信息
       if (errorMsg && errorMsg.includes('过期')) {
         ElMessage.warning('登录已过期，请重新登录');
-        
+
         // 清除本地存储
         AuthService.clearLoginData();
-        
+
         // 跳转到登录页
         setTimeout(() => {
           window.location.href = '/login';
@@ -32,7 +32,7 @@ instance.interceptors.response.use(
         ElMessage.error('认证失败，请重新登录');
       }
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -51,7 +51,7 @@ export function addToBlacklist(userId) {
 // 获取场地信息
 export const getVenues = (params) => {
   const token = localStorage.getItem('token');
-  return instance.get('/api/venues', { 
+  return instance.get('/api/venues', {
     params,
     headers: { 'Authorization': `Bearer ${token}` }
   });
@@ -115,7 +115,7 @@ export function uploadAvatar(formData) {
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
- 
+
   return instance.post('/api/upload/avatar', formData, {
     headers: headers
   });
@@ -125,11 +125,11 @@ export function uploadAvatar(formData) {
 export function getUserInfo(userId) {
   const token = localStorage.getItem('token');
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;  // ✅ 标准Bearer格式
   }
-  
+
   return instance.get(`/api/user/${userId}`, { headers });
 }
 
@@ -145,11 +145,11 @@ export function updateUserInfo(userId, userData) {
 export const fetchMyOrderSummary = (userId, params = {}) => {
   const token = localStorage.getItem('token');
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
   return instance.get(`/api/appointments`, {
     params: { userId, ...params },
     headers
@@ -160,11 +160,11 @@ export const fetchMyOrderSummary = (userId, params = {}) => {
 export const fetchUserPoints = (userId, params = {}) => {
   const token = localStorage.getItem('token');
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
   return instance.get(`/api/user/${userId}/points`, {
     params: { ...params },
     headers
@@ -175,11 +175,11 @@ export const fetchUserPoints = (userId, params = {}) => {
 export const fetchPointsHistory = (userId, params = {}) => {
   const token = localStorage.getItem('token');
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
   return instance.get(`/api/user/${userId}/points/history`, {
     params: { ...params },
     headers
@@ -190,11 +190,11 @@ export const fetchPointsHistory = (userId, params = {}) => {
 export const fetchUserNotifications = (userId, params = {}) => {
   const token = localStorage.getItem('token');
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
   return instance.get(`/api/user/${userId}/notifications`, {
     params: { ...params },
     headers
@@ -352,25 +352,25 @@ export const fetchConfirmInfo = (appointmentId) => {
 export const getPosts = (params) => {
   /*  params - 包含过滤和分页参数的对象
       e.g., { page: 1, pageSize: 10, status: 'pending', keyword: 'Vue' } */
-    return instance.get('/api/posts', { 
-        params, 
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
+  return instance.get('/api/posts', {
+    params,
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
 };
 export const approvePost = (id) => {
-    return instance.put(`/api/posts/${id}/approve`, null, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
+  return instance.put(`/api/posts/${id}/approve`, null, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
 };
 export const rejectPost = (id) => {
-    return instance.put(`/api/posts/${id}/reject`, null, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
+  return instance.put(`/api/posts/${id}/reject`, null, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
 };
 
 //举报管理相关
 export const getReports = (params) => {
-  return instance.get('/api/reports', { 
+  return instance.get('/api/reports', {
     params,
     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
   });
