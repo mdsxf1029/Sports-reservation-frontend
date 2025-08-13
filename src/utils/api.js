@@ -7,6 +7,36 @@ const instance = axios.create({
   timeout: 5000
 });
 
+// 在 api.js 中添加响应拦截器
+instance.interceptors.response.use(
+  response => {
+    return response;
+  },
+  error => {
+    // 处理401未授权错误（通常表示token过期）
+    if (error.response && error.response.status === 401) {
+      const errorMsg = error.response.data?.msg || error.response.data?.message;
+      
+      // 如果后端明确返回token过期信息
+      if (errorMsg && errorMsg.includes('过期')) {
+        ElMessage.warning('登录已过期，请重新登录');
+        
+        // 清除本地存储
+        AuthService.clearLoginData();
+        
+        // 跳转到登录页
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500);
+      } else {
+        ElMessage.error('认证失败，请重新登录');
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
 
 // 获取用户违约记录
 export function getViolations() {
@@ -76,17 +106,16 @@ export function loginUser(credentials) {
 }
 
 // 上传头像（注册时无需token，登录后需要token）
+// 改进版本的前端代码
 export function uploadAvatar(formData) {
   const token = localStorage.getItem('token');
-  const headers = {
-    'Content-Type': 'multipart/form-data'
-  };
+  const headers = {};
 
   // 如果有token就添加到headers中
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;  // ✅ 标准Bearer格式
+    headers['Authorization'] = `Bearer ${token}`;
   }
-
+ 
   return instance.post('/api/upload/avatar', formData, {
     headers: headers
   });

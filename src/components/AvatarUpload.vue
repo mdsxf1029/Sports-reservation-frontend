@@ -124,7 +124,7 @@ const urlInput = ref('')
 const loading = ref(false)
 const lastUploadedFile = ref(null) // 记录上次上传的文件信息
 
-// 根据性别计算默认头像
+// 默认头像
 const avatarDefaults = computed(() => {
   return [
     {
@@ -177,11 +177,12 @@ const handleFileChange = async (file) => {
     
     // 创建FormData对象
     const formData = new FormData()
-    formData.append('avatar', file.raw)
+    formData.append('Avatar', file.raw)
     
     // 上传文件到服务器
-    const response = await uploadAvatar(formData)
-    
+    const r = await uploadAvatar(formData)
+    const response = r.data
+
     if (response && response.code === 0) {
       // 服务器返回图片URL
       const avatarUrl = response.data.avatarUrl 
@@ -191,6 +192,7 @@ const handleFileChange = async (file) => {
       lastUploadedFile.value = currentFileInfo
       
       ElMessage.success(response.msg || '头像上传成功!')
+      console.log('头像上传成功:', avatarUrl)
     } else {
       ElMessage.error(response?.msg || '头像上传失败')
     }

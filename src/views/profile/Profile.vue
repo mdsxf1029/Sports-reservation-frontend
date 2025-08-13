@@ -43,10 +43,24 @@
           title="个人资料" 
           :showAddButton="false"
         >
+          <!-- 加载状态 -->
           <div v-if="isLoading" class="loading-container">
             <div class="loading-spinner"></div>
             <span style="margin-left: 10px;">加载中...</span>
           </div>
+          
+          <!-- 错误状态 -->
+          <div v-else-if="profileError" class="error-state">
+            <div class="error-icon">⚠️</div>
+            <div class="error-text">{{ profileErrorMessage }}</div>
+            <div class="error-actions">
+              <el-button type="primary" @click="retryLoadProfile" :loading="isLoading">
+                重试
+              </el-button>
+            </div>
+          </div>
+          
+          <!-- 正常状态 -->
           <div v-else class="profile-details">
             <div class="profile-section">
               <h3>基本信息</h3>
@@ -102,10 +116,24 @@
           v-if="activeTab === 'reservation'" 
           title="我的预约"
         >
+          <!-- 加载状态 -->
           <div v-if="reservationLoading" class="loading-container">
             <div class="loading-spinner"></div>
             <span style="margin-left: 10px;">加载订单中...</span>
           </div>
+          
+          <!-- 错误状态 -->
+          <div v-else-if="reservationError" class="error-state">
+            <div class="error-icon">⚠️</div>
+            <div class="error-text">{{ reservationErrorMessage }}</div>
+            <div class="error-actions">
+              <el-button type="primary" @click="retryLoadReservation" :loading="reservationLoading">
+                重试
+              </el-button>
+            </div>
+          </div>
+          
+          <!-- 空状态 -->
           <div v-else-if="reservationList.length === 0" class="empty-state">
             <div class="empty-icon">📅</div>
             <div class="empty-text">暂无预约记录</div>
@@ -148,11 +176,25 @@
             <div class="loading-spinner"></div>
             <span style="margin-left: 10px;">加载通知中...</span>
           </div>
+          
+          <!-- 错误状态 -->
+          <div v-else-if="notificationError" class="error-state">
+            <div class="error-icon">⚠️</div>
+            <div class="error-text">{{ notificationErrorMessage }}</div>
+            <div class="error-actions">
+              <el-button type="primary" @click="retryLoadNotification" :loading="notificationLoading">
+                重试
+              </el-button>
+            </div>
+          </div>
+          
+          <!-- 空状态 -->
           <div v-else-if="notificationList.length === 0" class="empty-state">
             <div class="empty-icon">🔔</div>
             <div class="empty-text">暂无通知消息</div>
             <div class="empty-desc">有新消息时会显示在这里</div>
           </div>
+          
           <NotificationItem 
             v-else
             v-for="(item, index) in notificationList" 
@@ -195,11 +237,25 @@
             <div class="loading-spinner"></div>
             <span style="margin-left: 10px;">加载积分记录中...</span>
           </div>
+          
+          <!-- 错误状态 -->
+          <div v-else-if="pointsError" class="error-state">
+            <div class="error-icon">⚠️</div>
+            <div class="error-text">{{ pointsErrorMessage }}</div>
+            <div class="error-actions">
+              <el-button type="primary" @click="retryLoadPoints" :loading="pointsLoading">
+                重试
+              </el-button>
+            </div>
+          </div>
+          
+          <!-- 空状态 -->
           <div v-else-if="pointsList.length === 0" class="empty-state">
             <div class="empty-icon">🎯</div>
             <div class="empty-text">暂无积分记录</div>
             <div class="empty-desc">使用系统获得积分后会显示在这里</div>
           </div>
+          
           <PointsItem 
             v-else
             v-for="(item, index) in pointsList" 
@@ -291,6 +347,17 @@ export default {
       reservationLoading: false, // 预约订单加载状态
       pointsLoading: false, // 积分记录加载状态
       notificationLoading: false, // 通知加载状态
+      
+      // 错误状态
+      profileError: false,
+      profileErrorMessage: '',
+      reservationError: false,
+      reservationErrorMessage: '',
+      pointsError: false,
+      pointsErrorMessage: '',
+      notificationError: false,
+      notificationErrorMessage: '',
+      
       reservationPagination: {
         total: 0,
         page: 1,
@@ -341,9 +408,6 @@ export default {
        
     // 检查路由参数，设置默认Tab
     this.setActiveTabFromRoute()
-
-    // 设置测试登录信息（开发用）
-    AuthService.setTestLoginInfo()
     
     await this.checkLoginAndLoadProfile()
     
@@ -438,15 +502,21 @@ export default {
         const userProfile = await UserProfileService.loadUserProfile(userId)
         this.userProfile = userProfile
         this.currentPoints = userProfile.points || 0
-        console.log('用户信息更新成功:', this.userProfile)
+        console.log('用户信息加载成功:', this.userProfile)
         console.log('头像URL:', this.userProfile.avatarUrl)
         ElMessage.success('用户信息加载成功')
+        this.profileError = false
       } catch (error) {
         console.error('获取用户信息失败:', error)
         console.log('使用默认用户信息')
         this.userProfile = UserProfileService.getDefaultUserProfile()
         this.currentPoints = 1250
         ElMessage.warning('无法获取用户信息，显示默认数据')
+
+        // 后端开发完成后，撤除注释，以及，删除上面的默认数据调用
+        // // 注意：401认证错误已在api.js拦截器中处理，这里只处理其他错误
+        // this.profileError = true
+        // this.profileErrorMessage = error.message || '获取用户信息失败'
       } finally {
         this.isLoading = false
       }
@@ -465,8 +535,6 @@ export default {
         ...updatedData
       }
       this.currentPoints = updatedData.points || this.currentPoints
-      
-      ElMessage.success('个人资料已更新')
     },
 
     // 加载预约订单数据
@@ -491,10 +559,20 @@ export default {
           console.log('API无数据，使用测试预约数据')
           this.loadTestReservationData()
         }
+        // 后端开发完成后，可以撤除注释，以及，删除上面的默认数据调用
+        // this.reservationList = result.reservationList
+        // this.reservationPagination = result.paginationInfo
+        // this.reservationError = false
       } catch (error) {
         console.error('加载预约数据失败:', error, '使用测试数据')
         // API失败时使用测试数据
         this.loadTestReservationData()
+
+        // 后端开发完成后，可以撤除注释，以及，删除上面的默认数据调用
+        // console.error('加载预约数据失败:', error)
+        // this.reservationError = true
+        // this.reservationErrorMessage = error.message || '获取预约数据失败'
+        // this.reservationList = []
       } finally {
         this.reservationLoading = false
       }
@@ -619,8 +697,12 @@ export default {
         
         this.pointsList = result.pointsList
         this.pointsPagination = result.paginationInfo
+        this.pointsError = false
       } catch (error) {
         console.error('加载积分数据失败:', error)
+        this.pointsError = true
+        this.pointsErrorMessage = error.message || '获取积分数据失败'
+        this.pointsList = []
       } finally {
         this.pointsLoading = false
       }
@@ -641,8 +723,12 @@ export default {
         
         this.notificationList = result.notificationList
         this.notificationPagination = result.paginationInfo
+        this.notificationError = false
       } catch (error) {
         console.error('加载通知数据失败:', error)
+        this.notificationError = true
+        this.notificationErrorMessage = error.message || '获取通知数据失败'
+        this.notificationList = []
       } finally {
         this.notificationLoading = false
       }
@@ -989,6 +1075,42 @@ export default {
     // 跳转到管理后台
     goToAdmin() {
       this.$router.push('/venue')
+    },
+
+    // 重试加载用户资料
+    async retryLoadProfile() {
+      const userId = localStorage.getItem('userId')
+      if (userId) {
+        this.profileError = false
+        await this.loadUserProfile(userId)
+      }
+    },
+
+    // 重试加载预约数据
+    async retryLoadReservation() {
+      const userId = localStorage.getItem('userId')
+      if (userId) {
+        this.reservationError = false
+        await this.loadReservationData(this.reservationPagination.page)
+      }
+    },
+
+    // 重试加载积分数据
+    async retryLoadPoints() {
+      const userId = localStorage.getItem('userId')
+      if (userId) {
+        this.pointsError = false
+        await this.loadPointsData(this.pointsPagination.page)
+      }
+    },
+
+    // 重试加载通知数据
+    async retryLoadNotification() {
+      const userId = localStorage.getItem('userId')
+      if (userId) {
+        this.notificationError = false
+        await this.loadNotificationData(this.notificationPagination.page)
+      }
     }
   }
 }
@@ -1004,16 +1126,18 @@ export default {
   margin: 0 auto;
   background: #F5F5F5;
   flex-direction: column;
-  padding-top: 90px;   /* 顶栏高度+适当间距 */
-  padding-bottom: 90px; /* 底部间距，避免被固定footer遮挡 */
+  padding-top: 60px;   /* 顶栏高度+适当间距 */
+  padding-bottom: 50px; /* 底部间距，避免被固定footer遮挡 */
   overflow-x: hidden; /* 防止水平溢出 */
   box-sizing: border-box; /* 确保padding计算在宽度内 */
 } 
 /* 顶栏导航 */
 .navbar {
-  width: 100%; /* 改为100%而不是99vw */
+  width: 100%; 
   position: fixed;
   margin: 0 auto;
+  left: 0;
+  right: 0;
   top: 0; 
   z-index: 100; /* 顶层 */
 }
@@ -1270,6 +1394,30 @@ export default {
 .empty-desc {
   font-size: 14px;
   color: #999;
+}
+
+/* 错误状态样式 */
+.error-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #f56c6c;
+}
+
+.error-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+
+.error-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: #f56c6c;
+  margin-bottom: 16px;
+}
+
+.error-actions {
+  margin-top: 16px;
 }
 
 /* 分页容器样式 */

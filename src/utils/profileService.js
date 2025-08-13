@@ -9,6 +9,8 @@ import { formatTimeRange, formatRelativeTime } from '@/utils/formatters'
 // 统一的响应处理函数
 function extractResponseData(response) {
   // 处理空响应
+  console.log('profile-service API响应:', response)
+  console.log('函数提取响应数据')
   if (!response) return null
   
   // 如果有axios包装的data
@@ -40,19 +42,20 @@ export class UserProfileService {
       console.log('API完整响应:', response)
       
       const responseData = extractResponseData(response)
-
+      
       if (responseData) {
         const userData = responseData.data || responseData  // 处理可能的嵌套结构
         console.log('解析出的用户数据:', userData)
         return UserProfileService.updateUserProfile(userData)
       } else {
-        console.warn('无法解析用户数据，使用默认数据')
-        return UserProfileService.getDefaultUserProfile()
+        console.warn('无法解析用户数据')
+        ElMessage.error('获取用户信息失败，请检查网络连接或重新登录')
+        throw new Error('无法获取用户数据')
       }
     } catch (error) {
       console.error('获取用户信息失败:', error)
-      ElMessage.error('获取用户信息失败，请稍后重试')
-      return UserProfileService.getDefaultUserProfile()
+      ElMessage.error('获取用户信息失败，请重新登录或联系客服')
+      throw error  // 抛出错误让调用方处理
     }
   }
 
@@ -145,6 +148,9 @@ export class ReservationService {
         reservationList: ReservationService.getDefaultReservations(),
         paginationInfo: { total: 2, page: 1, pageSize: 10 }
       }
+      // 实际应用的时候可以去掉 注释 ,并删除上面的return
+      // // 生产环境不返回默认数据，而是抛出错误
+      // throw error
     }
   }
 
@@ -314,6 +320,9 @@ export class PointsService {
         pointsList: PointsService.getDefaultPoints(),
         paginationInfo: { total: 4, page: pagination.page, pageSize: pagination.pageSize }
       }
+      // 实际应用时候，删除 return 去除注释
+      // // 生产环境不返回默认数据，而是抛出错误
+      // throw error
     }
   }
   
@@ -414,6 +423,9 @@ export class NotificationService {
         notificationList: NotificationService.getDefaultNotifications(),
         paginationInfo: { total: 2, page: pagination.page, pageSize: pagination.pageSize }
       }
+      // 实际应用时候，删除 return 去除注释
+      // // 生产环境不返回默认数据，而是抛出错误
+      // throw error
     }
   }
 
