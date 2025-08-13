@@ -216,10 +216,10 @@ const post = ref({ author: {}, publish_time: '' });
 const comments = ref([]);
 
 // 模拟当前用户数据
-const currentUser = ref({
+/*const currentUser = ref({
   avatar: 'https://picsum.photos/id/64/200',
   user_name: '当前用户'
-});
+});*/
 
 // 折叠相关状态
 const isCommentsExpanded = ref(false);

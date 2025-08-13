@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // 创建 axios 实例
 const instance = axios.create({
-  baseURL: '',
+  baseURL: 'http://127.0.0.1:4523/m1/6780458-6492819-default',
   timeout: 5000
 });
 
