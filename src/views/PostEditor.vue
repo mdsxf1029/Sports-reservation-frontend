@@ -40,6 +40,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router'; // 引入路由钩子
 import axios from 'axios';
+import { createCommunityPost } from '../utils/api.js';
 
 // 响应式数据
 const post_title = ref('');
@@ -72,16 +73,13 @@ const handlePublish = async () => {
     });
 
     // 处理成功响应（code=200的情况）
-    if (response.data.code === 200) {
+    if (response.data.code) {
       console.log('发布成功，帖子ID：', response.data.data.post_id);
       console.log('发布时间：', response.data.data.post_time);
       console.log('作者信息：', response.data.data.author);
       alert(`帖子发布成功！\n标题：${response.data.data.post_title}\n发布时间：${response.data.data.post_time}`);
       router.back();
-    } else {
-      // 处理其他未预期的成功状态码
-      alert('帖子发布成功，但状态异常');
-    }
+    } 
   } catch (error) {
     // 处理错误响应（包括code=400的情况）
     console.error('发布帖子时出错：', error);
