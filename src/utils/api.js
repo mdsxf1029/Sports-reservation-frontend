@@ -334,6 +334,18 @@ export const fetchPostById = (postId) => {
   return instance.get(`/api/community/posts/${postId}`);
 };
 
+// 发布社区帖子
+export const createCommunityPost = (postData) => {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return instance.post('/api/community/posts/publishapost', postData, { headers });
+};
+
 // 获取订单详情（根据预约 ID）
 export const fetchOrderDetail = (appointmentId) => {
   /*return instance.get(`/api/appointments/${appointmentId}`);*/
