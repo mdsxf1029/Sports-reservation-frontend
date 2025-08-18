@@ -1,35 +1,52 @@
 <template>
   <div class="post-card">
-    <div class="author-info">
-      <img :src="post.author.avatarUrl" alt="avatar" class="author-avatar">
-      <div class="author-details">
-        <span class="author-name">{{ post.author.username }}</span>
-        <span class="publish-time">{{ formattedPublishTime }}</span>
+    <!-- 头部区域：作者信息和举报按钮 -->
+    <div class="post-header">
+      <div class="author-info">
+        <img :src="post.author.avatarUrl" alt="avatar" class="author-avatar">
+        <div class="author-details">
+          <span class="author-name">{{ post.author.username }}</span>
+          <span class="publish-time">{{ formattedPublishTime }}</span>
+        </div>
       </div>
+      <el-dropdown>
+        <el-button class="post-report-btn" title="更多操作">
+          <MoreFilled class="rotated-icon" />
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item @click="handleReport">举报帖子</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </div>
 
+    <!-- 中间区域：可点击的帖子标题和内容 -->
     <router-link :to="{ name: 'PostViewer', params: { postId: post.postId } }" class="post-link">
       <h3 class="post-title">{{ post.title }}</h3>
       <p class="post-content">{{ post.content }}</p>
     </router-link>
 
+    <!-- 底部操作区域：点赞和收藏 -->
     <div class="post-actions">
-      <div class="action-item" @click="handleLike">
-        <span class="icon">{{ post.currentUserInteraction.hasLiked ? '❤️' : '♡' }}</span>
+      <div class="action-icons-wrapper">
+        <i
+          :class="{ 'fa-solid': post.currentUserInteraction.hasCollected, 'fa-regular': !post.currentUserInteraction.hasCollected }"
+          class="fa-star"
+          @click="handleCollect"
+        ></i>
+        <span>{{ post.stats.collectionCount || 0 }}</span>
+        <i
+          :class="{ 'fa-solid': post.currentUserInteraction.hasLiked, 'fa-regular': !post.currentUserInteraction.hasLiked }"
+          class="fa-heart"
+          @click="handleLike"
+        ></i>
         <span>{{ post.stats.likeCount }}</span>
-      </div>
-      <div class="action-item" @click="handleCollect">
-        <span class="icon">{{ post.currentUserInteraction.hasCollected ? '⭐' : '☆' }}</span>
-        <span>收藏</span>
-      </div>
-      <!-- 举报点击事件改为 handleReport 以便进行登录检查 -->
-      <div class="action-item" @click="handleReport">
-        <span class="icon">🚩</span>
-        <span>举报</span>
       </div>
     </div>
   </div>
 
+  <!-- 举报模态框 -->
   <div v-if="showReportModal" class="modal-overlay" @click.self="closeReportModal">
     <div class="report-modal">
       <div class="modal-header">
@@ -69,8 +86,10 @@
     </div>
   </div>
 
+  <!-- 提示信息 -->
   <div v-if="showReportTip" class="tip">{{ reportTip }}</div>
 
+  <!-- 登录提示 -->
   <LoginPrompt
     v-model="showLoginDialog"
     :message="loginPromptMessage"
@@ -81,7 +100,8 @@
 <script setup>
 import { defineProps, computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElDropdown, ElDropdownMenu, ElDropdownItem, ElButton } from 'element-plus';
+import { MoreFilled } from '@element-plus/icons-vue';
 // 引入所有需要用到的 API 函数
 import { 
   likeCommunityPost, 
@@ -168,9 +188,11 @@ const handleCollect = async () => {
     if (props.post.currentUserInteraction.hasCollected) {
       // 当前已收藏，执行取消收藏操作
       await uncollectCommunityPost(props.post.postId);
+       props.post.stats.collectionCount--;
     } else {
       // 当前未收藏，执行收藏操作
       await collectCommunityPost(props.post.postId);
+       props.post.stats.collectionCount++;
     }
     // 切换收藏状态
     props.post.currentUserInteraction.hasCollected = !props.post.currentUserInteraction.hasCollected;
@@ -257,24 +279,33 @@ const submitReport = async () => {
 </script>
 
 <style scoped>
-/* 原有样式保留 */
-.post-link {
-  color: inherit;
-  text-decoration: none;
-}
+/* --- 智能布局核心 --- */
 .post-card {
+  display: flex;
+  flex-direction: column; /* 垂直排列子元素 */
   background-color: #fff;
   padding: 20px;
   border-bottom: 1px solid #f0f2f5;
-  position: relative; /* 为提示框定位 */
 }
 .post-card:last-child {
   border-bottom: none;
 }
+.post-link {
+  color: inherit;
+  text-decoration: none;
+  flex-grow: 1; /* 让内容区域自适应伸展 */
+}
+
+/* --- 头部样式 --- */
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
 .author-info {
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
 }
 .author-avatar {
   width: 40px;
@@ -295,6 +326,8 @@ const submitReport = async () => {
   font-size: 12px;
   color: #8a919f;
 }
+
+/* --- 内容样式 --- */
 .post-title {
   font-size: 18px;
   margin: 0 0 10px 0;
@@ -307,32 +340,70 @@ const submitReport = async () => {
   line-height: 1.7;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2; /* 最多显示两行 */
+  -webkit-line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* --- 底部操作区样式 --- */
 .post-actions {
   display: flex;
-  margin-top: 15px;
-  color: #8a919f;
-  font-size: 14px;
+  justify-content: flex-end; /* 将图标容器推到右侧 */
+  margin-top: 15px; /* 与上方内容保持间距 */
 }
-.action-item {
+.action-icons-wrapper {
   display: flex;
   align-items: center;
-  margin-right: 25px;
+  gap: 18px;
+  font-size: 18px;
+  color: #7f8c8d;
+}
+.action-icons-wrapper i {
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.2s ease;
 }
-.action-item:hover {
-  color: #1e80ff;
+.action-icons-wrapper i:hover {
+  color: #2980b9;
 }
-.action-item .icon {
-  margin-right: 6px;
-  font-size: 16px;
+.action-icons-wrapper .fa-star.fa-solid {
+  color: #3498db;
+}
+.action-icons-wrapper .fa-heart.fa-solid {
+  color: #e74c3c;
 }
 
-/* --- 举报弹窗的模态框和提示框样式 --- */
+/* --- 举报按钮样式 --- */
+.post-report-btn {
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer;
+  color: grey !important;
+  font-size: 20px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, color 0.2s ease;
+  outline: none;
+  box-shadow: none;
+}
+.post-report-btn:focus,
+.post-report-btn.el-button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.post-report-btn:hover {
+  transform: scale(1.1);
+}
+.rotated-icon {
+  transform: rotate(90deg);
+  display: block; 
+  width: 1em;
+  height: 1em;
+  color: inherit;
+}
+
+/* --- 举报弹窗和提示框样式 --- */
 .tip {
   position: fixed;
   top: 20px;
@@ -411,7 +482,7 @@ const submitReport = async () => {
   border-radius: 4px;
   font-size: 14px;
   resize: vertical;
-  box-sizing: border-box; /* 保证 padding 不会撑大宽度 */
+  box-sizing: border-box;
 }
 .modal-footer {
   display: flex;
