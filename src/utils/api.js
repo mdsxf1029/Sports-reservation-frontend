@@ -1,5 +1,7 @@
 // src/utils/api.js
-import axios from 'axios';
+import axios from 'axios'; 
+import { ElMessage } from 'element-plus';
+import { AuthService } from './auth';
 
 // 创建 axios 实例
 const instance = axios.create({
@@ -17,20 +19,16 @@ instance.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       const errorMsg = error.response.data?.msg || error.response.data?.message;
       
-      // 如果后端明确返回token过期信息
-      if (errorMsg && errorMsg.includes('过期')) {
-        ElMessage.warning('登录已过期，请重新登录');
-        
-        // 清除本地存储
-        AuthService.clearLoginData();
-        
-        // 跳转到登录页
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 1500);
-      } else {
-        ElMessage.error('认证失败，请重新登录');
-      }
+      ElMessage.warning('登录已过期，请重新登录');
+      console.log('token401未授权，清除token，清除本地存储，跳转到登录页');
+      // 清除本地存储
+      AuthService.clearLoginData();
+      
+      // 跳转到登录页
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
+  
     }
     
     return Promise.reject(error);

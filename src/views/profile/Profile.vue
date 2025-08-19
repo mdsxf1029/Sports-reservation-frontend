@@ -198,7 +198,8 @@
           <NotificationItem 
             v-else
             v-for="(item, index) in notificationList" 
-            :key="item.notificationId || index"
+            :key="`notif-${item.notificationId || index}`"
+            :notificationId="item.notificationId || `notification-${index}`"
             :content="item.content"
             :time="item.time"
             :isRead="item.isRead"
@@ -507,16 +508,11 @@ export default {
         ElMessage.success('用户信息加载成功')
         this.profileError = false
       } catch (error) {
-        console.error('获取用户信息失败:', error)
-        console.log('使用默认用户信息')
-        this.userProfile = UserProfileService.getDefaultUserProfile()
-        this.currentPoints = 1250
-        ElMessage.warning('无法获取用户信息，显示默认数据')
-
-        // 后端开发完成后，撤除注释，以及，删除上面的默认数据调用
-        // // 注意：401认证错误已在api.js拦截器中处理，这里只处理其他错误
-        // this.profileError = true
-        // this.profileErrorMessage = error.message || '获取用户信息失败'
+        console.error('获取用户信息失败:', error)  
+ 
+        // 注意：401认证错误已在api.js拦截器中处理，这里只处理其他错误
+        this.profileError = true
+        this.profileErrorMessage = error.message || '获取用户信息失败'
       } finally {
         this.isLoading = false
       }
@@ -554,116 +550,23 @@ export default {
         if (result.reservationList && result.reservationList.length > 0) {
           this.reservationList = result.reservationList
           this.reservationPagination = result.paginationInfo
-        } else {
-          // 如果API没有数据，使用测试数据
-          console.log('API无数据，使用测试预约数据')
-          this.loadTestReservationData()
-        }
-        // 后端开发完成后，可以撤除注释，以及，删除上面的默认数据调用
-        // this.reservationList = result.reservationList
-        // this.reservationPagination = result.paginationInfo
-        // this.reservationError = false
+        } 
+        
+        this.reservationList = result.reservationList
+        this.reservationPagination = result.paginationInfo
+        this.reservationError = false
       } catch (error) {
-        console.error('加载预约数据失败:', error, '使用测试数据')
-        // API失败时使用测试数据
-        this.loadTestReservationData()
 
-        // 后端开发完成后，可以撤除注释，以及，删除上面的默认数据调用
-        // console.error('加载预约数据失败:', error)
-        // this.reservationError = true
-        // this.reservationErrorMessage = error.message || '获取预约数据失败'
-        // this.reservationList = []
+        console.error('加载预约数据失败:', error)
+        this.reservationError = true
+        this.reservationErrorMessage = error.message || '获取预约数据失败'
+        this.reservationList = []
       } finally {
         this.reservationLoading = false
       }
     },
 
-    // 加载测试预约数据
-    loadTestReservationData() {
-      const testReservations = [
-        {
-          appointmentId: 'test001',
-          id: 'test001',
-          content: '🏀 篮球场地 - 明天 15:00-17:00',
-          status: '已确认',
-          statusType: 'active',
-          venue_name: '四平校区篮球馆',
-          venue_subname: 'A区1号场地',
-          user_name: '测试用户',
-          begin_time: '2025-07-26T15:00:00Z',
-          end_time: '2025-07-26T17:00:00Z',
-          apply_time: '2025-07-25T10:30:00Z',
-          originalData: {
-            id: 'test001',
-            venue_name: '四平校区篮球馆',
-            venue_subname: 'A区1号场地',
-            user_name: '测试用户',
-            phone: '138****8888',
-            price: 30,
-            begin_time: '2025-07-26T15:00:00Z',
-            end_time: '2025-07-26T17:00:00Z',
-            apply_time: '2025-07-25T10:30:00Z'
-          }
-        },
-        {
-          appointmentId: 'test002',
-          id: 'test002',
-          content: '🏸 羽毛球场地 - 本周六 09:00-11:00',
-          status: '待确认',
-          statusType: 'pending',
-          venue_name: '嘉定校区羽毛球馆',
-          venue_subname: 'B区3号场地',
-          user_name: '测试用户',
-          begin_time: '2025-07-27T09:00:00Z',
-          end_time: '2025-07-27T11:00:00Z',
-          apply_time: '2025-07-25T14:20:00Z',
-          originalData: {
-            id: 'test002',
-            venue_name: '嘉定校区羽毛球馆',
-            venue_subname: 'B区3号场地',
-            user_name: '测试用户',
-            phone: '138****8888',
-            price: 25,
-            begin_time: '2025-07-27T09:00:00Z',
-            end_time: '2025-07-27T11:00:00Z',
-            apply_time: '2025-07-25T14:20:00Z'
-          }
-        },
-        {
-          appointmentId: 'test003',
-          id: 'test003',
-          content: '🏊 游泳池 - 本周日 14:00-15:00',
-          status: '已完成',
-          statusType: 'cancelled',
-          venue_name: '综合体育馆游泳池',
-          venue_subname: '标准泳道',
-          user_name: '测试用户',
-          begin_time: '2025-07-28T14:00:00Z',
-          end_time: '2025-07-28T15:00:00Z',
-          apply_time: '2025-07-25T09:15:00Z',
-          originalData: {
-            id: 'test003',
-            venue_name: '综合体育馆游泳池',
-            venue_subname: '标准泳道',
-            user_name: '测试用户',
-            phone: '138****8888',
-            price: 40,
-            begin_time: '2025-07-28T14:00:00Z',
-            end_time: '2025-07-28T15:00:00Z',
-            apply_time: '2025-07-25T09:15:00Z'
-          }
-        }
-      ]
-
-      this.reservationList = testReservations
-      this.reservationPagination = {
-        total: testReservations.length,
-        page: 1,
-        pageSize: 10
-      }
-      
-      console.log('已加载测试预约数据:', this.reservationList)
-    },
+    
 
     // 加载用户当前积分
     async loadUserPoints() {
@@ -801,13 +704,7 @@ export default {
 
         // 🔥 关键：通过appointmentId调用Detail API获取完整信息
         let detailResponse
-        try {
-          detailResponse = await fetchOrderDetail(appointmentId)
-        } catch (apiError) {
-          console.log('API调用失败，使用测试数据:', apiError)
-          // API失败时使用测试数据
-          detailResponse = this.getTestOrderDetail(appointmentId)
-        }
+        detailResponse = await fetchOrderDetail(appointmentId)
         
         console.log('Detail API响应:', detailResponse)
 
@@ -869,15 +766,6 @@ export default {
         console.error('获取订单详情失败:', error)
         ElMessage.error('获取订单详情失败，请稍后重试')
         
-        // 错误时使用Summary的基础信息作为兜底
-        this.currentOrder = {
-          ...order,
-          appointmentId: order.appointmentId || order.id,
-          qrcode_data: `https://yourdomain.com/entry/${order.appointmentId || order.id}`,
-          loading: false,
-          error: true,
-          errorMessage: '详细信息获取失败，显示基础信息'
-        }
       }
     },
 
@@ -930,135 +818,6 @@ export default {
       }
     },
 
-    // 获取测试订单详情 - 返回嵌套结构供转换
-    getTestOrderDetail(appointmentId) {
-      const testDetails = {
-        'test001': {
-          code: 0,
-          data: {
-            appointment: {
-              appointment_id: 1,
-              appointment_status: "upcoming",
-              apply_time: "2025-07-25T10:30:00Z",
-              begin_time: "2025-07-26T15:00:00Z",
-              end_time: "2025-07-26T17:00:00Z"
-            },
-            venue: {
-              venue_id: 1,
-              venue_name: "四平校区篮球馆",
-              venue_subname: "A区1号场地",
-              venue_type: "篮球",
-              venue_location: "上海市杨浦区四平路1239号体育中心",
-              venue_capacity: 20,
-              venue_status: "open"
-            },
-            bill: {
-              bill_id: 1,
-              bill_status: "paid",
-              bill_amount: 30,
-              begin_time: "2025-07-25T10:30:00Z"
-            },
-            user: {
-              user_id: 1,
-              user_name: "测试用户"
-            }
-          }
-        },
-        'test002': {
-          code: 0,
-          data: {
-            appointment: {
-              appointment_id: 2,
-              appointment_status: "pending",
-              apply_time: "2025-07-25T14:20:00Z",
-              begin_time: "2025-07-27T09:00:00Z",
-              end_time: "2025-07-27T11:00:00Z"
-            },
-            venue: {
-              venue_id: 2,
-              venue_name: "嘉定校区羽毛球馆",
-              venue_subname: "B区3号场地",
-              venue_type: "羽毛球",
-              venue_location: "上海市嘉定区曹安公路4800号",
-              venue_capacity: 4,
-              venue_status: "open"
-            },
-            bill: {
-              bill_id: 2,
-              bill_status: "pending",
-              bill_amount: 25,
-              begin_time: "2025-07-25T14:20:00Z"
-            },
-            user: {
-              user_id: 1,
-              user_name: "测试用户"
-            }
-          }
-        },
-        'test003': {
-          code: 0,
-          data: {
-            appointment: {
-              appointment_id: 3,
-              appointment_status: "completed",
-              apply_time: "2025-07-25T09:15:00Z",
-              begin_time: "2025-07-28T14:00:00Z",
-              end_time: "2025-07-28T15:00:00Z"
-            },
-            venue: {
-              venue_id: 3,
-              venue_name: "综合体育馆游泳池",
-              venue_subname: "标准泳道",
-              venue_type: "游泳",
-              venue_location: "上海市杨浦区四平路1239号综合体育馆",
-              venue_capacity: 50,
-              venue_status: "open"
-            },
-            bill: {
-              bill_id: 3,
-              bill_status: "paid",
-              bill_amount: 40,
-              begin_time: "2025-07-25T09:15:00Z"
-            },
-            user: {
-              user_id: 1,
-              user_name: "测试用户"
-            }
-          }
-        }
-      }
-
-      return testDetails[appointmentId] || {
-        code: 0,
-        data: {
-          appointment: {
-            appointment_id: appointmentId,
-            appointment_status: "upcoming",
-            apply_time: new Date().toISOString(),
-            begin_time: new Date(Date.now() + 24*60*60*1000).toISOString(),
-            end_time: new Date(Date.now() + 25*60*60*1000).toISOString()
-          },
-          venue: {
-            venue_id: 999,
-            venue_name: "测试场馆",
-            venue_subname: "测试场地",
-            venue_type: "测试",
-            venue_location: "测试地址",
-            venue_capacity: 10,
-            venue_status: "open"
-          },
-          bill: {
-            bill_id: 999,
-            bill_status: "paid",
-            bill_amount: 30
-          },
-          user: {
-            user_id: 1,
-            user_name: "测试用户"
-          }
-        }
-      }
-    },
 
     // 处理二维码弹窗关闭
     handleQRCodeDialogClose() {

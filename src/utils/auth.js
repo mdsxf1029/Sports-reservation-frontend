@@ -48,15 +48,6 @@ export class AuthService {
     localStorage.removeItem('userAvatar')
   }
 
-  // 设置测试登录信息（开发用）
-  static setTestLoginInfo() {
-    if (!localStorage.getItem('token')) {
-      localStorage.setItem('token', 'test-token-123')
-      localStorage.setItem('userId', '1')
-      localStorage.setItem('userName', 'testUser')
-      console.log('设置了测试用的登录信息')
-    }
-  }
 
   // 邮箱验证器
   static validateEmail(rule, value, callback) {

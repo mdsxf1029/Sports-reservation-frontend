@@ -15,6 +15,11 @@ export default {
       type: String,
       required: true
     },
+    isread:{
+      type: Boolean,
+      required: true,
+      default: false
+    },
     content: {
       type: String,
       required: true
@@ -22,10 +27,8 @@ export default {
     time: {
       type: String,
       required: true
-    }
-    // 删除isRead prop
-  }
-  // 删除emit mark-read
+    } 
+  } 
 }
 </script>
 
