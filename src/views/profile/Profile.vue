@@ -199,10 +199,10 @@
             v-else
             v-for="(item, index) in notificationList" 
             :key="`notif-${item.notificationId || index}`"
-            :notificationId="item.notificationId || `notification-${index}`"
+            :notificationId="item.notificationId"
             :content="item.content"
             :time="item.time"
-            :isRead="item.isRead"
+            :isread="item.isRead"
           />
           
           <!-- 通知分页组件 -->
@@ -362,7 +362,7 @@ export default {
       reservationPagination: {
         total: 0,
         page: 1,
-        pageSize: 10
+        pageSize: 20
       }, // 预约分页信息
       pointsPagination: {
         total: 0,

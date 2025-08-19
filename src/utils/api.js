@@ -176,6 +176,18 @@ export const fetchUserNotifications = (userId, params = {}) => {
   });
 };
 
+// 标记通知为已读
+export const markNotificationAsRead = (userId, notificationId) => {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return instance.put(`/api/user/${userId}/notifications/${notificationId}/read`, {}, { headers });
+};
+
 /* 违约管理相关API */
 
 // 获取违约记录列表

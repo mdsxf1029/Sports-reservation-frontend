@@ -277,7 +277,7 @@ export class PointsService {
     const timeDisplay = formatRelativeTime(changeTime)
 
     return {
-      changeId: point.changeId || point.id || Math.random().toString(),
+      changeId: point.changeId,
       content: changeReason,
       pointsChange: pointsChange,
       changeType: changeType,
@@ -285,40 +285,7 @@ export class PointsService {
       originalData: point
     }
   }
-
-  // 默认积分数据
-  static getDefaultPoints() {
-    return [
-      { 
-        changeId: 'demo1',
-        content: '完成篮球场预约', 
-        pointsChange: '+50', 
-        changeType: 'increase', 
-        time: '2小时前' 
-      },
-      { 
-        changeId: 'demo2',
-        content: '取消羽毛球预约', 
-        pointsChange: '-20', 
-        changeType: 'decrease', 
-        time: '1天前' 
-      },
-      { 
-        changeId: 'demo3',
-        content: '首次注册奖励', 
-        pointsChange: '+100', 
-        changeType: 'increase', 
-        time: '3天前' 
-      },
-      { 
-        changeId: 'demo4',
-        content: '连续签到奖励', 
-        pointsChange: '+30', 
-        changeType: 'increase', 
-        time: '5天前' 
-      }
-    ]
-  }
+ 
 }
 
 // 通知服务
@@ -329,12 +296,12 @@ export class NotificationService {
       console.log('开始获取用户通知，用户ID:', userId)
       const response = await fetchUserNotifications(userId, {
         page: pagination.page,
-        pageSize: pagination.pageSize  // 修复：移除错误的pageSizeData
+        pageSize: pagination.pageSize 
       })
-      console.log('通知API响应:', response)
+      console.log('通知API响应结果:', response)
       
       const responseData = extractResponseData(response)
-
+      console.log('通知API响应数据:', responseData)
       if (responseData) {
         const actualData = responseData.data || responseData
         let notificationData = []
@@ -366,14 +333,15 @@ export class NotificationService {
 
   // 格式化通知数据
   static formatNotificationData(notification) {
-    const content = notification.content || notification.message || notification.title || '系统通知'
-    const createTime = notification.createTime || notification.create_time || notification.time || ''
-    const timeDisplay = formatRelativeTime(createTime)
+    const content = notification.content
+    const createTime = notification.createTime
+    const timeDisplay = formatRelativeTime(createTime) 
 
     return {
-      notificationId: notification.notificationId || notification.id || Math.random().toString(),
+      notificationId: notification.notificationId,
       content: content,
       time: timeDisplay,
+      isRead: notification.isRead,
       originalData: notification
     }
   }
