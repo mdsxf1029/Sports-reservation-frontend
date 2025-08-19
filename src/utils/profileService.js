@@ -304,6 +304,7 @@ export class NotificationService {
       console.log('通知API响应数据:', responseData)
       if (responseData) {
         const actualData = responseData.data || responseData
+        const unreadNum = actualData.unreadNum 
         let notificationData = []
         let paginationInfo = { ...pagination }
 
@@ -318,7 +319,7 @@ export class NotificationService {
         paginationInfo.page = pagination.page
         
         console.log('通知数据加载成功:', notificationList)
-        return { notificationList, paginationInfo }
+        return { notificationList, paginationInfo, unreadNum }
       } else {
         throw new Error('无法解析API响应数据')
       }

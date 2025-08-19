@@ -33,7 +33,9 @@
         <span v-if="['normal', 'manager'].includes(userProfile.role)" class="tab" :class="{active: activeTab === 'profile'}" @click="activeTab = 'profile'">个人资料</span>
         <span v-if="userProfile.role === 'normal'" class="tab" :class="{active: activeTab === 'reservation'}" @click="activeTab = 'reservation'">预约</span>
         <span v-if="userProfile.role === 'normal'" class="tab" :class="{active: activeTab === 'points'}" @click="activeTab = 'points'">积分</span>
-        <span v-if="['normal', 'manager'].includes(userProfile.role)" class="tab" :class="{active: activeTab === 'notification'}" @click="activeTab = 'notification'">信息通知中心</span>
+        <span v-if="['normal', 'manager'].includes(userProfile.role)" class="tab" :class="{active: activeTab === 'notification'}" @click="activeTab = 'notification'">信息通知中心
+          <span v-if="unreadNum" class="notification-badge"></span>
+        </span>
 
     </div>
         <div class="tab-content">
@@ -203,6 +205,7 @@
             :content="item.content"
             :time="item.time"
             :isread="item.isRead"
+            @read="handleNotificationRead"
           />
           
           <!-- 通知分页组件 -->
@@ -348,7 +351,8 @@ export default {
       reservationLoading: false, // 预约订单加载状态
       pointsLoading: false, // 积分记录加载状态
       notificationLoading: false, // 通知加载状态
-      
+      unreadNum: 0, // 是否有未读通知
+
       // 错误状态
       profileError: false,
       profileErrorMessage: '',
@@ -362,17 +366,17 @@ export default {
       reservationPagination: {
         total: 0,
         page: 1,
-        pageSize: 20
+        pageSize: 10
       }, // 预约分页信息
       pointsPagination: {
         total: 0,
         page: 1,
-        pageSize: 20
+        pageSize: 10
       }, // 积分分页信息
       notificationPagination: {
         total: 0,
         page: 1,
-        pageSize: 20
+        pageSize: 10
       }, // 通知分页信息
       showEditDialog: false, // 控制编辑弹窗显示
       showQRCodeDialog: false,  // 控制二维码弹窗显示
@@ -425,6 +429,9 @@ export default {
         this.loadNotificationData()
         break
     }
+    
+    // ✅ 主动检查未读消息
+    await this.checkUnreadNotifications()
   },
   watch: {
     // 监听tab切换，当切换到不同tab时加载相应数据
@@ -626,6 +633,7 @@ export default {
         
         this.notificationList = result.notificationList
         this.notificationPagination = result.paginationInfo
+        this.unreadNum = result.unreadNum || 0
         this.notificationError = false
       } catch (error) {
         console.error('加载通知数据失败:', error)
@@ -870,6 +878,39 @@ export default {
         this.notificationError = false
         await this.loadNotificationData(this.notificationPagination.page)
       }
+    },
+
+    // 新增方法
+    async checkUnreadNotifications() {
+      const userId = localStorage.getItem('userId')
+      if (!userId) return
+      
+      try {
+        // 只获取一条消息来检查是否有未读
+        const result = await NotificationService.loadNotificationData(userId, {
+          page: 1,
+          pageSize: 1
+        })
+        console.log('检查未读状态结果:', result)
+        this.unreadNum = result.unreadNum || 0
+        console.log('🔍 初始未读状态:', this.unreadNum)
+      } catch (error) {
+        console.error('检查未读状态失败:', error)
+      }
+    },
+
+    // 处理通知已读事件
+    handleNotificationRead(notificationId) {
+      console.log('通知已读:', notificationId)
+      // 更新本地通知列表中的状态
+      const notification = this.notificationList.find(item => item.notificationId == notificationId)
+      if (notification) {
+        notification.isRead = true
+      }
+      
+      // 重新计算未读状态
+      this.unreadNum = this.unreadNum - 1
+      console.log('更新后的未读状态:', this.unreadNum)
     }
   }
 }
@@ -1223,4 +1264,20 @@ export default {
   color: #fff;
 }
 
+/* 红点提示样式 */
+.notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: #ff4d4f;
+  border-radius: 50%;
+}
+ 
+/* Tab 相对定位，为红点提供定位基准 */
+.tab {
+  position: relative;
+  /* ...其他样式保持不变... */
+}
 </style>
