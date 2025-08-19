@@ -176,22 +176,24 @@ export class ReservationService {
         statusText = '即将开始'
         statusType = 'active'
         break
-      case 'confirmed':
-        statusText = '已确认'
-        statusType = 'success'
+      case 'ongoing':
+        statusText = '进行中'
+        statusType = 'active'
         break
-      case 'pending':
-        statusText = '待确认'
+      case 'canceled':
+      case 'cancelled':
+        statusText = '已取消'
         statusType = 'warning'
+        break
+      case 'overtime':
+        statusText = '已超时'
+        statusType = 'error'
         break
       case 'completed':
         statusText = '已完成'
         statusType = 'success'
         break
-      case 'cancelled':
-        statusText = '已取消'
-        statusType = 'cancelled'
-        break
+     
       default:
         statusText = appointmentStatus || '未知'
         statusType = 'info'

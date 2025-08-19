@@ -750,6 +750,7 @@ export default {
             // 费用和状态
             price: apiData.bill?.bill_amount || 0,
             status: this.getAppointmentStatusText(apiData.appointment?.appointment_status),
+            statusType: this.getAppointmentStatusType(apiData.appointment?.appointment_status),
             bill_status: apiData.bill?.bill_status,
             
             // ID信息
@@ -776,15 +777,29 @@ export default {
         
       }
     },
+    
+
+    getAppointmentStatusType(status) {
+      const statusTypeMap = {
+        'upcoming': 'upcoming',
+        'ongoing': 'ongoing', 
+        'canceled': 'cancelled',
+        'cancelled': 'cancelled',
+        'overtime': 'expired',
+        'completed': 'completed'
+      }
+      return statusTypeMap[status] || 'pending'
+    },
 
     // 获取预约状态文本
     getAppointmentStatusText(status) {
       const statusMap = {
         'upcoming': '即将开始',
-        'confirmed': '已确认', 
-        'pending': '待确认',
-        'completed': '已完成',
-        'cancelled': '已取消'
+        'ongoing': '进行中',
+        'canceled': '已取消',
+        'cancelled': '已取消',
+        'overtime': '已超时',
+        'completed': '已完成'
       }
       return statusMap[status] || status || '未知'
     },
