@@ -72,11 +72,16 @@ const markAsRead = async () => {
       return
     }
     
-    await markNotificationAsRead(userId, props.notificationId)
-    isReadState.value = true
-    emit('update:isread', true)
-    emit('read', props.notificationId)
-    ElMessage.success('已标记为已读')
+    const res = await markNotificationAsRead(userId, props.notificationId)
+    console.log('标记已读结果:', res)
+    if(res.data.code == 0){
+      isReadState.value = true
+      emit('update:isread', true)
+      emit('read', props.notificationId)
+      ElMessage.success('已标记为已读')
+    }else{
+      ElMessage.error(res.data.msg)
+    }
   } catch (error) {
     console.error('标记已读失败:', error)
     ElMessage.error('标记已读失败，请稍后重试')
