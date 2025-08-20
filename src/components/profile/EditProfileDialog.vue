@@ -18,15 +18,11 @@
       >
         <!-- 头像上传 -->
         <div class="avatar-section">
-          <h4>头像设置</h4>
-          <div class="avatar-upload">
+          <h4>头像设置</h4> 
             <AvatarUpload 
               v-model="editForm.avatarUrl"
               :gender="editForm.gender"
-            />
-            <div class="avatar-tip"> 
-            </div>
-          </div>
+            />  
         </div>
         
         <!-- 基本信息 -->
@@ -504,56 +500,34 @@ export default {
   padding-bottom: 6px;
   border-bottom: 2px solid #2062ea;
 }
-
-.avatar-upload {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+/* 头像上传区域 - 简单修复边框显示 */
+.avatar-section :deep(.el-upload) {
+  margin: 0 auto;
+  width: 90% !important;
 }
 
-.avatar-uploader {
-  flex-shrink: 0;
-}
-
-.avatar-uploader :deep(.el-upload) {
-  border: 2px dashed #d9d9d9;
-  border-radius: 12px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.2s;
-  width: 100px;
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatar-uploader :deep(.el-upload:hover) {
-  border-color: #2062ea;
-}
-
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-}
-
-.avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 12px;
-  object-fit: cover;
-}
-
-.avatar-tip p {
-  margin: 0 0 4px 0;
-  color: #333;
-  font-size: 14px;
-}
-
-.tip-text {
-  font-size: 12px;
-  color: #999;
+@media (max-width: 768px) {
+  .avatar-section {
+    padding: 1.5rem;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .half-width {
+    flex: none;
+  }
+  
+  .form-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  /* 移动端调整 */
+  .avatar-section :deep(.el-upload) {
+    width: 100% !important;
+  }
 }
 
 /* 表单项样式 */

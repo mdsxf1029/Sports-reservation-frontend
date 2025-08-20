@@ -375,6 +375,7 @@ const register = async () => {
 /* 头像上传区域 - 简单修复边框显示 */
 .register-form :deep(.el-upload) {
   width: 90% !important;
+  margin: 0 auto;
 }
 
 @media (max-width: 768px) {
