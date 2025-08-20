@@ -157,7 +157,8 @@ const loadUserAvatar = async () => {
       }
       
       // 如果没有缓存，通过API获取用户信息
-      const response = await getUserInfo(userId)
+      const res = await getUserInfo(userId)
+      const response = res.data
       if (response && response.code === 0 && response.data) {
         const avatarUrl = response.data.avatarUrl
         if (avatarUrl) {
