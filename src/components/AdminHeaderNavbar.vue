@@ -97,13 +97,9 @@
         </el-avatar>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item @click="$router.push('/admin/profile')">
+            <el-dropdown-item @click="$router.push('/profile')">
               <el-icon><User /></el-icon>
               管理员信息
-            </el-dropdown-item>
-            <el-dropdown-item @click="$router.push('/admin/account')">
-              <el-icon><Key /></el-icon>
-              账户设置
             </el-dropdown-item>
             <el-dropdown-item divided @click="logout">
               <el-icon><SwitchButton /></el-icon>
