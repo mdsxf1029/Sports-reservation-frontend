@@ -69,9 +69,9 @@
           
           <el-form-item label="性别" prop="gender">
             <el-radio-group v-model="editForm.gender">
-              <el-radio label="male">男</el-radio>
-              <el-radio label="female">女</el-radio>
-              <el-radio label="unknown">保密</el-radio>
+              <el-radio value="male">男</el-radio>
+              <el-radio value="female">女</el-radio>
+              <el-radio value="unknown">保密</el-radio>
             </el-radio-group>
           </el-form-item>
           
@@ -222,9 +222,7 @@ export default {
     
     // 动态获取表单验证规则
     formRules() {
-      const baseRules = AuthService.getFormRules(this.editForm.newPassword)
-      
-      // 自定义确认密码验证器，绑定当前组件的newPassword
+      // 自定义确认密码验证器
       const validateConfirmPassword = (rule, value, callback) => {
         if (this.editForm.newPassword && !value) {
           return callback(new Error('请确认新密码'))
@@ -234,14 +232,46 @@ export default {
         }
         callback()
       }
-      
       return {
-        userName: baseRules.userName,
-        telephone: baseRules.telephone,
-        email: baseRules.email,
-        newPassword: baseRules.newPassword,
+        // 用户名 
+        userName: [
+          {validator: AuthService.validateUserName, trigger: 'blur' }
+        ],
+        
+        // 电话 
+        telephone: [
+          {validator: AuthService.validatePhone, trigger: 'blur' }
+        ],
+        
+        // 邮箱 
+        email: [
+          {validator: AuthService.validateEmail, trigger: 'blur' }
+        ],
+        
+        
+        
+        // 确认密码 - 只有在设置新密码时才需要
         confirmPassword: [
           { validator: validateConfirmPassword, trigger: 'blur' }
+        ],
+         
+        // 地区 - 可选，但不能为空字符串
+        region: [
+          { 
+            validator: (rule, value, callback) => {
+              if (value && value.trim().length === 0) {
+                callback(new Error('地区不能为空格'))
+              } else {
+                callback()
+              }
+            }, 
+            trigger: 'blur' 
+          }
+        ],
+        
+        // 个人简介 - 可选，但有长度限制
+        profile: [
+          { max: 200, message: '个人简介不能超过200个字符', trigger: 'blur' }
         ]
       }
     }
@@ -272,7 +302,7 @@ export default {
         newPassword: '',
         confirmPassword: ''
       }
-      
+      console.log('初始化edit表单数据:', this.editForm)
       // 保存原始数据
       this.originalData = { ...this.editForm }
     },
@@ -317,7 +347,7 @@ export default {
     
     // 重置表单数据
     resetFormData() {
-      // 真正的清理：清空所有数据
+      // 清空所有数据
       this.editForm = {
         userName: '',
         userId: '',

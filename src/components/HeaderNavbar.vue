@@ -93,12 +93,14 @@ const loadUserAvatar = async () => {
       // 首先检查是否已经有缓存的头像
       const cachedAvatar = localStorage.getItem('userAvatar')
       if (cachedAvatar) {
+        console.log('使用缓存的头像:', cachedAvatar)
         userAvatar.value = cachedAvatar
         return
       }
       
       // 如果没有缓存，通过API获取用户信息
       const res = await getUserInfo(userId)
+      console.log('获取用户信息:', res)
       const response = res.data
       if (response && response.code === 0 && response.data) {
         const avatarUrl = response.data.avatarUrl
