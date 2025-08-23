@@ -209,30 +209,40 @@ watch(() => route.path, () => {
   loadUserAvatar()
 })
 
-document.addEventListener('DOMContentLoaded', () => {
-  const htmlElement = document.documentElement
+// 深色模式相关逻辑
+const applyDarkMode = () => {
   const savedTheme = localStorage.getItem('theme')
   if (savedTheme === 'dark') {
     isDarkMode.value = true
-    htmlElement.classList.add('dark')
+    // 为导航栏添加深色模式类
+    const navbar = document.querySelector('.admin-header-navbar')
+    if (navbar) {
+      navbar.classList.add('dark')
+    }
   } else {
-    htmlElement.classList.remove('dark')
-  }
-})
-
-const toggleDarkMode = () => {
-  const htmlElement = document.documentElement
-  localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light')
-  if (isDarkMode.value) {
-    htmlElement.classList.add('dark')
-  } else {
-    htmlElement.classList.remove('dark')
+    isDarkMode.value = false
+    // 移除导航栏的深色模式类
+    const navbar = document.querySelector('.admin-header-navbar')
+    if (navbar) {
+      navbar.classList.remove('dark')
+    }
   }
 }
+
+const toggleDarkMode = () => {
+  localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light')
+  applyDarkMode()
+}
+
+onMounted(() => {
+  loadUserAvatar() // 组件挂载时加载用户头像
+  applyDarkMode() // 应用深色模式
+})
 </script>
 
 <style scoped>
-:global(:root) {
+/* 使用CSS变量，但限制在组件范围内 */
+.admin-header-navbar {
   --header-background-initial-color: rgba(255, 255, 255, 1);
   --header-background-transparent-color: rgba(255, 255, 255, 0.8);
   --header-shadow-color-1: rgba(0, 0, 0, 0.1);
@@ -240,7 +250,8 @@ const toggleDarkMode = () => {
   --header-text-color: #000000;
 }
 
-:global(.dark) {
+/* 深色模式变量 */
+.admin-header-navbar.dark {
   --header-background-initial-color: rgba(0, 0, 0, 0.9);
   --header-background-transparent-color: rgba(0, 0, 0, 0.8);
   --header-shadow-color-1: rgba(255, 255, 255, 0.1);
@@ -248,7 +259,7 @@ const toggleDarkMode = () => {
   --header-text-color: #ffffff;
 }
 
-/* 让 header 里的所有文字都用变量色 */
+/* 让 header 里的所有文字都用变量色，限制在组件范围内 */
 .admin-header-navbar,
 .admin-header-navbar h1,
 .admin-header-navbar .navbar-item,
@@ -274,9 +285,8 @@ const toggleDarkMode = () => {
   padding: 0 20px;
 }
 
-
-
-h1 {
+/* 限制h1样式在组件范围内 */
+.admin-header-navbar h1 {
   font-size: 24px;
   margin: 0 20px 0 0;
 }

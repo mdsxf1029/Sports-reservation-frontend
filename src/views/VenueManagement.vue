@@ -428,7 +428,7 @@ const resetFilters = () => {
 };
 </script>
 
-<style src="../styles/admin-sidebar.css"></style>
+
 <style scoped>
 .page-layout {
   min-height: 100vh;

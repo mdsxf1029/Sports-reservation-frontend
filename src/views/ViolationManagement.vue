@@ -1,51 +1,51 @@
 <template>
-  <div class="page-layout">
+  <div class="violation-page-layout">
     <AdminHeaderNavbar />
-    <div class="page-content">
+    <div class="violation-page-content">
       <div class="post-management-container">
         <!-- 违约统计卡片 -->
-        <div class="statistics-cards">
-          <div class="stat-card">
-            <div class="stat-icon warning">
+        <div class="violation-statistics-cards">
+          <div class="violation-stat-card">
+            <div class="violation-stat-icon warning">
               <el-icon><Warning /></el-icon>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ totalViolations }}</div>
-              <div class="stat-label">总违约次数</div>
+            <div class="violation-stat-content">
+              <div class="violation-stat-number">{{ totalViolations }}</div>
+              <div class="violation-stat-label">总违约次数</div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon danger">
+          <div class="violation-stat-card">
+            <div class="violation-stat-icon danger">
               <el-icon><User /></el-icon>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ uniqueUsers }}</div>
-              <div class="stat-label">违约用户数</div>
+            <div class="violation-stat-content">
+              <div class="violation-stat-number">{{ uniqueUsers }}</div>
+              <div class="violation-stat-label">违约用户数</div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon info">
+          <div class="violation-stat-card">
+            <div class="violation-stat-icon info">
               <el-icon><Calendar /></el-icon>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ todayViolations }}</div>
-              <div class="stat-label">今日违约</div>
+            <div class="violation-stat-content">
+              <div class="violation-stat-number">{{ todayViolations }}</div>
+              <div class="violation-stat-label">今日违约</div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon success">
+          <div class="violation-stat-card">
+            <div class="violation-stat-icon success">
               <el-icon><TrendCharts /></el-icon>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ violationRate }}%</div>
-              <div class="stat-label">违约率</div>
+            <div class="violation-stat-content">
+              <div class="violation-stat-number">{{ violationRate }}%</div>
+              <div class="violation-stat-label">违约率</div>
             </div>
           </div>
         </div>
 
         <!-- 筛选和搜索区域 -->
-        <div class="filter-section">
-          <div class="filter-left">
+        <div class="violation-filter-section">
+          <div class="violation-filter-left">
             <el-select v-model="filterStatus" placeholder="处理状态" clearable style="width: 120px; margin-right: 10px;">
               <el-option label="全部" value="" />
               <el-option label="已确认违约" value="confirmed" />
@@ -73,7 +73,7 @@
               style="width: 240px; margin-right: 10px;"
             />
           </div>
-          <div class="filter-right">
+          <div class="violation-filter-right">
             <el-input
               v-model="searchKeyword"
               placeholder="搜索用户名或用户ID"
@@ -88,8 +88,8 @@
         </div>
 
         <!-- 违约记录表格 -->
-        <div class="table-section">
-          <div class="table-header">
+        <div class="violation-table-section">
+          <div class="violation-table-header">
             <h3>违约记录列表</h3>
             <el-tag type="info" size="small">{{ filteredViolations.length }} 条记录</el-tag>
           </div>
@@ -536,5 +536,5 @@ export default {
 };
 </script>
 
-<style src="../styles/admin-sidebar.css"></style>
+
 <style src="../styles/violation-management.css"></style>
