@@ -41,10 +41,10 @@
       <!-- --- 创作中心容器 --- -->
       <div class="creation-center-container">
         <div class="creation-card">
-          <!-- 1. 标题 -->
+          <!-- 标题 -->
           <h3 class="creation-title">创作中心</h3>
           
-          <!-- 2. 提示语和插图 -->
+          <!-- 提示语和插图 -->
           <div class="creation-prompt">
             <div class="prompt-text">
               <h4>开启你的创作之旅</h4>
@@ -60,13 +60,12 @@
             </svg>
           </div>
 
-          <!-- 3. 开始创作按钮 -->
+          <!-- 开始创作按钮 -->
           <button class="create-button" @click="navigateToEditor">
             <span class="plus-icon">+</span> 开始创作
           </button>
         </div>
       </div>
-      <!-- --- 修改结束 --- -->
     </div>
 
     <!-- 登录提示弹窗 -->
@@ -88,7 +87,7 @@ import { useRouter } from 'vue-router';
 // 引入组件和 API
 import HeaderNavbar from '../components/HeaderNavbar.vue';
 import CommunityPostCard from '../components/CommunityPostCard.vue';
-import BackToTop from '../components/BackToTop.vue'; // 1. 引入 BackToTop 组件
+import BackToTop from '../components/BackToTop.vue';
 import { fetchCommunityPosts, fetchMyCollectedPosts } from '../utils/api.js';
 import { AuthService } from '../utils/auth.js';
 import LoginPrompt from '../components/LoginPrompt.vue';
@@ -114,6 +113,7 @@ const handleLoginRedirect = () => {
   router.push('/login');
 };
 
+// 获取推荐帖子列表
 const getPosts = async () => {
   isLoading.value = true;
   try {
@@ -125,15 +125,14 @@ const getPosts = async () => {
       console.log("正在获取我的收藏...");
       response = await fetchMyCollectedPosts(pagination.value);
     }
-    
-    if (response.data && response.data.code === 200) {
-      posts.value = response.data.data.list;
-    } else {
-      posts.value = [];
-    }
+    // 直接使用数据，不再检查 response.data.code
+    // 如果请求失败 (HTTP status is not 2xx), axios 会抛出错误，代码会直接进入 catch 块
+    // 使用 `|| []` 作为后备，防止后端在成功时返回空数据导致 `list` 为 undefined
+    posts.value = response.data.data.list || [];
+
   } catch (error) {
     console.error('获取帖子列表失败:', error);
-    posts.value = [];
+    posts.value = []; // 请求失败时清空列表
   } finally {
     isLoading.value = false;
   }
@@ -175,7 +174,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 列表为空时的样式 */
+/* 样式部分未作修改 */
 .empty-list-indicator {
   text-align: center;
   padding: 80px 50px;
@@ -183,14 +182,13 @@ onMounted(() => {
   font-size: 16px;
 }
 
-/* --- 创作中心卡片的样式 --- */
 .creation-card {
   background-color: #fff;
   padding: 20px;
   border-radius: 4px;
-  display: flex; /* 使用flex布局 */
-  flex-direction: column; /* 垂直排列 */
-  gap: 16px; /* 元素间距 */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .creation-title {
@@ -198,7 +196,7 @@ onMounted(() => {
   font-weight: 600;
   color: #333;
   margin: 0;
-  text-align: left; /* 左对齐 */
+  text-align: left;
   border-bottom: 1px solid #f0f2f5;
   padding-bottom: 12px;
 }
@@ -229,7 +227,7 @@ onMounted(() => {
 .prompt-icon {
   width: 60px;
   height: 60px;
-  flex-shrink: 0; /* 防止图标被压缩 */
+  flex-shrink: 0;
 }
 
 .create-button {
