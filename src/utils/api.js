@@ -308,40 +308,45 @@ export const fetchCommunityPosts = (params) => {
 
 // 点赞社区帖子
 export const likeCommunityPost = (postId) => {
+  const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`/api/community/posts/${postId}/like`, null, {
+  return instance.post(`/api/users/${userId}/community/posts/${postId}/like`, null, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
 // 取消点赞社区帖子
 export const unlikeCommunityPost = (postId) => {
+  const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.delete(`/api/community/posts/${postId}/like`, {
+  return instance.delete(`/api/users/${userId}/community/posts/${postId}/like`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
 // 收藏社区帖子
 export const collectCommunityPost = (postId) => {
+  const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`/api/community/posts/${postId}/collect`, null, {
+  return instance.post(`/api/users/${userId}/community/posts/${postId}/collect`, null, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
 // 取消收藏社区帖子
 export const uncollectCommunityPost = (postId) => {
+  const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.delete(`/api/community/posts/${postId}/collect`, {
+  return instance.delete(`/api/users/${userId}/community/posts/${postId}/collect`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
 // 获取我收藏的帖子列表
 export const fetchMyCollectedPosts = (params) => {
+  const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.get('/api/community/posts/collections', {
+  return instance.get(`/api/users/${userId}/community/posts/collections`, {
     params: params,
     headers: { 'Authorization': `Bearer ${token}` }
   });
@@ -349,8 +354,9 @@ export const fetchMyCollectedPosts = (params) => {
 
 // 举报社区帖子
 export const reportCommunityPost = (postId, data) => {
+  const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`/api/community/posts/${postId}/report`, data, {
+  return instance.post(`/api/users/${userId}/community/posts/${postId}/report`, data, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
