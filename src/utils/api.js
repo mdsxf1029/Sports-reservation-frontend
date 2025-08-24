@@ -5,7 +5,7 @@ import { AuthService } from './auth';
 
 // 创建 axios 实例
 const instance = axios.create({
-  baseURL: 'http://127.0.0.1:4523/m1/6780458-6492819-default',
+  baseURL: 'http://47.83.188.207:5101 ',
   timeout: 5000
 });
 
@@ -310,7 +310,7 @@ export const fetchCommunityPosts = (params) => {
 export const likeCommunityPost = (postId) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`/api/users/${userId}/community/posts/${postId}/like`, null, {
+  return instance.post(`/api/community/posts/${postId}/likes/${userId}`, null, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
@@ -319,7 +319,7 @@ export const likeCommunityPost = (postId) => {
 export const unlikeCommunityPost = (postId) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.delete(`/api/users/${userId}/community/posts/${postId}/like`, {
+  return instance.delete(`/api/community/posts/${postId}/likes/${userId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
@@ -328,7 +328,7 @@ export const unlikeCommunityPost = (postId) => {
 export const collectCommunityPost = (postId) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`/api/users/${userId}/community/posts/${postId}/collect`, null, {
+  return instance.post(`/api/community/posts/${postId}/collections/${userId}`, null, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
@@ -337,7 +337,7 @@ export const collectCommunityPost = (postId) => {
 export const uncollectCommunityPost = (postId) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.delete(`/api/users/${userId}/community/posts/${postId}/collect`, {
+  return instance.delete(`/api/community/posts/${postId}/collections/${userId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
@@ -346,7 +346,7 @@ export const uncollectCommunityPost = (postId) => {
 export const fetchMyCollectedPosts = (params) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.get(`/api/users/${userId}/community/posts/collections`, {
+  return instance.get(`/api/community/collections/${userId}`, {
     params: params,
     headers: { 'Authorization': `Bearer ${token}` }
   });
@@ -356,7 +356,7 @@ export const fetchMyCollectedPosts = (params) => {
 export const reportCommunityPost = (postId, data) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`/api/users/${userId}/community/posts/${postId}/report`, data, {
+  return instance.post(`/api/community/posts/${postId}/reports/${userId}`, data, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
