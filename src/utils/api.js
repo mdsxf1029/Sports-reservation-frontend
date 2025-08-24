@@ -308,34 +308,51 @@ export const fetchCommunityPosts = (params) => {
 
 // 点赞社区帖子
 export const likeCommunityPost = (postId) => {
-  return instance.post(`/api/community/posts/${postId}/like`);
+  const token = localStorage.getItem('token');
+  return instance.post(`/api/community/posts/${postId}/like`, null, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
 // 取消点赞社区帖子
 export const unlikeCommunityPost = (postId) => {
-  return instance.delete(`/api/community/posts/${postId}/like`);
+  const token = localStorage.getItem('token');
+  return instance.delete(`/api/community/posts/${postId}/like`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
 // 收藏社区帖子
 export const collectCommunityPost = (postId) => {
-  return instance.post(`/api/community/posts/${postId}/collect`);
+  const token = localStorage.getItem('token');
+  return instance.post(`/api/community/posts/${postId}/collect`, null, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
 // 取消收藏社区帖子
 export const uncollectCommunityPost = (postId) => {
-  return instance.delete(`/api/community/posts/${postId}/collect`);
+  const token = localStorage.getItem('token');
+  return instance.delete(`/api/community/posts/${postId}/collect`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
 // 获取我收藏的帖子列表
 export const fetchMyCollectedPosts = (params) => {
+  const token = localStorage.getItem('token');
   return instance.get('/api/community/posts/collections', {
     params: params,
+    headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
 // 举报社区帖子
 export const reportCommunityPost = (postId, data) => {
-  return instance.post(`/api/community/posts/${postId}/report`, data);
+  const token = localStorage.getItem('token');
+  return instance.post(`/api/community/posts/${postId}/report`, data, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
 // 获取帖子详情页
