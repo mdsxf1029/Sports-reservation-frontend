@@ -18,15 +18,11 @@
       >
         <!-- 头像上传 -->
         <div class="avatar-section">
-          <h4>头像设置</h4>
-          <div class="avatar-upload">
+          <h4>头像设置</h4> 
             <AvatarUpload 
               v-model="editForm.avatarUrl"
               :gender="editForm.gender"
-            />
-            <div class="avatar-tip"> 
-            </div>
-          </div>
+            />  
         </div>
         
         <!-- 基本信息 -->
@@ -69,9 +65,9 @@
           
           <el-form-item label="性别" prop="gender">
             <el-radio-group v-model="editForm.gender">
-              <el-radio label="male">男</el-radio>
-              <el-radio label="female">女</el-radio>
-              <el-radio label="unknown">保密</el-radio>
+              <el-radio value="male">男</el-radio>
+              <el-radio value="female">女</el-radio>
+              <el-radio value="unknown">保密</el-radio>
             </el-radio-group>
           </el-form-item>
           
@@ -222,9 +218,7 @@ export default {
     
     // 动态获取表单验证规则
     formRules() {
-      const baseRules = AuthService.getFormRules(this.editForm.newPassword)
-      
-      // 自定义确认密码验证器，绑定当前组件的newPassword
+      // 自定义确认密码验证器
       const validateConfirmPassword = (rule, value, callback) => {
         if (this.editForm.newPassword && !value) {
           return callback(new Error('请确认新密码'))
@@ -234,14 +228,46 @@ export default {
         }
         callback()
       }
-      
       return {
-        userName: baseRules.userName,
-        telephone: baseRules.telephone,
-        email: baseRules.email,
-        newPassword: baseRules.newPassword,
+        // 用户名 
+        userName: [
+          {validator: AuthService.validateUserName, trigger: 'blur' }
+        ],
+        
+        // 电话 
+        telephone: [
+          {validator: AuthService.validatePhone, trigger: 'blur' }
+        ],
+        
+        // 邮箱 
+        email: [
+          {validator: AuthService.validateEmail, trigger: 'blur' }
+        ],
+        
+        
+        
+        // 确认密码 - 只有在设置新密码时才需要
         confirmPassword: [
           { validator: validateConfirmPassword, trigger: 'blur' }
+        ],
+         
+        // 地区 - 可选，但不能为空字符串
+        region: [
+          { 
+            validator: (rule, value, callback) => {
+              if (value && value.trim().length === 0) {
+                callback(new Error('地区不能为空格'))
+              } else {
+                callback()
+              }
+            }, 
+            trigger: 'blur' 
+          }
+        ],
+        
+        // 个人简介 - 可选，但有长度限制
+        profile: [
+          { max: 200, message: '个人简介不能超过200个字符', trigger: 'blur' }
         ]
       }
     }
@@ -272,7 +298,7 @@ export default {
         newPassword: '',
         confirmPassword: ''
       }
-      
+      console.log('初始化edit表单数据:', this.editForm)
       // 保存原始数据
       this.originalData = { ...this.editForm }
     },
@@ -317,7 +343,7 @@ export default {
     
     // 重置表单数据
     resetFormData() {
-      // 真正的清理：清空所有数据
+      // 清空所有数据
       this.editForm = {
         userName: '',
         userId: '',
@@ -474,56 +500,34 @@ export default {
   padding-bottom: 6px;
   border-bottom: 2px solid #2062ea;
 }
-
-.avatar-upload {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+/* 头像上传区域 - 简单修复边框显示 */
+.avatar-section :deep(.el-upload) {
+  margin: 0 auto;
+  width: 90% !important;
 }
 
-.avatar-uploader {
-  flex-shrink: 0;
-}
-
-.avatar-uploader :deep(.el-upload) {
-  border: 2px dashed #d9d9d9;
-  border-radius: 12px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.2s;
-  width: 100px;
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatar-uploader :deep(.el-upload:hover) {
-  border-color: #2062ea;
-}
-
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-}
-
-.avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 12px;
-  object-fit: cover;
-}
-
-.avatar-tip p {
-  margin: 0 0 4px 0;
-  color: #333;
-  font-size: 14px;
-}
-
-.tip-text {
-  font-size: 12px;
-  color: #999;
+@media (max-width: 768px) {
+  .avatar-section {
+    padding: 1.5rem;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .half-width {
+    flex: none;
+  }
+  
+  .form-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  /* 移动端调整 */
+  .avatar-section :deep(.el-upload) {
+    width: 100% !important;
+  }
 }
 
 /* 表单项样式 */

@@ -48,15 +48,6 @@ export class AuthService {
     localStorage.removeItem('userAvatar')
   }
 
-  // 设置测试登录信息（开发用）
-  static setTestLoginInfo() {
-    if (!localStorage.getItem('token')) {
-      localStorage.setItem('token', 'test-token-123')
-      localStorage.setItem('userId', '1')
-      localStorage.setItem('userName', 'testUser')
-      console.log('设置了测试用的登录信息')
-    }
-  }
 
   // 邮箱验证器
   static validateEmail(rule, value, callback) {
@@ -123,39 +114,5 @@ export class AuthService {
     }
   }
 
-  // 获取表单验证规则
-  static getFormRules(newPassword = '') {
-    return {
-      // 用户名规则
-      userName: [
-        { validator: this.validateUserName, trigger: 'blur' }
-      ],
-      
-      // 邮箱规则
-      email: [
-        { validator: this.validateEmail, trigger: 'blur' }
-      ],
-      
-      // 手机号规则
-      telephone: [
-        { validator: this.validatePhone, trigger: 'blur' }
-      ],
-      
-      // 密码规则
-      password: [
-        { validator: this.validatePassword, trigger: 'blur' }
-      ],
-      
-      // 新密码规则（可选）
-      newPassword: [
-        { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' }
-      ],
-      
-      // 确认密码规则
-      confirmPassword: [
-        { validator: this.validateConfirmPassword(newPassword), trigger: 'blur' }
-      ]
-    }
-  }
-
+  
 }

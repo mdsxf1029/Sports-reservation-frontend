@@ -9,7 +9,6 @@ import { formatTimeRange, formatRelativeTime } from '@/utils/formatters'
 // 统一的响应处理函数
 function extractResponseData(response) {
   // 处理空响应
-  console.log('profile-service API响应:', response)
   console.log('函数提取响应数据')
   if (!response) return null
   
@@ -53,8 +52,7 @@ export class UserProfileService {
         throw new Error('无法获取用户数据')
       }
     } catch (error) {
-      console.error('获取用户信息失败:', error)
-      ElMessage.error('获取用户信息失败，请重新登录或联系客服')
+      console.error('获取用户信息失败:', error) 
       throw error  // 抛出错误让调用方处理
     }
   }
@@ -74,28 +72,10 @@ export class UserProfileService {
       profile: userData.profile || userData.bio || userData.description || userData.introduction || '这个人很懒，什么都没有留下...',
       role: userData.role || 'normal',
       register_time: userData.register_time || userData.registerTime || userData.createdAt || '',
-      points: userData.points || 1250
+      points: userData.points || 0
     }
   }
-
-  // 默认用户资料
-  static getDefaultUserProfile() {
-    return {
-      userName: '示例',
-      userId: '20240001',
-      telephone: '138****8888',
-      email: 'example@uni.edu.cn',
-      password: '',
-      gender: 'male',
-      birthday: '1995-06-15',
-      avatarUrl: '', // 置空，让getAvatarUrl()方法处理
-      region: '上海市',
-      profile: '热爱运动的大学生',
-      role: 'manager',
-      register_time: '2024-01-01T00:00:00Z',
-      points: 1250
-    }
-  }
+ 
 }
 
 // 预约服务
@@ -144,13 +124,9 @@ export class ReservationService {
       console.error('获取订单数据失败:', error)
       ElMessage.error('获取订单数据失败，请稍后重试')
       
-      return {
-        reservationList: ReservationService.getDefaultReservations(),
-        paginationInfo: { total: 2, page: 1, pageSize: 10 }
-      }
-      // 实际应用的时候可以去掉 注释 ,并删除上面的return
-      // // 生产环境不返回默认数据，而是抛出错误
-      // throw error
+       
+      // 生产环境不返回默认数据，而是抛出错误
+      throw error
     }
   }
 
@@ -194,34 +170,30 @@ export class ReservationService {
   // 状态映射
   static mapStatus(appointmentStatus) {
     let statusText = '未知'
-    let statusType = 'info'
-    
+    let statusType = 'info' 
     switch (appointmentStatus.toLowerCase()) {
       case 'upcoming':
-      case 'confirmed':
-      case 'active':
-        statusText = '已确认'
+        statusText = '即将开始'
         statusType = 'active'
-        break
-      case 'pending':
-      case 'waiting':
-        statusText = '待确认'
-        statusType = 'pending'
-        break
-      case 'canceled':
-      case 'cancelled':
-        statusText = '已取消'
-        statusType = 'cancelled'
-        break
-      case 'completed':
-      case 'finished':
-        statusText = '已完成'
-        statusType = 'completed'
         break
       case 'ongoing':
         statusText = '进行中'
         statusType = 'active'
         break
+      case 'canceled':
+      case 'cancelled':
+        statusText = '已取消'
+        statusType = 'warning'
+        break
+      case 'overtime':
+        statusText = '已超时'
+        statusType = 'error'
+        break
+      case 'completed':
+        statusText = '已完成'
+        statusType = 'success'
+        break
+     
       default:
         statusText = appointmentStatus || '未知'
         statusType = 'info'
@@ -230,31 +202,7 @@ export class ReservationService {
     return { statusText, statusType }
   }
 
-  // 默认预约数据
-  static getDefaultReservations() {
-    return [
-      { 
-        appointmentId: 'demo1',
-        content: '🏀 篮球场地 - 明天 15:00-17:00', 
-        status: '已确认', 
-        statusType: 'active',
-        facilityName: '篮球场A',
-        appointmentDate: '2024-01-20',
-        startTime: '15:00',
-        endTime: '17:00'
-      },
-      { 
-        appointmentId: 'demo2',
-        content: '🏊‍♂️ 游泳池 - 本周六 09:00-11:00', 
-        status: '待确认', 
-        statusType: 'pending',
-        facilityName: '游泳池B',
-        appointmentDate: '2024-01-22',
-        startTime: '09:00',
-        endTime: '11:00'
-      }
-    ]
-  }
+  
 }
 
 // 积分服务
@@ -283,17 +231,16 @@ export class PointsService {
   // 加载积分数据
   static async loadPointsData(userId, pagination) {
     try {
-      console.log('开始获取用户积分记录，用户ID:', userId, '页码:', pagination.page)
+      console.log('开始获取用户积分历史记录，用户ID:', userId, '页码:', pagination.page)
       const response = await fetchPointsHistory(userId, {
         page: pagination.page,
         pageSize: pagination.pageSize
       })
-      console.log('积分API响应:', response)
-
+      console.log('积分记录历史API响应:', response)
       const responseData = extractResponseData(response)
-      
+      console.log('积分记录历史API响应数据是:', responseData)
       if (responseData) {
-        const actualData = responseData.data || responseData
+        const actualData = responseData.data
         let pointsData = []
         let paginationInfo = { ...pagination }
         
@@ -316,13 +263,8 @@ export class PointsService {
       console.error('获取积分数据失败:', error)
       ElMessage.error('获取积分数据失败，请稍后重试')
       
-      return {
-        pointsList: PointsService.getDefaultPoints(),
-        paginationInfo: { total: 4, page: pagination.page, pageSize: pagination.pageSize }
-      }
-      // 实际应用时候，删除 return 去除注释
-      // // 生产环境不返回默认数据，而是抛出错误
-      // throw error
+      // 生产环境不返回默认数据，而是抛出错误
+      throw error
     }
   }
   
@@ -337,7 +279,7 @@ export class PointsService {
     const timeDisplay = formatRelativeTime(changeTime)
 
     return {
-      changeId: point.changeId || point.id || Math.random().toString(),
+      changeId: point.changeId,
       content: changeReason,
       pointsChange: pointsChange,
       changeType: changeType,
@@ -345,40 +287,7 @@ export class PointsService {
       originalData: point
     }
   }
-
-  // 默认积分数据
-  static getDefaultPoints() {
-    return [
-      { 
-        changeId: 'demo1',
-        content: '完成篮球场预约', 
-        pointsChange: '+50', 
-        changeType: 'increase', 
-        time: '2小时前' 
-      },
-      { 
-        changeId: 'demo2',
-        content: '取消羽毛球预约', 
-        pointsChange: '-20', 
-        changeType: 'decrease', 
-        time: '1天前' 
-      },
-      { 
-        changeId: 'demo3',
-        content: '首次注册奖励', 
-        pointsChange: '+100', 
-        changeType: 'increase', 
-        time: '3天前' 
-      },
-      { 
-        changeId: 'demo4',
-        content: '连续签到奖励', 
-        pointsChange: '+30', 
-        changeType: 'increase', 
-        time: '5天前' 
-      }
-    ]
-  }
+ 
 }
 
 // 通知服务
@@ -389,14 +298,15 @@ export class NotificationService {
       console.log('开始获取用户通知，用户ID:', userId)
       const response = await fetchUserNotifications(userId, {
         page: pagination.page,
-        pageSize: pagination.pageSize  // 修复：移除错误的pageSizeData
+        pageSize: pagination.pageSize 
       })
-      console.log('通知API响应:', response)
+      console.log('通知API响应结果:', response)
       
       const responseData = extractResponseData(response)
-
+      console.log('通知API响应数据:', responseData)
       if (responseData) {
         const actualData = responseData.data || responseData
+        const unreadNum = actualData.unreadNum 
         let notificationData = []
         let paginationInfo = { ...pagination }
 
@@ -411,7 +321,7 @@ export class NotificationService {
         paginationInfo.page = pagination.page
         
         console.log('通知数据加载成功:', notificationList)
-        return { notificationList, paginationInfo }
+        return { notificationList, paginationInfo, unreadNum }
       } else {
         throw new Error('无法解析API响应数据')
       }
@@ -419,43 +329,24 @@ export class NotificationService {
       console.error('获取通知数据失败:', error)
       ElMessage.error('获取通知数据失败，请稍后重试')
       
-      return {
-        notificationList: NotificationService.getDefaultNotifications(),
-        paginationInfo: { total: 2, page: pagination.page, pageSize: pagination.pageSize }
-      }
-      // 实际应用时候，删除 return 去除注释
-      // // 生产环境不返回默认数据，而是抛出错误
-      // throw error
+      // 生产环境不返回默认数据，而是抛出错误
+      throw error
     }
   }
 
   // 格式化通知数据
   static formatNotificationData(notification) {
-    const content = notification.content || notification.message || notification.title || '系统通知'
-    const createTime = notification.createTime || notification.create_time || notification.time || ''
-    const timeDisplay = formatRelativeTime(createTime)
+    const content = notification.content
+    const createTime = notification.createTime
+    const timeDisplay = formatRelativeTime(createTime) 
 
     return {
-      notificationId: notification.notificationId || notification.id || Math.random().toString(),
+      notificationId: notification.notificationId,
       content: content,
       time: timeDisplay,
+      isRead: notification.isRead,
       originalData: notification
     }
   }
 
-  // 默认通知数据
-  static getDefaultNotifications() {
-    return [
-      { 
-        notificationId: 'demo1',
-        content: '📢 您的篮球场预约已确认', 
-        time: '30分钟前'        
-      },
-      { 
-        notificationId: 'demo2',
-        content: '💰 会员积分+50，继续加油！', 
-        time: '2小时前'
-      }
-    ]
-  }
 }

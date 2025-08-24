@@ -1,5 +1,7 @@
 // src/utils/api.js
-import axios from 'axios';
+import axios from 'axios'; 
+import { ElMessage } from 'element-plus';
+import { AuthService } from './auth';
 
 // 创建 axios 实例
 const instance = axios.create({
@@ -16,21 +18,16 @@ instance.interceptors.response.use(
     // 处理401未授权错误（通常表示token过期）
     if (error.response && error.response.status === 401) {
       const errorMsg = error.response.data?.msg || error.response.data?.message;
-
-      // 如果后端明确返回token过期信息
-      if (errorMsg && errorMsg.includes('过期')) {
-        ElMessage.warning('登录已过期，请重新登录');
-
-        // 清除本地存储
-        AuthService.clearLoginData();
-
-        // 跳转到登录页
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 1500);
-      } else {
-        ElMessage.error('认证失败，请重新登录');
-      }
+      
+      ElMessage.warning('登录已过期，请重新登录');
+      console.log('token401未授权，清除token，清除本地存储，跳转到登录页');
+      // 清除本地存储
+      AuthService.clearLoginData();
+      
+      // 跳转到登录页
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
     }
 
     return Promise.reject(error);
@@ -199,6 +196,18 @@ export const fetchUserNotifications = (userId, params = {}) => {
     params: { ...params },
     headers
   });
+};
+
+// 标记通知为已读
+export const markNotificationAsRead = (userId, notificationId) => {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return instance.put(`/api/user/${userId}/notifications/${notificationId}/read`, {}, { headers });
 };
 
 /* 违约管理相关API */
