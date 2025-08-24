@@ -38,7 +38,7 @@
         </div>
       </div>
 
-      <!-- --- 修改：创作中心容器 --- -->
+      <!-- --- 创作中心容器 --- -->
       <div class="creation-center-container">
         <div class="creation-card">
           <!-- 1. 标题 -->
@@ -75,6 +75,9 @@
       :message="loginPromptMessage"
       @login="handleLoginRedirect"
     />
+
+    <!-- 回到顶部按钮 -->
+    <BackToTop />
   </div>
 </template>
 
@@ -85,6 +88,7 @@ import { useRouter } from 'vue-router';
 // 引入组件和 API
 import HeaderNavbar from '../components/HeaderNavbar.vue';
 import CommunityPostCard from '../components/CommunityPostCard.vue';
+import BackToTop from '../components/BackToTop.vue'; // 1. 引入 BackToTop 组件
 import { fetchCommunityPosts, fetchMyCollectedPosts } from '../utils/api.js';
 import { AuthService } from '../utils/auth.js';
 import LoginPrompt from '../components/LoginPrompt.vue';
@@ -154,18 +158,16 @@ const switchTab = (tabName) => {
   getPosts();
 };
 
-// --- 新增：跳转到帖子编辑页的方法 ---
+// --- 跳转到帖子编辑页的方法 ---
 const navigateToEditor = () => {
-  // 同样可以增加登录检查
   const authStatus = AuthService.checkLoginStatus();
   if (!authStatus.isValid) {
     loginPromptMessage.value = '登录后才能开始创作哦～';
     showLoginDialog.value = true;
     return;
   }
-  router.push({ name: 'PostEditor' }); // 假设你的路由配置中，帖子编辑页的 name 是 'PostEditor'
+  router.push({ name: 'PostEditor' });
 };
-// --- 新增结束 ---
 
 onMounted(() => {
   getPosts();
@@ -181,7 +183,7 @@ onMounted(() => {
   font-size: 16px;
 }
 
-/* --- 新增/修改：创作中心卡片的样式 --- */
+/* --- 创作中心卡片的样式 --- */
 .creation-card {
   background-color: #fff;
   padding: 20px;
