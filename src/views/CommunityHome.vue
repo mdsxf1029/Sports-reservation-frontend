@@ -125,13 +125,8 @@ const getPosts = async () => {
     } else {
       console.log("正在获取我的收藏...");
       response = await fetchMyCollectedPosts(pagination.value);
-    }
-
-    // 直接使用数据，不再检查 response.data.code
-    // 如果请求失败 (HTTP status is not 2xx), axios 会抛出错误，代码会直接进入 catch 块
-    // 使用 `|| []` 作为后备，防止后端在成功时返回空数据导致 `list` 为 undefined
-
-    posts.value = response.data.data.list || [];
+    }  
+    posts.value = response.data.list || [];
 
   } catch (error) {
     console.error('获取帖子列表失败:', error);
@@ -160,7 +155,7 @@ const switchTab = (tabName) => {
   getPosts();
 };
 
-// --- 跳转到帖子编辑页的方法 ---
+// --- 跳转到帖子编辑页 ---
 const navigateToEditor = () => {
   const authStatus = AuthService.checkLoginStatus();
   if (!authStatus.isValid) {
@@ -177,7 +172,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 样式部分未作修改 */
+/* 样式 */
 .empty-list-indicator {
   text-align: center;
   padding: 80px 50px;
