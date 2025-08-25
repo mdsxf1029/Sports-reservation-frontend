@@ -134,7 +134,7 @@
         </div>
 
         <!-- 分页 -->
-        <div class="pagination-section">
+        <div class="violation-pagination-section">
           <el-pagination
             v-model:current-page="currentPage"
             v-model:page-size="pageSize"

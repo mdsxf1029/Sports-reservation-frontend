@@ -363,7 +363,6 @@ const pendingReportsCount = ref(0);
 const dialogVisible = ref(false);
 const dialogTitle = ref('');
 const currentContent = ref({});
-
 // 获取帖子列表数据
 const fetchPosts = async () => {
   postLoading.value = true;
@@ -576,6 +575,8 @@ const getStatusType = (status) => {
   return typeMap[status] || 'info';
 };
 </script>
+
+<style src="../styles/post-management.css" scoped></style>
 
 <style scoped>
 .page-layout {
