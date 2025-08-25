@@ -177,7 +177,21 @@
           <el-input v-model="form.publishedBy" :disabled="true" placeholder="将自动填充当前管理员" />
         </el-form-item>
         <el-form-item label="封面图">
-          <el-input v-model="form.coverUrl" placeholder="请输入图片URL" />
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap: wrap;">
+            <el-input v-model="form.coverUrl" placeholder="可手动粘贴图片URL（可为空）" style="width: 320px;" />
+            <el-upload
+              :auto-upload="false"
+              :show-file-list="false"
+              accept="image/*"
+              :on-change="onCoverFileChange"
+            >
+              <el-button type="primary">本地上传</el-button>
+            </el-upload>
+            <el-button v-if="form.coverUrl" @click="form.coverUrl = ''">清除</el-button>
+          </div>
+          <div v-if="form.coverUrl" style="margin-top: 10px;">
+            <el-image :src="form.coverUrl" fit="cover" style="width: 160px; height: 100px; border-radius: 6px;" />
+          </div>
         </el-form-item>
         <el-form-item label="正文">
           <el-input v-model="form.content" type="textarea" :rows="8" />
@@ -369,6 +383,20 @@ const handlePublish = async (row) => {
   } catch (e) {
     ElMessage.error('发布失败');
   }
+};
+
+// 处理封面图本地上传（允许为空）：转换为 dataURL 直接预览或上传到你的服务器
+const onCoverFileChange = (file) => {
+  const raw = file.raw || file;
+  if (!raw) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    // 这里将本地文件转换为 base64 预览。若后端需要文件上传，请在此改为表单上传并设置返回的 URL。
+    form.value.coverUrl = reader.result;
+    ElMessage.success('已选择图片');
+  };
+  reader.onerror = () => ElMessage.error('读取图片失败');
+  reader.readAsDataURL(raw);
 };
 
 const onSelectionChange = (rows) => {
