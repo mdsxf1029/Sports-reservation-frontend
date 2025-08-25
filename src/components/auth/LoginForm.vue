@@ -78,6 +78,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { loginUser } from '@/utils/api'
 import { ElMessage } from 'element-plus' 
+import { AuthService } from '@/utils/auth'
 
 const dialogVisible = ref(false)
 const router = useRouter()  // 路由实例
@@ -106,15 +107,10 @@ const rules = {
     { required: true, message: '请选择身份', trigger: 'change' }
   ],
   email: [
-    { required: true, message: '邮箱不能为空', trigger: 'blur' },
-    { 
-      type: 'email', 
-      message: '请输入正确的邮箱格式', 
-      trigger: ['blur', 'change'] 
-    }
+    { required: true, validator: AuthService.validateEmail, trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '密码不能为空', trigger: 'blur' }
+    { required: true, validator: AuthService.validatePassword, trigger: 'blur' }
   ]
 }
 const login = () => {
@@ -126,13 +122,13 @@ const login = () => {
     console.log('表单校验通过，开始登录请求...')
     
     try {
-      const res = await loginUser({
+      const r = await loginUser({
         role: form.value.role,
         email: form.value.email,       
         password: form.value.password,
-        way: 'password' // API要求的登录方式参数
+        way: 0 
       })
-      
+      const res = r.data
       if (res.code === 0) {
         ElMessage.success('登录成功！')
         // 存储登录信息
@@ -149,7 +145,10 @@ const login = () => {
           localStorage.removeItem('saved_email')  
           localStorage.removeItem('saved_role')
         }
-        router.push('/profile')
+        ElMessage.info('即将跳转到首页')
+        setTimeout(() => {
+          router.push('/')
+        }, 500)
       } else {
         ElMessage.error(res.msg || '登录失败')
       }

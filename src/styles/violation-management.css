@@ -1,11 +1,11 @@
 /* 违约管理页面样式 */
 
-.page-layout {
+.violation-page-layout {
   min-height: 100vh;
   background: #f5f5f5;
 }
 
-.page-content {
+.violation-page-content {
   padding: 20px;
   background: #fff;
   margin-top: 80px;
@@ -13,14 +13,14 @@
 }
 
 /* 统计卡片样式 */
-.statistics-cards {
+.violation-statistics-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
 }
 
-.stat-card {
+.violation-stat-card {
   background: #fff;
   border-radius: 8px;
   padding: 20px;
@@ -30,11 +30,11 @@
   transition: transform 0.2s;
 }
 
-.stat-card:hover {
+.violation-stat-card:hover {
   transform: translateY(-2px);
 }
 
-.stat-icon {
+.violation-stat-icon {
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -46,41 +46,41 @@
   color: #fff;
 }
 
-.stat-icon.warning {
+.violation-stat-icon.warning {
   background: linear-gradient(135deg, #ff9a56, #ff6b6b);
 }
 
-.stat-icon.danger {
+.violation-stat-icon.danger {
   background: linear-gradient(135deg, #ff6b6b, #ee5a52);
 }
 
-.stat-icon.info {
+.violation-stat-icon.info {
   background: linear-gradient(135deg, #4ecdc4, #44a08d);
 }
 
-.stat-icon.success {
+.violation-stat-icon.success {
   background: linear-gradient(135deg, #a8edea, #fed6e3);
   color: #333;
 }
 
-.stat-content {
+.violation-stat-content {
   flex: 1;
 }
 
-.stat-number {
+.violation-stat-number {
   font-size: 28px;
   font-weight: bold;
   color: #303133;
   margin-bottom: 5px;
 }
 
-.stat-label {
+.violation-stat-label {
   font-size: 14px;
   color: #909399;
 }
 
 /* 筛选区域样式 */
-.filter-section {
+.violation-filter-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -90,30 +90,30 @@
   border-radius: 8px;
 }
 
-.filter-left {
+.violation-filter-left {
   display: flex;
   align-items: center;
 }
 
-.filter-right {
+.violation-filter-right {
   display: flex;
   align-items: center;
 }
 
 /* 表格区域样式 */
-.table-section {
+.violation-table-section {
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.table-section .el-table {
+.violation-table-section .el-table {
   width: 100%;
   max-width: 1200px;
 }
 
-.table-header {
+.violation-table-header {
   width: 100%;
   max-width: 1200px;
   display: flex;
@@ -124,14 +124,14 @@
   border-bottom: 1px solid #eee;
 }
 
-.table-header h3 {
+.violation-table-header h3 {
   margin: 0;
   color: #303133;
   font-size: 18px;
   font-weight: 600;
 }
 
-.no-data {
+.violation-no-data {
   text-align: center;
   padding: 40px;
   color: #999;
@@ -141,7 +141,7 @@
 }
 
 /* 分页样式 */
-.pagination-section {
+.violation-pagination-section {
   display: flex;
   justify-content: center;
   margin-top: 20px;
@@ -155,11 +155,11 @@
   overflow-y: auto;
 }
 
-.detail-section {
+.violation-detail-section {
   margin-bottom: 25px;
 }
 
-.detail-section h4 {
+.violation-detail-section h4 {
   margin: 0 0 15px 0;
   color: #303133;
   font-size: 16px;
@@ -168,61 +168,61 @@
   border-bottom: 2px solid #409eff;
 }
 
-.detail-grid {
+.violation-detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 15px;
 }
 
-.detail-item {
+.violation-detail-item {
   display: flex;
   align-items: center;
 }
 
-.detail-item .label {
+.violation-detail-item .label {
   font-weight: 600;
   color: #606266;
   min-width: 100px;
   margin-right: 10px;
 }
 
-.detail-item .value {
+.violation-detail-item .value {
   color: #303133;
   flex: 1;
 }
 
-.history-summary {
+.violation-history-summary {
   background: #f8f9fa;
   padding: 15px;
   border-radius: 6px;
   border-left: 4px solid #409eff;
 }
 
-.history-summary p {
+.violation-history-summary p {
   margin: 5px 0;
   color: #606266;
 }
 
-.history-summary strong {
+.violation-history-summary strong {
   color: #409eff;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .statistics-cards {
+  .violation-statistics-cards {
     grid-template-columns: repeat(2, 1fr);
   }
   
-  .filter-section {
+  .violation-filter-section {
     flex-direction: column;
     align-items: stretch;
   }
   
-  .filter-left {
+  .violation-filter-left {
     margin-bottom: 10px;
   }
   
-  .detail-grid {
+  .violation-detail-grid {
     grid-template-columns: 1fr;
   }
 } 
