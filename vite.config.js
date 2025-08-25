@@ -28,7 +28,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5097',
+        target: 'http://47.83.188.207:5101',
         changeOrigin: true,
         secure: false, // 本地自签名证书需要加这个，否则会报错
       }

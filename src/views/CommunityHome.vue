@@ -97,6 +97,7 @@ import '../styles/community-home.css';
 
 // 定义组件状态
 const posts = ref([]);
+
 const isLoading = ref(true);
 const pagination = ref({
   page: 1,

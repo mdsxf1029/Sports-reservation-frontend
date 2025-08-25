@@ -67,9 +67,9 @@ const handlePublish = async () => {
   }
 
   try {
-    const response = await axios.post('/api/community/posts/publishapost', {
-      title: post_title.value,
-      content: post_content.value
+    const response = await createCommunityPost({
+      postTitle: post_title.value,
+      postContent: post_content.value
     });
 
     // 处理成功响应（code=200的情况）
