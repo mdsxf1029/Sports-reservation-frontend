@@ -464,7 +464,7 @@ const handleCurrentChange = (newPage) => {
 };
 </script>
 
-<style src="../styles/admin-sidebar.css"></style>
+
 <style scoped>
 .action-buttons {
   display: flex;

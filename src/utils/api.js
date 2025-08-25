@@ -378,6 +378,27 @@ export const createCommunityPost = (postData) => {
   return instance.post('/api/community/posts/publishapost', postData, { headers });
 };
 
+// 帖子评论点赞、点踩、发布
+export const likeComment = (commentId) => {
+  return instance.post('/api/community/comments/like', { commentId });
+};
+
+export const unlikeComment = (commentId) => {
+  return instance.post('/api/community/comments/unlike', { commentId });
+};
+
+export const dislikeComment = (commentId) => {
+  return instance.post('/api/community/comments/dislike', { commentId });
+};
+
+export const undislikeComment = (commentId) => {
+  return instance.post('/api/community/comments/undislike', { commentId });
+};
+
+export const createCommunityComment = (data) => {
+  return instance.post(`/api/community/community/comments`, data);
+};
+
 // 获取订单详情（根据预约 ID）
 export const fetchOrderDetail = (appointmentId) => {
   /*return instance.get(`/api/appointments/${appointmentId}`);*/
