@@ -1,11 +1,38 @@
 // src/utils/api.js
-import axios from 'axios';
+import axios from 'axios'; 
+import { ElMessage } from 'element-plus';
+import { AuthService } from './auth';
 
 // 创建 axios 实例
 const instance = axios.create({
   baseURL: '',
   timeout: 5000
 });
+
+// 在 api.js 中添加响应拦截器
+instance.interceptors.response.use(
+  response => {
+    return response;
+  },
+  error => {
+    // 处理401未授权错误（通常表示token过期）
+    if (error.response && error.response.status === 401) {
+      const errorMsg = error.response.data?.msg || error.response.data?.message;
+      
+      ElMessage.warning('登录已过期，请重新登录');
+      console.log('token401未授权，清除token，清除本地存储，跳转到登录页');
+      // 清除本地存储
+      AuthService.clearLoginData();
+      
+      // 跳转到登录页
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 
 // 获取用户违约记录
@@ -18,29 +45,47 @@ export function addToBlacklist(userId) {
   return instance.post('/api/blacklist/add', { userId });
 }
 
-//获取场地信息
+// 获取场地信息
 export const getVenues = (params) => {
-  return instance.get('/api/venues', { params });
+  const token = localStorage.getItem('token');
+  return instance.get('/api/venues', {
+    params,
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
-//发布场地
+// 发布场地
 export const createVenue = (data) => {
-  return instance.post('/api/venues', data);
+  const token = localStorage.getItem('token');
+  // 对于 POST 和 PUT 请求, headers 是第三个参数
+  return instance.post('/api/venues', data, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
-//更新场地
+// 更新场地
 export const updateVenue = (id, data) => {
-  return instance.put(`/api/venues/${id}`, data);
+  const token = localStorage.getItem('token');
+  return instance.put(`/api/venues/${id}`, data, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
-//删除场地
+// 删除场地
 export const deleteVenue = (id) => {
-  return instance.delete(`/api/venues/${id}`);
+  const token = localStorage.getItem('token');
+  // 对于 DELETE 请求, headers 在第二个参数对象中
+  return instance.delete(`/api/venues/${id}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
-//批量更新场地状态
+// 批量更新场地状态
 export const batchUpdateVenueStatus = (ids, status) => {
-    return instance.put('/api/venues/batch-status', { ids, status });
+  const token = localStorage.getItem('token');
+  return instance.put('/api/venues/batch-status', { ids, status }, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
 // 你可以根据需要继续添加其他接口方法
@@ -58,15 +103,14 @@ export function loginUser(credentials) {
 }
 
 // 上传头像（注册时无需token，登录后需要token）
+// 改进版本的前端代码
 export function uploadAvatar(formData) {
   const token = localStorage.getItem('token');
-  const headers = {
-    'Content-Type': 'multipart/form-data'
-  };
+  const headers = {};
 
   // 如果有token就添加到headers中
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;  // ✅ 标准Bearer格式
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   return instance.post('/api/upload/avatar', formData, {
@@ -78,11 +122,11 @@ export function uploadAvatar(formData) {
 export function getUserInfo(userId) {
   const token = localStorage.getItem('token');
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;  // ✅ 标准Bearer格式
   }
-  
+
   return instance.get(`/api/user/${userId}`, { headers });
 }
 
@@ -98,11 +142,11 @@ export function updateUserInfo(userId, userData) {
 export const fetchMyOrderSummary = (userId, params = {}) => {
   const token = localStorage.getItem('token');
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
   return instance.get(`/api/appointments`, {
     params: { userId, ...params },
     headers
@@ -113,11 +157,11 @@ export const fetchMyOrderSummary = (userId, params = {}) => {
 export const fetchUserPoints = (userId, params = {}) => {
   const token = localStorage.getItem('token');
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
   return instance.get(`/api/user/${userId}/points`, {
     params: { ...params },
     headers
@@ -128,11 +172,11 @@ export const fetchUserPoints = (userId, params = {}) => {
 export const fetchPointsHistory = (userId, params = {}) => {
   const token = localStorage.getItem('token');
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
   return instance.get(`/api/user/${userId}/points/history`, {
     params: { ...params },
     headers
@@ -143,15 +187,27 @@ export const fetchPointsHistory = (userId, params = {}) => {
 export const fetchUserNotifications = (userId, params = {}) => {
   const token = localStorage.getItem('token');
   const headers = {};
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return instance.get(`/api/user/${userId}/notifications`, {
+    params: { ...params },
+    headers
+  });
+};
+
+// 标记通知为已读
+export const markNotificationAsRead = (userId, notificationId) => {
+  const token = localStorage.getItem('token');
+  const headers = {};
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
   
-  return instance.get(`/api/user/${userId}/notifications`, {
-    params: { ...params },
-    headers
-  });
+  return instance.put(`/api/user/${userId}/notifications/${notificationId}/read`, {}, { headers });
 };
 
 /* 违约管理相关API */
@@ -288,15 +344,15 @@ export const fetchPostById = (postId) => {
 };
 
 // 发布社区帖子
-export const createCommunityPost = (postData, userId) => { // 接收userId参数
+export const createCommunityPost = (postData) => {
   const token = localStorage.getItem('token');
   const headers = {};
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-
-  return instance.post(`/api/post/user/${userId}`, postData, { headers });
+  
+  return instance.post('/api/community/posts/publishapost', postData, { headers });
 };
 
 // 帖子评论点赞、点踩、发布
@@ -338,19 +394,36 @@ export const fetchConfirmInfo = (appointmentId) => {
 export const getPosts = (params) => {
   /*  params - 包含过滤和分页参数的对象
       e.g., { page: 1, pageSize: 10, status: 'pending', keyword: 'Vue' } */
-    return instance.get('/api/posts', { params });
+  return instance.get('/api/posts', {
+    params,
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
 };
 export const approvePost = (id) => {
-    return instance.put(`/api/posts/${id}/approve`);
+  return instance.put(`/api/posts/${id}/approve`, null, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
 };
 export const rejectPost = (id) => {
-    return instance.put(`/api/posts/${id}/reject`);
+  return instance.put(`/api/posts/${id}/reject`, null, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
 };
 
 //举报管理相关
 export const getReports = (params) => {
-  return instance.get('/api/reports', { params });
+  return instance.get('/api/reports', {
+    params,
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
 };
 export const processReport = (reportId, data) => {
-  return instance.put(`/api/reports/${reportId}/process`, data);
+  return instance.put(`/api/reports/${reportId}/process`, data, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
+};
+export const fetchPostID = (postId) => {
+  return instance.get(`/api/posts/${postId}`, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
 };
