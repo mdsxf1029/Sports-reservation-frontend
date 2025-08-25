@@ -36,7 +36,7 @@ export default {
     statusType: {
       type: String,
       default: 'pending',
-      validator: (value) => ['active', 'pending', 'cancelled'].includes(value)
+      validator: (value) => ['active', 'pending', 'cancelled', 'upcoming', 'ongoing', 'expired', 'completed', 'success', 'warning', 'error'].includes(value)
     },
     orderDetail: {
       type: Object,
@@ -104,18 +104,28 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.active-status {
+.active-status, .upcoming-status, .ongoing-status {
   background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
   color: white;
 }
 
-.pending-status {
+.pending-status, .warning-status {
   background: linear-gradient(135deg, #e6a23c 0%, #f0a020 100%);
   color: white;
 }
 
-.cancelled-status {
+.cancelled-status, .error-status {
   background: linear-gradient(135deg, #f56c6c 0%, #f78989 100%);
+  color: white;
+}
+
+.completed-status, .success-status {
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+  color: white;
+}
+
+.expired-status {
+  background: linear-gradient(135deg, #909399 0%, #b1b3b8 100%);
   color: white;
 }
 

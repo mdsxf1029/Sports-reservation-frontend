@@ -40,6 +40,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router'; // 引入路由钩子
 import axios from 'axios';
+import { createCommunityPost } from '../utils/api.js';
 
 // 响应式数据
 const post_title = ref('');
@@ -53,28 +54,48 @@ const handlePreview = () => {
 };
 
 // 发布按钮事件
+// 修改后的handlePublish方法如下
 const handlePublish = async () => {
-  if (!post_title.value.trim() || !post_content.value.trim()) {
-    alert('标题和正文不能为空，请完善后再发布！');
+  // 前端基础校验（可保留也可移除，根据后端校验强度决定）
+  if (!post_title.value.trim()) {
+    alert('标题不能为空');
+    return;
+  }
+  if (post_content.value.trim().length < 10) {
+    alert('内容长度不能少于10个字符');
     return;
   }
 
   try {
-    const response = await axios.post('/api/community/posteditor', {
+    const response = await axios.post('/api/community/posts/publishapost', {
       title: post_title.value,
       content: post_content.value
     });
 
-    console.log('发布的标题：', post_title.value);
-    console.log('发布的正文：', post_content.value);
-    console.log('API 响应：', response.data);
-    alert('帖子发布成功！');
-    
-    // 发布成功后也返回上一页
-    router.back();
+    // 处理成功响应（code=200的情况）
+    if (response.data.code) {
+      console.log('发布成功，帖子ID：', response.data.data.post_id);
+      console.log('发布时间：', response.data.data.post_time);
+      console.log('作者信息：', response.data.data.author);
+      alert(`帖子发布成功！\n标题：${response.data.data.post_title}\n发布时间：${response.data.data.post_time}`);
+      router.back();
+    } 
   } catch (error) {
+    // 处理错误响应（包括code=400的情况）
     console.error('发布帖子时出错：', error);
-    alert('帖子发布失败，请稍后重试。');
+    if (error.response && error.response.data) {
+      const errorData = error.response.data;
+      // 显示后端返回的错误信息列表
+      if (errorData.errors && Array.isArray(errorData.errors)) {
+        alert(`发布失败：\n${errorData.errors.join('\n')}`);
+      } else {
+        // 显示后端返回的错误消息
+        alert(errorData.message || '帖子发布失败，请稍后重试');
+      }
+    } else {
+      // 网络错误等情况
+      alert('网络异常，发布失败，请检查网络连接');
+    }
   }
 };
 
@@ -83,6 +104,7 @@ const handleCancel = () => {
   // 确认是否取消
   if (confirm('确定要取消编辑吗？所有未保存的内容将丢失。')) {
     location.reload();
+    router.back();
   }
 };
 </script>
