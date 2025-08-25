@@ -1,50 +1,50 @@
 <template>
-  <div class="page-layout">
+  <div class="appeal-page-layout">
     <AdminHeaderNavbar />
-    <div class="page-content">
+    <div class="appeal-page-content">
       <div class="post-management-container">
         <!-- 统计概览卡片 -->
-        <div class="statistics-section">
-          <div class="stat-card">
-            <div class="stat-icon pending">
+        <div class="appeal-statistics-section">
+          <div class="appeal-stat-card">
+            <div class="appeal-stat-icon pending">
               <el-icon><Clock /></el-icon>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ pendingAppeals.length }}</div>
-              <div class="stat-label">待处理申诉</div>
+            <div class="appeal-stat-content">
+              <div class="appeal-stat-number">{{ pendingAppeals.length }}</div>
+              <div class="appeal-stat-label">待处理申诉</div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon approved">
+          <div class="appeal-stat-card">
+            <div class="appeal-stat-icon approved">
               <el-icon><CircleCheck /></el-icon>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ approvedAppeals.length }}</div>
-              <div class="stat-label">申诉通过</div>
+            <div class="appeal-stat-content">
+              <div class="appeal-stat-number">{{ approvedAppeals.length }}</div>
+              <div class="appeal-stat-label">申诉通过</div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon rejected">
+          <div class="appeal-stat-card">
+            <div class="appeal-stat-icon rejected">
               <el-icon><CircleClose /></el-icon>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ rejectedAppeals.length }}</div>
-              <div class="stat-label">申诉被拒</div>
+            <div class="appeal-stat-content">
+              <div class="appeal-stat-number">{{ rejectedAppeals.length }}</div>
+              <div class="appeal-stat-label">申诉被拒</div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon blacklist">
+          <div class="appeal-stat-card">
+            <div class="appeal-stat-icon blacklist">
               <el-icon><UserFilled /></el-icon>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ blacklistUsers.length }}</div>
-              <div class="stat-label">黑名单用户</div>
+            <div class="appeal-stat-content">
+              <div class="appeal-stat-number">{{ blacklistUsers.length }}</div>
+              <div class="appeal-stat-label">黑名单用户</div>
             </div>
           </div>
         </div>
 
         <!-- 快速操作区域 -->
-        <div class="quick-actions">
+        <div class="appeal-quick-actions">
           <el-button type="success" size="large" @click="handleBatchApprove">
             <el-icon><Check /></el-icon>
             批量通过申诉
@@ -64,13 +64,13 @@
         </div>
 
         <!-- 主要内容区域 -->
-        <div class="main-content">
+        <div class="appeal-main-content">
           <el-tabs v-model="currentTab" class="demo-tabs">
             <el-tab-pane label="申诉审核" name="pending">
-              <div class="tab-content">
-                <div class="tab-header">
+              <div class="appeal-tab-content">
+                <div class="appeal-tab-header">
                   <h3>申诉申请列表</h3>
-                  <div class="header-stats">
+                  <div class="appeal-header-stats">
                     <el-tag type="warning" size="small">{{ pendingAppeals.length }} 条待处理</el-tag>
                     <el-tag type="success" size="small">{{ approvedAppeals.length }} 条已通过</el-tag>
                     <el-tag type="danger" size="small">{{ rejectedAppeals.length }} 条已拒绝</el-tag>
@@ -78,7 +78,7 @@
                 </div>
                 
                 <!-- 筛选区域 -->
-                <div class="filter-section">
+                <div class="appeal-filter-section">
                   <el-select v-model="appealStatusFilter" placeholder="申诉状态" clearable style="width: 120px; margin-right: 10px;">
                     <el-option label="全部" value="" />
                     <el-option label="待处理" value="pending" />
@@ -129,7 +129,7 @@
                   <el-table-column type="selection" width="55" />
                   <el-table-column prop="userName" label="用户名" width="120">
                     <template #default="scope">
-                      <div class="user-info">
+                      <div class="appeal-user-info">
                         <el-avatar :size="32" :src="scope.row.userAvatar">
                           <el-icon><User /></el-icon>
                         </el-avatar>
@@ -141,7 +141,7 @@
                   <el-table-column prop="violationTime" label="违约时间" width="180" />
                   <el-table-column prop="venue" label="预约场馆" width="120">
                     <template #default="scope">
-                      <div class="venue-info">
+                      <div class="appeal-venue-info">
                         <el-icon><Location /></el-icon>
                         <span>{{ scope.row.venue }}</span>
                       </div>
@@ -150,7 +150,7 @@
                   <el-table-column prop="timeSlot" label="预约时间段" width="150" />
                   <el-table-column prop="appealReason" label="申诉理由" min-width="200">
                     <template #default="scope">
-                      <div class="appeal-reason">
+                      <div class="appeal-appeal-reason">
                         <el-icon><ChatDotRound /></el-icon>
                         <span>{{ scope.row.appealReason }}</span>
                       </div>
@@ -214,14 +214,14 @@
                   </el-table-column>
                 </el-table>
                 
-                <div v-if="filteredAppeals.length === 0" class="no-data">
+                <div v-if="filteredAppeals.length === 0" class="appeal-no-data">
                   <el-empty description="暂无申诉记录" :image-size="200">
                     <el-button type="primary" @click="refreshData">刷新数据</el-button>
                   </el-empty>
                 </div>
                 
                 <!-- 分页 -->
-                <div class="pagination-section" v-if="filteredAppeals.length > 0">
+                <div class="appeal-pagination-section" v-if="filteredAppeals.length > 0">
                   <el-pagination
                     v-model:current-page="appealCurrentPage"
                     v-model:page-size="appealPageSize"
@@ -236,10 +236,10 @@
             </el-tab-pane>
             
             <el-tab-pane label="黑名单管理" name="blacklist">
-              <div class="tab-content">
-                <div class="tab-header">
+              <div class="appeal-tab-content">
+                <div class="appeal-tab-header">
                   <h3>黑名单用户管理</h3>
-                  <div class="header-actions">
+                  <div class="appeal-header-actions">
                     <el-tag type="danger" size="small">{{ blacklistUsers.length }} 人在黑名单</el-tag>
                     <el-button type="danger" size="small" @click="showAddBlacklistDialog">
                       <el-icon><User /></el-icon>
@@ -252,7 +252,7 @@
                   <el-table-column type="selection" width="55" />
                   <el-table-column prop="userName" label="用户名" width="120">
                     <template #default="scope">
-                      <div class="user-info">
+                      <div class="appeal-user-info">
                         <el-avatar :size="32" :src="scope.row.userAvatar">
                           <el-icon><User /></el-icon>
                         </el-avatar>
@@ -269,7 +269,7 @@
                   <el-table-column prop="blacklistTime" label="加入黑名单时间" width="180" />
                   <el-table-column prop="blacklistReason" label="加入原因" min-width="200">
                     <template #default="scope">
-                      <div class="blacklist-reason">
+                      <div class="appeal-blacklist-reason">
                         <el-icon><Warning /></el-icon>
                         <span>{{ scope.row.blacklistReason }}</span>
                       </div>
@@ -289,14 +289,14 @@
                   </el-table-column>
                 </el-table>
                 
-                <div v-if="blacklistUsers.length === 0" class="no-data">
+                <div v-if="blacklistUsers.length === 0" class="appeal-no-data">
                   <el-empty description="暂无黑名单用户" :image-size="200">
                     <el-button type="primary" @click="refreshData">刷新数据</el-button>
                   </el-empty>
                 </div>
                 
                 <!-- 分页 -->
-                <div class="pagination-section" v-if="blacklistUsers.length > 0">
+                <div class="appeal-pagination-section" v-if="blacklistUsers.length > 0">
                   <el-pagination
                     v-model:current-page="blacklistCurrentPage"
                     v-model:page-size="blacklistPageSize"
@@ -322,42 +322,42 @@
       :close-on-click-modal="false"
     >
       <div v-if="selectedAppeal" class="appeal-detail">
-        <div class="detail-section">
+        <div class="appeal-detail-section">
           <h4>申诉信息</h4>
-          <div class="detail-grid">
-            <div class="detail-item">
+          <div class="appeal-detail-grid">
+            <div class="appeal-detail-item">
               <span class="label">用户：</span>
               <span class="value">{{ selectedAppeal.userName }}</span>
             </div>
-            <div class="detail-item">
+            <div class="appeal-detail-item">
               <span class="label">违约时间：</span>
               <span class="value">{{ selectedAppeal.violationTime }}</span>
             </div>
-            <div class="detail-item">
+            <div class="appeal-detail-item">
               <span class="label">预约场馆：</span>
               <span class="value">{{ selectedAppeal.venue }}</span>
             </div>
-            <div class="detail-item">
+            <div class="appeal-detail-item">
               <span class="label">预约时间段：</span>
               <span class="value">{{ selectedAppeal.timeSlot }}</span>
             </div>
-            <div class="detail-item">
+            <div class="appeal-detail-item">
               <span class="label">申诉时间：</span>
               <span class="value">{{ selectedAppeal.appealTime }}</span>
             </div>
-            <div class="detail-item">
+            <div class="appeal-detail-item">
               <span class="label">申诉理由：</span>
               <span class="value">{{ selectedAppeal.appealReason }}</span>
             </div>
-            <div class="detail-item" v-if="selectedAppeal.processor">
+            <div class="appeal-detail-item" v-if="selectedAppeal.processor">
               <span class="label">处理人：</span>
               <span class="value">{{ selectedAppeal.processor }}</span>
             </div>
-            <div class="detail-item" v-if="selectedAppeal.processTime">
+            <div class="appeal-detail-item" v-if="selectedAppeal.processTime">
               <span class="label">处理时间：</span>
               <span class="value">{{ selectedAppeal.processTime }}</span>
             </div>
-            <div class="detail-item">
+            <div class="appeal-detail-item">
               <span class="label">申诉状态：</span>
               <span class="value">
                 <el-tag :type="getAppealStatusType(selectedAppeal.appealStatus)" size="small">
@@ -369,7 +369,7 @@
         </div>
       </div>
       <template #footer>
-        <span class="dialog-footer">
+        <span class="appeal-dialog-footer">
           <el-button @click="detailDialogVisible = false">关 闭</el-button>
         </span>
       </template>
@@ -417,45 +417,45 @@
       :close-on-click-modal="false"
     >
       <div class="appeal-detail">
-        <div class="detail-section">
+        <div class="appeal-detail-section">
           <h4>申诉信息</h4>
-          <div class="detail-grid">
-            <div class="detail-item">
+          <div class="appeal-detail-grid">
+            <div class="appeal-detail-item">
               <span class="label">用户：</span>
               <span class="value">{{ selectedAppeal?.userName }}</span>
             </div>
-            <div class="detail-item">
+            <div class="appeal-detail-item">
               <span class="label">违约时间：</span>
               <span class="value">{{ selectedAppeal?.violationTime }}</span>
             </div>
-            <div class="detail-item">
+            <div class="appeal-detail-item">
               <span class="label">预约场馆：</span>
               <span class="value">{{ selectedAppeal?.venue }}</span>
             </div>
-            <div class="detail-item">
+            <div class="appeal-detail-item">
               <span class="label">预约时间段：</span>
               <span class="value">{{ selectedAppeal?.timeSlot }}</span>
             </div>
-            <div class="detail-item">
+            <div class="appeal-detail-item">
               <span class="label">申诉时间：</span>
               <span class="value">{{ selectedAppeal?.appealTime }}</span>
             </div>
-            <div class="detail-item">
+            <div class="appeal-detail-item">
               <span class="label">申诉理由：</span>
               <span class="value">{{ selectedAppeal?.appealReason }}</span>
             </div>
-            <div class="detail-item" v-if="selectedAppeal?.processor">
+            <div class="appeal-detail-item" v-if="selectedAppeal?.processor">
               <span class="label">处理人：</span>
               <span class="value">{{ selectedAppeal?.processor }}</span>
             </div>
-            <div class="detail-item" v-if="selectedAppeal?.processTime">
+            <div class="appeal-detail-item" v-if="selectedAppeal?.processTime">
               <span class="label">处理时间：</span>
               <span class="value">{{ selectedAppeal?.processTime }}</span>
             </div>
           </div>
         </div>
       </div>
-      <div v-if="appealAction === 'reject'" class="reject-reason">
+      <div v-if="appealAction === 'reject'" class="appeal-reject-reason">
         <el-form-item label="拒绝理由">
           <el-input 
             v-model="rejectReason" 
@@ -466,7 +466,7 @@
         </el-form-item>
       </div>
       <template #footer>
-        <span class="dialog-footer">
+        <span class="appeal-dialog-footer">
           <el-button @click="appealDialogVisible = false">取 消</el-button>
           <el-button 
             :type="appealAction === 'approve' ? 'success' : 'danger'"
@@ -1043,5 +1043,5 @@ export default {
 };
 </script>
 
-<style src="../styles/admin-sidebar.css"></style>
+
 <style src="../styles/appeal-management.css"></style>
