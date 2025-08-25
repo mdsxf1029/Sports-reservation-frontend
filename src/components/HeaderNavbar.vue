@@ -6,13 +6,16 @@
         <router-link to="/home"  class="title-link">运动场地预约系统</router-link>
       </h1>
     </el-container>
-    <el-menu-item class="navbar-item" index="1" @click="$router.push('/community')">
-      运动社区
+    <el-menu-item class="navbar-item" index="1" @click="$router.push('/home')">
+      首页
     </el-menu-item>
     <el-menu-item class="navbar-item" index="2" @click="$router.push('/news')">
       运动新闻
     </el-menu-item>
-    <el-menu-item class="navbar-item" index="3"@click="$router.push('/venuelist')">
+    <el-menu-item class="navbar-item" index="3" @click="$router.push('/community')">
+      运动社区
+    </el-menu-item>
+    <el-menu-item class="navbar-item" index="4"@click="$router.push('/venuelist')">
       运动场地预约
     </el-menu-item>
 
