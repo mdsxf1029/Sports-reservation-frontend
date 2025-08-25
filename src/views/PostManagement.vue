@@ -248,15 +248,13 @@ const dialogVisible = ref(false);
 const dialogTitle = ref('');
 const currentContent = ref({ title: '', content: '', author: '', publishTime: '' });
 
-// 统计计算
+// 统计计算（避免误导，默认显示 0；如需真实统计，请从后端接口获取）
 const approvedCount = computed(() => {
-  // 这里应该从API获取已通过的帖子数量
-  return 15; // 模拟数据
+  return 0;
 });
 
 const rejectedCount = computed(() => {
-  // 这里应该从API获取已拒绝的帖子数量
-  return 8; // 模拟数据
+  return 0;
 });
 
 // 帖子审核相关函数
