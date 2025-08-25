@@ -7,7 +7,7 @@
 
       <!-- 轮播图 Banner -->
       <el-carousel :interval="4000" height="220px" arrow="always" class="news-carousel">
-        <el-carousel-item v-for="(banner, idx) in banners" :key="idx">
+        <el-carousel-item v-for="(banner, idx) in banners.slice(0, 4)" :key="idx">
           <img :src="banner.img" :alt="banner.title" class="carousel-image" />
           <div class="carousel-caption">{{ banner.title }}</div>
         </el-carousel-item>
@@ -174,7 +174,7 @@ onMounted(() => {
 .page-title::after { 
   content: ""; 
   display: block; 
-  width: 60px; 
+  width: 120px; 
   height: 4px; 
   background-color: #0f40f5; 
   border-radius: 2px;

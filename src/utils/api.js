@@ -310,7 +310,7 @@ export const fetchCommunityPosts = (params) => {
 export const likeCommunityPost = (postId) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`/api/community/posts/${postId}/likes/${userId}`, null, {
+  return instance.post(`/api/post-like/${postId}-${userId}`, null, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
@@ -319,7 +319,7 @@ export const likeCommunityPost = (postId) => {
 export const unlikeCommunityPost = (postId) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.delete(`/api/community/posts/${postId}/likes/${userId}`, {
+  return instance.delete(`/api/post-like/${postId}-${userId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
@@ -328,7 +328,7 @@ export const unlikeCommunityPost = (postId) => {
 export const collectCommunityPost = (postId) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`/api/community/posts/${postId}/collections/${userId}`, null, {
+  return instance.post(`/api/post-collection/${userId}-${postId}`, null, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
@@ -337,7 +337,7 @@ export const collectCommunityPost = (postId) => {
 export const uncollectCommunityPost = (postId) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.delete(`/api/community/posts/${postId}/collections/${userId}`, {
+  return instance.delete(`/api/post-collection/${userId}-${postId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
@@ -346,7 +346,7 @@ export const uncollectCommunityPost = (postId) => {
 export const fetchMyCollectedPosts = (params) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.get(`/api/community/collections/${userId}`, {
+  return instance.get(`/api/post-collection/user/${userId}`, {
     params: params,
     headers: { 'Authorization': `Bearer ${token}` }
   });
@@ -356,7 +356,7 @@ export const fetchMyCollectedPosts = (params) => {
 export const reportCommunityPost = (postId, data) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`/api/community/posts/${postId}/reports/${userId}`, data, {
+  return instance.post(`api/post-report/${postId}-${userId}`, data, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
