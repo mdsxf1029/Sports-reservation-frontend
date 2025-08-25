@@ -6,13 +6,13 @@
       <!-- 作者信息 + 发布时间 + 内容 -->
       <div class="post-card">
         <!-- 帖子标题，居中大字 -->
-        <h1 class="post-main-title">{{ post.title }}</h1>
+        <h1 class="post-main-title">{{ post.postTitle }}</h1>
         <div class="post-header">
           <div class="author-info">
-            <img :src="post.author.avatar" alt="作者头像" class="author-avatar" />
+            <img :src="user.avatarUrl" alt="作者头像" class="author-avatar" />
             <div class="post-info">
-              <span class="author-name">{{ post.author.user_name }}</span>
-              <span class="post-time">发表于 {{ post.publish_time }}</span>
+              <span class="author-name">{{ user.userName }}</span>
+              <span class="post-time">发表于 {{ post.postTime }}</span>
             </div>
           </div>
           <el-dropdown>
@@ -30,7 +30,7 @@
         </div>
 
         <!-- 帖子正文 -->
-        <p class="post-content">{{ post.content }}</p>
+        <p class="post-content">{{ post.postContent }}</p>
 
 
         <!-- 操作图标 - 现在会显示在右侧 -->
@@ -245,7 +245,8 @@ const commentInput = ref(null);
 
 // 状态初始化
 const isLoading = ref(true);
-const post = ref({ author: {}, publish_time: '' });
+const post = ref({});
+const user = ref({});
 const comments = ref([]);
 
 // 评论框显示/隐藏状态
@@ -330,16 +331,16 @@ const loginPromptMessage = ref('');
 const mockPostData = {
   post: {
     id: 1,
-    title: "分享我的马拉松训练计划",
-    content: "大家好，我想分享一下我为即将到来的城市马拉松准备的训练计划。\n\n每周一、三、五：早晨6点进行5-8公里的轻松跑\n每周二、四：力量训练+核心训练（各30分钟）\n每周六：长距离慢跑（从15公里开始，每周增加2公里）\n每周日：休息或轻度拉伸\n\n饮食方面，我主要以高蛋白、低碳水为主，每天保证3升以上的水分摄入。\n\n有没有跑友有更好的建议？欢迎交流！",
+    title: "确实不错",
+    content: "还行wjdiwajdiqjciqjcieqjciqjciencienciencienciecnieciqjcqcjqoicjanxaknscjancjancjancjancjaksncajkcnakjncajncjancjancjasncjascnajscnjascnjascnjascnjaskcnjascnaskjcnjaskncjasnc",
     author: {
-      avatar: "https://picsum.photos/id/237/200",
-      user_name: "跑步达人"
+      avatar: "https://i.pravatar.cc/150?u=user21",
+      user_name: "Yihe Huang"
     },
-    publish_time: "2023-10-15 08:30",
+    publish_time: "2025-08-20 08:36",
     stats: {
-      likeCount: 128,
-      collectionCount: 45
+      likeCount: 1,
+      collectionCount: 1
     }
   },
   comments: [
@@ -446,16 +447,15 @@ onMounted(async () => {
   try {
     // 尝试获取真实数据
     const response = await fetchPostById(props.postId);
-    if (response.data && response.data.code === 200) {
-      const postData = response.data.data;
-      post.value = postData.post;
-      comments.value = postData.comments;
+    if (response.data && response.data.post) {
+      post.value = response.data.post;
+      user.value = response.data.user;
       
       // 初始化交互状态
-      isLiked.value = postData.currentUserInteraction.hasLiked;
-      isFavorited.value = postData.currentUserInteraction.hasCollected;
-      like_count.value = postData.post.stats.likeCount;
-      collection_count.value = postData.post.stats.collectionCount;
+      isLiked.value = response.data.currentUserInteraction?.hasLiked || false;
+      isFavorited.value = response.data.currentUserInteraction?.hasCollected || true;
+      like_count.value = response.data.post.likeCount;
+      collection_count.value = response.data.post.collectionCount;
     } else {
       console.warn("获取帖子详情失败，使用模拟数据:", response.data?.message || '未知错误');
       // 使用模拟数据
@@ -533,11 +533,11 @@ const handleLike = async () => {
   try {
     if (isLiked.value) {
       // 当前已点赞，执行取消点赞操作
-      await unlikeCommunityPost(post.value.id);
+      await unlikeCommunityPost(post.value.postId);
       like_count.value--;
     } else {
       // 当前未点赞，执行点赞操作
-      await likeCommunityPost(post.value.id);
+      await likeCommunityPost(post.value.postId);
       like_count.value++;
     }
     // 切换点赞状态

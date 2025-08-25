@@ -197,7 +197,7 @@ const handleCollect = async () => {
     // 切换收藏状态
     props.post.currentUserInteraction.hasCollected = !props.post.currentUserInteraction.hasCollected;
   } catch (error) {
-    console.error("收藏操作失败:", error);
+    console.error("收藏操作失败:", error.response || error);
     ElMessage.error('操作失败，请稍后重试');
   } finally {
     isCollecting.value = false;
@@ -263,10 +263,10 @@ const submitReport = async () => {
 
   try {
     // 向后端发送举报请求
+    const combinedReason = `[${selectedReportReason.value}] ${reportDescription.value}`;
     await reportCommunityPost(props.post.postId, {
       user_id: authStatus.userId, // 提交用户ID
-      category: selectedReportReason.value,
-      reason: reportDescription.value,
+      reportReason: combinedReason,
     });
 
     ElMessage.success('举报已提交');

@@ -97,6 +97,7 @@ import '../styles/community-home.css';
 
 // 定义组件状态
 const posts = ref([]);
+
 const isLoading = ref(true);
 const pagination = ref({
   page: 1,
@@ -125,9 +126,11 @@ const getPosts = async () => {
       console.log("正在获取我的收藏...");
       response = await fetchMyCollectedPosts(pagination.value);
     }
+
     // 直接使用数据，不再检查 response.data.code
     // 如果请求失败 (HTTP status is not 2xx), axios 会抛出错误，代码会直接进入 catch 块
     // 使用 `|| []` 作为后备，防止后端在成功时返回空数据导致 `list` 为 undefined
+
     posts.value = response.data.data.list || [];
 
   } catch (error) {
