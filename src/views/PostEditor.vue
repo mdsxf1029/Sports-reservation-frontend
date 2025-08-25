@@ -38,7 +38,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router'; // 引入路由钩子
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { createCommunityPost } from '../utils/api.js';
 
@@ -46,7 +46,7 @@ import { createCommunityPost } from '../utils/api.js';
 const post_title = ref('');
 const post_content = ref('');
 const isPreviewShow = ref(false);
-const router = useRouter(); // 获取路由实例
+const router = useRouter();
 
 // 预览按钮事件
 const handlePreview = () => {
@@ -54,9 +54,8 @@ const handlePreview = () => {
 };
 
 // 发布按钮事件
-// 修改后的handlePublish方法如下
 const handlePublish = async () => {
-  // 前端基础校验（可保留也可移除，根据后端校验强度决定）
+  // 前端基础校验
   if (!post_title.value.trim()) {
     alert('标题不能为空');
     return;
@@ -66,50 +65,69 @@ const handlePublish = async () => {
     return;
   }
 
-  try {
-    const response = await axios.post('/api/community/posts/publishapost', {
-      title: post_title.value,
-      content: post_content.value
-    });
+  // 获取用户ID
+  const userId = localStorage.getItem('userId');
+  if (!userId) {
+    alert('请先登录');
+    return;
+  }
 
-    // 处理成功响应（code=200的情况）
-    if (response.data.code) {
-      console.log('发布成功，帖子ID：', response.data.data.post_id);
-      console.log('发布时间：', response.data.data.post_time);
-      console.log('作者信息：', response.data.data.author);
-      alert(`帖子发布成功！\n标题：${response.data.data.post_title}\n发布时间：${response.data.data.post_time}`);
+  try {
+    const response = await createCommunityPost(
+      { title: post_title.value, content: post_content.value },
+      userId
+    );
+
+    // 关键修改：适配接口返回格式（无code字段，用postId是否存在判断成功）
+    if (response.data && response.data.postId !== undefined) {
+      console.log('发布成功，完整响应：', response.data);
+      alert(`帖子发布成功！\n标题：${response.data.postTitle}\n发布时间：${new Date(response.data.postTime).toLocaleString()}`);
       router.back();
-    } 
-  } catch (error) {
-    // 处理错误响应（包括code=400的情况）
-    console.error('发布帖子时出错：', error);
-    if (error.response && error.response.data) {
-      const errorData = error.response.data;
-      // 显示后端返回的错误信息列表
-      if (errorData.errors && Array.isArray(errorData.errors)) {
-        alert(`发布失败：\n${errorData.errors.join('\n')}`);
-      } else {
-        // 显示后端返回的错误消息
-        alert(errorData.message || '帖子发布失败，请稍后重试');
-      }
     } else {
-      // 网络错误等情况
-      alert('网络异常，发布失败，请检查网络连接');
+      // 处理接口返回格式异常的情况
+      console.warn('接口返回格式不符合预期：', response.data);
+      alert('发布失败：接口返回数据异常');
+    }
+  } catch (error) {
+    // 增强错误信息打印，方便排查
+    console.error('发布失败详细错误：', error);
+    
+    // 分场景处理错误
+    if (error.response) {
+      // 有响应但状态码异常（如400/500）
+      console.error('响应状态码：', error.response.status);
+      console.error('响应数据：', error.response.data);
+      alert(`发布失败：服务器返回错误（状态码：${error.response.status}）`);
+    } else if (error.request) {
+      // 无响应（网络问题）
+      alert('发布失败：网络异常，未收到服务器响应');
+    } else {
+      // 其他错误（如参数错误）
+      alert(`发布失败：${error.message || '未知错误'}`);
     }
   }
 };
 
 // 取消编辑事件
 const handleCancel = () => {
-  // 确认是否取消
   if (confirm('确定要取消编辑吗？所有未保存的内容将丢失。')) {
-    location.reload();
     router.back();
   }
 };
 </script>
 
 <style scoped>
+/* 样式部分与原代码一致，省略 */
+.app-container {
+  min-height: 100vh;
+  background-color: #f5f6fa;
+  padding-top: 40px;
+  padding-bottom: 80px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+  color: #1f2937;
+}
+
 .app-container {
   min-height: 100vh;
   background-color: #f5f6fa;

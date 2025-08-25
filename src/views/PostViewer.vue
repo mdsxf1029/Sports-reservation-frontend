@@ -1,75 +1,76 @@
 <template>
+  <TopNavbar title="运动社区 / 帖子详情" />
   <div class="app-container">
-    <!-- 固定页头 -->
-    <div class="fixed-header">
-      <div class="header-content">
-        <!-- 返回键在页头左侧 -->
-        <button class="back-btn header-back-btn" @click="handleBack">
-          <span>&lt;</span>
-        </button>
-        运动社区 / {{ post.title }}
-      </div>
-    </div>
-
-    <!-- 内容区域 -->
     <div class="content-wrapper">
-      <!-- 帖子作者信息（包含举报按钮） -->
-      <div class="author-info">
-        <img :src="post.author.avatar" alt="作者头像" class="author-avatar">
-        <div class="author-details">
-          <span class="author-user_name">{{ post.author.user_name }}</span>
-          <span class="author-post-time">{{ post.publish_time }}</span>
-        </div>
-      </div>
 
-      <!-- 帖子内容区域 -->
-      <div class="post-box">
-        <h3 class="post-title">{{ post.title }}</h3>
+      <!-- 作者信息 + 发布时间 + 内容 -->
+      <div class="post-card">
+        <!-- 帖子标题，居中大字 -->
+        <h1 class="post-main-title">{{ post.title }}</h1>
+        <div class="post-header">
+          <div class="author-info">
+            <img :src="post.author.avatar" alt="作者头像" class="author-avatar" />
+            <div class="post-info">
+              <span class="author-name">{{ post.author.user_name }}</span>
+              <span class="post-time">发表于 {{ post.publish_time }}</span>
+            </div>
+          </div>
+          <el-dropdown>
+            <button class="post-menu-btn" title="更多操作">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="handleReport">举报帖子</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+
+        <!-- 帖子正文 -->
         <p class="post-content">{{ post.content }}</p>
-        
-        <!-- 帖子举报按钮（放在左下角） -->
-        <button class="post-report-btn" @click="openReportModal" title="举报帖子">
-          <span class="post-report-icon">⚠</span>
-        </button>
-        
-        <!-- 帖子操作图标（右侧） -->
-        <div class="post-icons">
-          <i
-            :class="{ 'fa-solid': isFavorited, 'fa-regular': !isFavorited }"
-            class="fa-star"
-            @click="handleFavorite"
-          ></i>
-          <span>{{ collection_count }}</span>
-          <i
-            :class="{ 'fa-solid': isLiked, 'fa-regular': !isLiked }"
-            class="fa-heart"
-            @click="handleLike"
-          ></i>
-          <span>{{ like_count }}</span>
-          <i class="fa-regular fa-comment" @click="openCommentModal"></i>
-          <span>{{ comments.length }}</span>
+
+
+        <!-- 操作图标 - 现在会显示在右侧 -->
+        <div class="post-actions-container">
+          <div class="post-icons">
+            <i
+              :class="{ 'fa-solid': isFavorited, 'fa-regular': !isFavorited }"
+              class="fa-star"
+              @click="handleFavorite"
+              title="收藏"
+            ></i>
+            <span>{{ collection_count }}</span>
+            <i
+              :class="{ 'fa-solid': isLiked, 'fa-regular': !isLiked }"
+              class="fa-heart"
+              @click="handleLike"
+              title="喜欢"
+            ></i>
+            <span>{{ like_count }}</span>
+          </div>
         </div>
       </div>
 
       <!-- 评论区域（带折叠功能） -->
       <div class="comments-box">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-          <h4 class="comments-title">帖子评论 ({{ comments.length }})</h4>
-          <div class="sort-container">
-            <select 
+          <div class="comments-box-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 class="comments-title">帖子评论 ({{ comments.length }})</h4>
+            <el-select 
               v-model="sortType" 
-              class="sort-select"
+              placeholder="排序方式" 
+              style="margin-left: 12px; width: 100px;"
             >
-              <option 
-                v-for="option in sortOptions" 
-                :key="option.value" 
-                :value="option.value"
-              >
-                {{ option.label }}
-              </option>
-            </select>
+              <el-option
+                v-for="option in sortOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value">
+              </el-option>
+            </el-select>
           </div>
-        </div>
         
         <!-- 评论列表 -->
         <div 
@@ -95,15 +96,15 @@
               <span class="comment-time">{{ comment.publish_time }}</span>
               <div class="comment-actions">
                 <i
-                  :class="{ 'fa-solid': comment.isLiked, 'fa-regular': !comment.isLiked }"
-                  class="fa-thumbs-up"
-                  @click="handleCommentLike(index)"
+                :class="{ 'fa-solid': comment.isLiked, 'fa-regular': !comment.isLiked }"
+                class="fa-thumbs-up"
+                @click="handleCommentLike(comment.id)"
                 ></i>
                 <span>{{ comment.like_count }}</span>
                 <i
                   :class="{ 'fa-solid': comment.isDisliked, 'fa-regular': !comment.isDisliked }"
                   class="fa-thumbs-down"
-                  @click="handleCommentDislike(index)"
+                  @click="handleCommentDislike(comment.id)"
                 ></i>
                 <span>{{ comment.dislike_count }}</span>
               </div>
@@ -112,48 +113,27 @@
         </div>
         
         <!-- 折叠/展开按钮 -->
-        <button 
-          v-if="comments.length > 5" 
+        <el-button
+          v-if="comments.length > 5"
+          type="text"
           class="toggle-comments-btn"
           @click="isCommentsExpanded = !isCommentsExpanded"
         >
           {{ isCommentsExpanded ? '收起评论' : `显示全部 ${comments.length} 条评论` }}
-        </button>
+        </el-button>
       </div>
     </div>
 
-    <!-- 提示框和各种模态框 -->
+    <!-- 提示框和举报模态框 -->
     <div v-if="showFavoriteTip" class="tip">{{ favoriteTip }}</div>
     <div v-if="showLikeTip" class="tip">{{ likeTip }}</div>
     <div v-if="showReportTip" class="tip">{{ reportTip }}</div>
-    
-    <!-- 评论模态框 -->
-    <div v-if="showCommentModal" class="modal-overlay" @click.self="closeCommentModal">
-      <div class="comment-modal">
-        <div class="modal-header">
-          <h3>发表评论</h3>
-          <button class="close-btn" @click="closeCommentModal">×</button>
-        </div>
-        <div class="modal-body">
-          <textarea 
-            v-model="newComment" 
-            placeholder="请输入评论内容..." 
-            rows="4"
-            class="comment-input"
-          ></textarea>
-        </div>
-        <div class="modal-footer">
-          <button class="cancel-btn" @click="closeCommentModal">取消</button>
-          <button class="submit-btn" @click="submitComment" :disabled="!newComment.trim()">提交</button>
-        </div>
-      </div>
-    </div>
     
     <!-- 帖子举报模态框 -->
     <div v-if="showReportModal" class="modal-overlay" @click.self="closeReportModal">
       <div class="report-modal">
         <div class="modal-header">
-          <h3>举报帖子</h3>
+          <h3>举报</h3>
           <button class="close-btn" @click="closeReportModal">×</button>
         </div>
         <div class="modal-body">
@@ -189,16 +169,66 @@
     </div>
   </div>
 
-  <!--返回顶部-->
+  <!-- 固定底部评论输入框（可收起） -->
+  <div 
+    class="fixed-comment-container"
+    :class="{ 'collapsed': !isCommentBoxVisible }"
+  >
+    <!-- 评论框展开/收起控制按钮 -->
+    <div 
+      class="comment-toggle-btn"
+      @click="toggleCommentBox"
+    >
+      <i :class="isCommentBoxVisible ? 'fa fa-chevron-down' : 'fa fa-chevron-up'"></i>
+    </div>
+    
+    <!-- 评论输入区域 -->
+    <div class="fixed-comment-box">
+      <textarea 
+        v-model="newComment" 
+        placeholder="请输入评论内容..." 
+        rows="1"
+        class="comment-input"
+        ref="commentInput"
+        @keydown.enter.exact.prevent="submitComment"
+        :disabled="!isCommentBoxVisible"
+      ></textarea>
+      <button 
+        class="submit-comment-btn" 
+        @click="submitComment" 
+        :disabled="!newComment.trim() || !isCommentBoxVisible"
+      >
+        发送
+      </button>
+    </div>
+  </div>
+
+  <!-- 返回顶部 -->
   <BackToTop/>
+  
+  <!-- 登录提示组件 -->
+  <LoginPrompt
+    v-model="showLoginDialog"
+    :message="loginPromptMessage"
+    @login="handleLoginRedirect"
+  />
 
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import { fetchPostById } from '../utils/api.js';
+import { 
+  fetchPostById, reportCommunityPost, likeCommunityPost, unlikeCommunityPost, 
+  collectCommunityPost, uncollectCommunityPost,
+  likeComment, unlikeComment, dislikeComment, undislikeComment, createCommunityComment
+} from '../utils/api.js';
+import { ElDropdown, ElDropdownMenu, ElDropdownItem, ElButton, ElSelect, ElOption, ElMessage } from 'element-plus';
+import { MoreFilled } from '@element-plus/icons-vue';
 import BackToTop from '../components/BackToTop.vue';
+import TopNavbar from '../components/TopNavbar.vue';
+import LoginPrompt from '../components/LoginPrompt.vue';
+import { AuthService } from '../utils/auth.js';
 
 const router = useRouter();
 
@@ -210,10 +240,16 @@ const props = defineProps({
   }
 });
 
+// 评论输入框引用
+const commentInput = ref(null);
+
 // 状态初始化
 const isLoading = ref(true);
 const post = ref({ author: {}, publish_time: '' });
 const comments = ref([]);
+
+// 评论框显示/隐藏状态
+const isCommentBoxVisible = ref(true);
 
 // 模拟当前用户数据
 const currentUser = ref({
@@ -266,22 +302,29 @@ const showReportTip = ref(false);
 const favoriteTip = ref('');
 const likeTip = ref('');
 const reportTip = ref('');
-const showCommentModal = ref(false);
 const newComment = ref('');
 const collection_count = ref(0);
 const like_count = ref(0);
 
+// 添加处理中的状态，防止用户连续快速点击
+const isLiking = ref(false);
+const isCollecting = ref(false);
+
 // 帖子举报相关状态
 const showReportModal = ref(false);
 const reportReasons = [
-  { label: "垃圾广告", value: "spam" },
-  { label: "违法违规", value: "illegal" },
-  { label: "辱骂攻击", value: "abuse" },
-  { label: "色情低俗", value: "pornography" },
-  { label: "其他原因", value: "other" }
+  { label: '广告', value: 'spam' },
+  { label: '色情低俗', value: 'pornography' },
+  { label: '欺诈', value: 'fraud' },
+  { label: '侵权', value: 'infringement' },
+  { label: '其它原因', value: 'other' }
 ];
 const selectedReportReason = ref('');
 const reportDescription = ref('');
+
+// 登录提示相关状态
+const showLoginDialog = ref(false);
+const loginPromptMessage = ref('');
 
 // 模拟帖子数据
 const mockPostData = {
@@ -440,83 +483,237 @@ const initWithMockData = () => {
 // 方法定义
 const handleBack = () => router.back();
 
-const handleFavorite = () => {
-  isFavorited.value = !isFavorited.value;
-  collection_count.value += isFavorited.value ? 1 : -1;
-  favoriteTip.value = isFavorited.value ? '已收藏该帖子' : '已取消收藏';
-  showFavoriteTip.value = true;
-  setTimeout(() => showFavoriteTip.value = false, 2000);
-  // TODO: 调用收藏API接口
-};
-
-const handleLike = () => {
-  isLiked.value = !isLiked.value;
-  like_count.value += isLiked.value ? 1 : -1;
-  likeTip.value = isLiked.value ? '已喜欢该帖子' : '已取消喜欢';
-  showLikeTip.value = true;
-  setTimeout(() => showLikeTip.value = false, 2000);
-  // TODO: 调用点赞API接口
-};
-
-const openCommentModal = () => showCommentModal.value = true;
-
-const closeCommentModal = () => {
-  showCommentModal.value = false;
-  newComment.value = '';
-};
-
-const submitComment = () => {
-  if (!newComment.value.trim()) return;
-  const now = new Date();
-  const formattedTime = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-  
-  // 本地临时添加评论
-  const newCommentObj = {
-    content: newComment.value,
-    author: { 
-      avatar: currentUser.value.avatar, 
-      user_name: currentUser.value.user_name 
-    },
-    publish_time: formattedTime,
-    isLiked: false, 
-    isDisliked: false, 
-    like_count: 0, 
-    dislike_count: 0
-  };
-  comments.value.unshift(newCommentObj);
-  
-  // 关闭模态框并显示提示
-  closeCommentModal();
-  likeTip.value = '评论提交成功';
-  showLikeTip.value = true;
-  setTimeout(() => showLikeTip.value = false, 2000);
-  
-  // TODO: 调用提交评论API接口
-};
-
-const handleCommentLike = (index) => {
-  const comment = comments.value[index];
-  comment.like_count += comment.isLiked ? -1 : 1;
-  if (!comment.isLiked && comment.isDisliked) {
-    comment.dislike_count--;
-    comment.isDisliked = false;
+// 修改收藏功能实现
+const handleFavorite = async () => {
+  const authStatus = AuthService.checkLoginStatus();
+  if (!authStatus.isValid) {
+    loginPromptMessage.value = '登录后才能收藏哦～';
+    showLoginDialog.value = true;
+    return;
   }
-  comment.isLiked = !comment.isLiked;
-  // TODO: 调用评论点赞API接口
+
+  if (isCollecting.value) return; // 如果正在处理中，则不执行任何操作
+  isCollecting.value = true;
+  
+  try {
+    if (isFavorited.value) {
+      // 当前已收藏，执行取消收藏操作
+      await uncollectCommunityPost(post.value.id);
+      collection_count.value--;
+    } else {
+      // 当前未收藏，执行收藏操作
+      await collectCommunityPost(post.value.id);
+      collection_count.value++;
+    }
+    // 切换收藏状态
+    isFavorited.value = !isFavorited.value;
+    favoriteTip.value = isFavorited.value ? '已收藏该帖子' : '已取消收藏';
+    showFavoriteTip.value = true;
+    setTimeout(() => showFavoriteTip.value = false, 2000);
+  } catch (error) {
+    console.error("收藏操作失败:", error);
+    ElMessage.error('操作失败，请稍后重试');
+  } finally {
+    isCollecting.value = false; // 无论成功或失败，都结束处理状态
+  }
 };
 
-const handleCommentDislike = (index) => {
-  const comment = comments.value[index];
-  comment.dislike_count += comment.isDisliked ? -1 : 1;
-  if (!comment.isDisliked && comment.isLiked) {
-    comment.like_count--;
-    comment.isLiked = false;
+// 修改点赞功能实现
+const handleLike = async () => {
+  const authStatus = AuthService.checkLoginStatus();
+  if (!authStatus.isValid) {
+    loginPromptMessage.value = '登录后才能点赞哦～';
+    showLoginDialog.value = true;
+    return;
   }
-  comment.isDisliked = !comment.isDisliked;
-  // TODO: 调用评论点踩API接口
+
+  if (isLiking.value) return; // 如果正在处理中，则不执行任何操作
+  isLiking.value = true;
+  
+  try {
+    if (isLiked.value) {
+      // 当前已点赞，执行取消点赞操作
+      await unlikeCommunityPost(post.value.id);
+      like_count.value--;
+    } else {
+      // 当前未点赞，执行点赞操作
+      await likeCommunityPost(post.value.id);
+      like_count.value++;
+    }
+    // 切换点赞状态
+    isLiked.value = !isLiked.value;
+    likeTip.value = isLiked.value ? '已喜欢该帖子' : '已取消喜欢';
+    showLikeTip.value = true;
+    setTimeout(() => showLikeTip.value = false, 2000);
+  } catch (error) {
+    console.error("点赞操作失败:", error);
+    ElMessage.error('操作失败，请稍后重试');
+  } finally {
+    isLiking.value = false; // 无论成功或失败，都结束处理状态
+  }
+};
+
+// 切换评论框显示/隐藏状态
+const toggleCommentBox = () => {
+  isCommentBoxVisible.value = !isCommentBoxVisible.value;
+  
+  // 如果显示评论框，自动聚焦
+  if (isCommentBoxVisible.value) {
+    nextTick(() => {
+      commentInput.value?.focus();
+    });
+  }
+};
+
+// 聚焦到评论输入框
+const focusCommentInput = () => {
+  if (!isCommentBoxVisible.value) {
+    toggleCommentBox();
+    return;
+  }
+  
+  nextTick(() => {
+    commentInput.value?.focus();
+  });
+};
+
+// 修改提交评论方法
+const isSubmittingComment = ref(false);
+
+// 修改提交评论方法
+const submitComment = async () => {
+  // 验证输入和状态
+  if (!newComment.value.trim() || !isCommentBoxVisible.value || isSubmittingComment.value) return;
+  
+  // 检查登录状态
+  const authStatus = AuthService.checkLoginStatus();
+  if (!authStatus.isValid) {
+    loginPromptMessage.value = '登录后才能发表评论哦～';
+    showLoginDialog.value = true;
+    return;
+  }
+
+  isSubmittingComment.value = true;
+  try {
+    // 调用评论API提交
+    const response = await createCommunityComment({
+      post_id: props.postId,
+      content: newComment.value.trim()
+    });
+
+    // 处理API返回结果
+    if (response.data?.code === 200 && response.data.data) {
+      // 将API返回的评论数据添加到列表
+      comments.value.unshift(response.data.data);
+      newComment.value = '';
+      ElMessage.success('评论发布成功');
+    } else {
+      ElMessage.error(response.data?.message || '评论发布失败，请重试');
+    }
+  } catch (error) {
+    console.error('评论提交失败:', error);
+    ElMessage.error('网络错误，无法提交评论');
+  } finally {
+    isSubmittingComment.value = false;
+  }
+};
+
+const handleCommentLike = async (commentId) => {
+  // 检查登录状态
+  const authStatus = AuthService.checkLoginStatus();
+  if (!authStatus.isValid) {
+    loginPromptMessage.value = '登录后才能点赞评论哦～';
+    showLoginDialog.value = true;
+    return;
+  }
+  
+  // 防止重复点击
+  if (isCommentInteracting.value[commentId]) return;
+  isCommentInteracting.value[commentId] = true;
+  
+  try {
+    // 找到对应的评论对象
+    const comment = comments.value.find(item => item.id === commentId);
+    if (!comment) return;
+    
+    if (comment.isLiked) {
+      // 取消点赞
+      await unlikeComment(commentId);
+      comment.like_count--;
+    } else {
+      // 点赞
+      await likeComment(commentId);
+      comment.like_count++;
+      // 如果之前点了踩，需要取消踩
+      if (comment.isDisliked) {
+        comment.dislike_count--;
+        comment.isDisliked = false;
+      }
+    }
+    comment.isLiked = !comment.isLiked;
+  } catch (error) {
+    console.error("评论点赞操作失败:", error);
+    ElMessage.error('操作失败，请稍后重试');
+  } finally {
+    isCommentInteracting.value[commentId] = false;
+  }
+};
+
+// 修改评论点踩处理方法
+const handleCommentDislike = async (commentId) => {
+  // 检查登录状态
+  const authStatus = AuthService.checkLoginStatus();
+  if (!authStatus.isValid) {
+    loginPromptMessage.value = '登录后才能点踩评论哦～';
+    showLoginDialog.value = true;
+    return;
+  }
+  
+  // 防止重复点击
+  if (isCommentInteracting.value[commentId]) return;
+  isCommentInteracting.value[commentId] = true;
+  
+  try {
+    // 找到对应的评论对象
+    const comment = comments.value.find(item => item.id === commentId);
+    if (!comment) return;
+    
+    if (comment.isDisliked) {
+      // 取消点踩
+      await undislikeComment(commentId);
+      comment.dislike_count--;
+    } else {
+      // 点踩
+      await dislikeComment(commentId);
+      comment.dislike_count++;
+      // 如果之前点了赞，需要取消赞
+      if (comment.isLiked) {
+        comment.like_count--;
+        comment.isLiked = false;
+      }
+    }
+    comment.isDisliked = !comment.isDisliked;
+  } catch (error) {
+    console.error("评论点踩操作失败:", error);
+    ElMessage.error('操作失败，请稍后重试');
+  } finally {
+    isCommentInteracting.value[commentId] = false;
+  }
 };
 
 // 帖子举报相关方法
+const handleReport = () => {
+  // 检查登录状态
+  const authStatus = AuthService.checkLoginStatus();
+  if (!authStatus.isValid) {
+    loginPromptMessage.value = '登录后才能举报哦～';
+    showLoginDialog.value = true;
+    return;
+  }
+  // 登录后才打开举报窗口
+  openReportModal();
+};
+
 const openReportModal = () => {
   showReportModal.value = true;
   selectedReportReason.value = '';
@@ -527,411 +724,414 @@ const closeReportModal = () => {
   showReportModal.value = false;
 };
 
-const submitReport = () => {
-  if (!selectedReportReason.value) return;
-  
-  // 显示举报成功提示
-  reportTip.value = '举报已提交，感谢您的反馈';
-  showReportTip.value = true;
-  setTimeout(() => showReportTip.value = false, 2000);
-  
-  // 关闭模态框
-  closeReportModal();
-  
-  // TODO: 调用帖子举报API接口
-  console.log('举报帖子:', {
-    postId: props.postId,
-    reason: selectedReportReason.value,
-    description: reportDescription.value
-  });
+const submitReport = async () => {
+  if (!selectedReportReason.value) {
+    ElMessage.warning('请选择举报类别');
+    return;
+  }
+
+  const authStatus = AuthService.checkLoginStatus();
+  if (!authStatus.isValid) {
+    ElMessage.error('登录状态已失效，请重新登录');
+    showLoginDialog.value = true;
+    return;
+  }
+
+  try {
+    // 调用统一的举报API
+    await reportCommunityPost(props.postId, {
+      user_id: authStatus.userId,
+      category: selectedReportReason.value,
+      reason: reportDescription.value,
+    });
+
+    ElMessage.success('举报已提交，感谢您的反馈');
+    closeReportModal();
+  } catch (err) {
+    ElMessage.error('举报失败，请稍后重试');
+    console.error("举报失败:", err);
+  }
+};
+
+const handleLoginRedirect = () => {
+  router.push('/login'); // 跳转到登录页
 };
 </script>
 
 <style scoped>
-/* 举报按钮样式 */
+.app-container {
+  min-height: 100vh;
+  background-color: #f5f6fa !important;
+  padding-top: 20px !important;
+  padding-bottom: 120px; /* 为底部评论框留出空间 */
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+  color: #1f2937;
+}
+
+.content-wrapper {
+  width: 82%;
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  box-sizing: border-box;
+  padding: 20px 0;
+}
+
+
+.post-main-title {
+  font-size: 32px;
+  font-weight: 700;
+  text-align: left;
+  color: black; 
+  margin-bottom: 40px;
+}
+
+/* 帖子卡片整体 */
+.post-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 32px 70px;
+  position: relative;
+}
+
+/* 帖子头部：作者 + 时间 */
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgb(224, 221, 221) !important;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+}
+
 .author-info {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
-  padding: 15px 0;
-  justify-content: space-between;
+  gap: 18px;
 }
 
-/* 返回按钮样式 */
-.header-back-btn {
-  margin-right: 10px;
-  padding: 8px 12px; /* 增大点击区域 */
-  font-size: 20px;
-  background-color: transparent;
-  border: 1px solid transparent; /* 预留边框空间 */
-  border-radius: 6px; /* 圆角处理 */
-  color: #4b5563;
-  cursor: pointer;
-  transition: all 0.2s ease; /* 统一过渡效果 */
+.author-avatar {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.post-info {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.header-back-btn:hover {
-  background-color: #f3f4f6; /* 悬停背景色 */
+.author-name {
+  font-size: 16px;
+  font-weight: 600;
   color: #1f2937;
-  border-color: #e5e7eb; /* 悬停时显示边框 */
-  transform: translateX(-2px); /* 轻微左移增强交互感 */
 }
 
-.header-back-btn:active {
-  background-color: #e5e7eb; /* 点击状态背景色 */
-  transform: translateX(0); /* 点击时复位 */
+.post-time {
+  font-size: 14px;
+  color: #6b7280;
 }
 
-/* 评论区域样式 */
+/* 帖子内容 */
+.post-content {
+  font-size: 18px;
+  line-height: 1.8;
+  color: #1f2937;
+  margin-bottom: 32px;
+  white-space: pre-line; /* 保留换行符 */
+}
+
+/* 操作图标容器 - 用于将按钮定位在右侧 */
+.post-actions-container {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid rgb(224, 221, 221);
+}
+
+/* 帖子操作图标 - 确保图标和文字垂直居中对齐 */
+.post-icons {
+  display: flex;
+  gap: 24px;
+  font-size: 20px;
+  color: #6b7280;
+  align-items: center; /* 垂直居中 */
+}
+
+.post-icons span {
+  display: flex;
+  align-items: center; /* 确保图标和文字在同一行垂直居中 */
+}
+
+.post-icons i {
+  cursor: pointer;
+  transition: color 0.2s;
+  margin-right: 2px; /* 调整间距，使对齐更美观 */
+}
+
+.post-icons i:hover {
+  color: #3b82f6;
+}
+
+.post-icons .fa-solid.fa-heart {
+  color: #ef4444;
+}
+
+.post-icons .fa-solid.fa-star {
+  color: #f59e0b;
+}
+
+/* 评论区域 */
+.comments-box {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 24px 32px;
+}
+
+.comments-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+/* 评论项 */
 .comment-item {
   display: flex;
-  margin-bottom: 20px;
-  padding: 15px 0;
-  border-bottom: 1px solid #dee0e4;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+.comment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .comment-content-wrapper {
-  flex: 1;
-  margin-left: 15px;
-  display: flex;
-  flex-direction: column;
+  flex-grow: 1;
 }
 
 .comment-header {
   margin-bottom: 8px;
 }
 
-.comment-content {
+.comment-user_name {
+  font-weight: 600;
+  color: #1f2937;
   font-size: 14px;
-  line-height: 1.6;
-  color: #374151;
-  margin: 0 0 10px 0;
 }
 
-/* 评论底部区域：时间、赞、踩放在评论最下方 */
+.comment-content {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #1f2937;
+  margin: 0 0 12px 0;
+}
+
 .comment-footer {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-top: auto;
-  font-size: 12px;
-  color: #9ca3af;
-  justify-content: space-between; /* 新增：两端对齐 */
+  font-size: 14px;
+  color: #6b7280;
 }
 
 .comment-time {
-  margin-right: 15px;
-  white-space: nowrap;
+  color: #9ca3af;
 }
 
+/* 评论操作按钮 - 确保图标和文字垂直居中对齐 */
 .comment-actions {
   display: flex;
-  gap: 15px;
-  font-size: 14px;
-  color: #4b5563;
+  gap: 16px;
+  align-items: center; /* 垂直居中 */
+}
+
+.comment-actions span {
+  display: flex;
+  align-items: center; /* 确保图标和文字在同一行垂直居中 */
 }
 
 .comment-actions i {
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color 0.2s;
+  margin-right: 1px; /* 调整间距，使对齐更美观 */
 }
 
-.comment-actions i:hover {
-  color: #1f2937;
+.comment-actions .fa-thumbs-up:hover {
+  color: #3b82f6;
 }
 
-.comment-actions .fa-thumbs-up.fa-solid {
-  color: #ff4218;
+.comment-actions .fa-thumbs-down:hover {
+  color: #ef4444;
 }
 
-.comment-actions .fa-thumbs-down.fa-solid {
-  color: #0d8bf2;
+.comment-actions .fa-solid.fa-thumbs-up {
+  color: #3b82f6;
 }
 
-/* 评论输入框样式调整 - 移除横向滚动条 */
-.comment-input {
-  width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #c5c5c5;
-  border-radius: 8px;
-  font-size: 15px;
-  resize: none;
-  outline: none;
-  min-height: 100px; /* 增加初始高度 */
-  transition: all 0.3s ease; /* 统一过渡效果 */
-  line-height: 2; /* 优化行高 */
-  background-color: #fcfcfc;
-  box-sizing: border-box; /* 确保padding不影响宽度 */
+.comment-actions .fa-solid.fa-thumbs-down {
+  color: #ef4444;
 }
 
-/* 举报说明文本框 */
-.report-description {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  font-size: 14px;
-  resize: none;
-  outline: none;
-  margin-bottom: 10px;
-  overflow-x: hidden; /* 防止横向滚动 */
-  word-wrap: break-word; /* 自动换行 */
-  word-break: break-word; /* 长单词拆分换行 */
-  box-sizing: border-box; /* 确保padding不影响宽度 */
-  max-width: 100%; /* 确保不超出容器 */
-}
-
-.post-report-btn {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 8px;
-  transition: transform 0.2s ease, color 0.2s ease;
-}
-
-.post-report-btn:hover {
-  transform: scale(1.1);
-  color: #ff4218;
-}
-
-.post-report-icon {
-  font-size: 18px;
-  color: #6b7280;
-}
-
-.header-content {
-  width: 100%; /* 修改为100%，让内容容器也占满页头 */
-  max-width: 1200px; /* 保持最大宽度限制 */
-  margin: 0 auto; /* 居中显示 */
-  padding: 0 20px; /* 保留内边距 */
-  font-size: 16px;
-  color: #333;
-  font-weight: 500;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-}
-
+/* 折叠/展开评论按钮 */
 .toggle-comments-btn {
   width: 100%;
+  color: #3b82f6;
   padding: 8px 0;
-  margin-top: 15px;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  color: #4b5563;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  margin-top: 8px;
 }
 
-.toggle-comments-btn:hover {
-  background-color: #f3f4f6;
-  color: #ff4218;
-}
-
-.app-container {
-  min-height: 100vh;
-  background-color: #fafafa;
-  padding-top: 60px;
-  padding-bottom: 60px;
-  box-sizing: border-box;
-}
-
-.fixed-header {
+/* 固定底部评论框样式 */
+.fixed-comment-container {
   position: fixed;
-  top: 0;
+  bottom: 0;
   left: 0;
-  right: 0; /* 新增：确保右侧紧贴屏幕边缘 */
-  width: 100% !important; /* 强制占满宽度 */
-  height: 60px;
-  background-color: #fff;
-  border-bottom: 1px solid #eee;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  z-index: 100;
+  right: 0;
+  transition: transform 0.3s ease;
+  transform: translateY(0);
+  z-index: 1000;
+}
+
+/* 评论框收起状态 */
+.fixed-comment-container.collapsed {
+  /* 整个容器向下移动，只露出切换按钮 */
+  transform: translateY(calc(100% - 20px));
+}
+
+/* 评论输入区域 */
+.fixed-comment-box {
+  background-color: white;
+  padding: 15px 10%;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+/* 评论框展开/收起按钮 */
+.comment-toggle-btn {
+  background-color: #3b82f6;
+  color: white;
+  width: 40px;
+  height: 20px;
+  border-radius: 10px 10px 0 0;
+  margin: 0 auto;
   display: flex;
   align-items: center;
-  padding: 0; /* 移除默认内边距 */
-  margin: 0; /* 移除默认外边距 */
-  box-sizing: border-box; /* 确保边框和内边距不影响总宽度 */
-}
-
-.content-wrapper {
-  width: 75%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px 0;
-  box-sizing: border-box;
-}
-
-.author-avatar {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  margin-right: 12px;
-}
-
-.author-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-}
-
-.author-user_name {
-  font-size: 18px;
-  color: #374151;
-  font-weight: 500;
-}
-
-.author-post-time {
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1);
   font-size: 12px;
-  color: #9ca3af;
+  transition: all 0.3s ease;
 }
 
-.post-box {
-  padding: 25px 20px;
-  background-color: #fff;
-  margin-bottom: 20px;
+.comment-input {
+  flex-grow: 1;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  position: relative;
-  min-height: 120px;
-}
-
-.post-title {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 15px;
-  color: #1f2937;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #d7dbe0;
-}
-
-.post-content {
+  padding: 12px 16px;
   font-size: 16px;
-  line-height: 1.8;
-  color: #374151;
-  white-space: pre-wrap;
-  margin-bottom: 40px;
+  resize: none;
+  transition: border-color 0.2s;
+  min-height: 25px;
 }
 
-.post-icons {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  gap: 15px;
-  font-size: 18px;
-  color: #4b5563;
+.comment-input:focus {
+  outline: none;
+  border-color: #3b82f6;
 }
 
-.post-icons i {
-  cursor: pointer;
-  transition: color 0.2s ease;
+.comment-input:disabled {
+  background-color: #f9fafb;
+  cursor: not-allowed;
 }
 
-.post-icons i:hover {
-  color: #1f2937;
-}
-
-.post-icons .fa-star.fa-solid {
-  color: #ffc107;
-}
-
-.post-icons .fa-heart.fa-solid {
-  color: #ff4218;
-}
-
-.comments-box {
-  padding: 25px 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.comments-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 15px;
-  color: #1f2937;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #969696;
-}
-
-.comment-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-}
-
-.comment-user_name {
-  font-size: 14px;
-  color: #1f2937;
-  font-weight: 500;
-}
-
-.back-btn {
-  padding: 9px 18px;
-  border: none;
-  border-radius: 6px;
-  background-color: #f3f4f6;
-  color: #4b5563;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.back-btn:hover {
-  background-color: #e5e7eb;
-}
-
-.tip {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: rgba(0, 0, 0, 0.7);
+.submit-comment-btn {
+  background-color: #3b82f6;
   color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
-  z-index: 1000;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
   white-space: nowrap;
 }
 
+.submit-comment-btn:hover {
+  background-color: #2563eb;
+}
+
+.submit-comment-btn:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+/* 提示框样式 */
+.tip {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  z-index: 1001;
+  animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* 举报模态框样式 */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 2000;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  z-index: 1010;
 }
 
-.comment-modal, .report-modal {
+.report-modal {
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   width: 90%;
   max-width: 500px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .modal-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -939,204 +1139,124 @@ const submitReport = () => {
 
 .modal-header h3 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 500;
-  color: #1f2937;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .close-btn {
-  background: none;
+  background: transparent;
   border: none;
   font-size: 20px;
-  color: #9ca3af;
   cursor: pointer;
-  padding: 0 5px;
-}
-
-.close-btn:hover {
-  color: #4b5563;
+  color: #6b7280;
 }
 
 .modal-body {
-  padding: 20px;
-  flex: 1;
-  overflow-y: auto;
-}
-
-.comment-input:focus {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-}
-
-.modal-footer {
-  padding: 16px 20px;
-  border-top: 1px solid #f0f0f0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.cancel-btn, .submit-btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.cancel-btn {
-  background-color: #f3f4f6;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
-}
-
-.cancel-btn:hover {
-  background-color: #e5e7eb;
-}
-
-.submit-btn {
-  background-color: #1890ff;
-  color: white;
-  border: none;
-}
-
-.submit-btn:hover {
-  background-color: #0d8bf2;
-}
-
-.submit-btn:disabled {
-  background-color: #d1d5db;
-  cursor: not-allowed;
+  padding: 24px;
 }
 
 .report-desc {
-  margin: 0 0 15px 0;
-  color: #374151;
-  font-size: 14px;
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #1f2937;
 }
 
 .report-reasons {
-  margin-bottom: 15px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .reason-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #374151;
-  font-size: 14px;
   cursor: pointer;
 }
 
 .reason-item input {
-  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.report-description {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px;
+  resize: none;
+  box-sizing: border-box;
+  font-family: inherit;
 }
 
 .report-description:focus {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-}
-
-@media (max-width: 768px) {
-  .content-wrapper,
-  .header-content,
-  .footer-content {
-    width: 95%;
-  }
-}
-
-/* 排序按钮样式 */
-.sort-buttons {
-  display: flex;
-  margin: 0 0 15px auto;
-  width: 160px; /* 固定宽度使按钮组更整齐 */
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.sort-btn {
-  flex: 1;
-  padding: 8px 0;
-  background-color: #fff;
-  border: none;
-  color: #4b5563;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.sort-btn.active {
-  background-color: #1890ff;
-  color: white;
-  font-weight: 500;
-}
-
-.sort-btn:not(.active):hover {
-  background-color: #f9fafb;
-  color: #1f2937;
-}
-
-.comments-title {
-  display: inline-block;
-  margin-bottom: 15px;
-}
-
-/* 排序容器样式 */
-.sort-container {
-  position: relative;
-  width: 100px;
-}
-
-/* 排序选择器样式 */
-.sort-select {
-  width: 100%;
-  padding: 6px 30px 6px 12px;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #374151;
-  appearance: none; /* 移除默认箭头 */
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.sort-container::after {
-  content: "\f078";
-  font-family: "Font Awesome 6 Free";
-  font-weight: 900;
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: #6b7280;
-  font-size: 12px;
-}
-
-.sort-select:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.sort-select:focus {
   outline: none;
-  border-color: #ff4218;
-  box-shadow: 0 0 0 3px rgba(255, 66, 24, 0.1);
+  border-color: #3b82f6;
 }
 
-.sort-select option {
-  padding: 8px;
-  background-color: #ffffff;
-  color: #374151;
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
-.sort-select option:hover {
+.cancel-btn {
+  padding: 8px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-btn:hover {
   background-color: #f9fafb;
+}
+
+.submit-btn {
+  padding: 8px 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.submit-btn:hover {
+  background-color: #2563eb;
+}
+
+.submit-btn:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+/* 三个点按钮样式 */
+.post-menu-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px; /* 控制点之间的距离 */
+  align-items: center;
+  justify-content: center;
+}
+
+.post-menu-btn .dot {
+  display: block;
+  width: 4px; /* 点的大小 */
+  height: 4px;
+  border-radius: 50%;
+  background-color: #666; /* 点的颜色 */
+}
+
+.rotated-icon {
+  display: none;
 }
 </style>
