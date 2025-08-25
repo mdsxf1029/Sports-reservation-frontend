@@ -85,7 +85,7 @@
   display: flex;
   gap: 12px;
   margin-bottom: 24px;
-  flex-wrap: wrap;
+  margin-top: 10px;
 }
 
 .appeal-quick-actions .el-button {
@@ -212,13 +212,15 @@
   justify-content: center;
   margin-top: 20px;
   width: 100%;
-  max-width: 1200px;
+  border-collapse: collapse;
+  background: #fff;
 }
-
-/* 申诉详情样式 */
-.appeal-detail {
-  max-height: 400px;
-  overflow-y: auto;
+.main-table th,
+.main-table td {
+  border: 1px solid #eee;
+  padding: 16px 10px;
+  text-align: center;
+  font-size: 18px;
 }
 
 .appeal-detail-section {

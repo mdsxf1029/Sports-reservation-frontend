@@ -52,5 +52,6 @@
 
     .title {
         flex: 1;
+        margin-bottom: 8px !important;
     }
 </style>

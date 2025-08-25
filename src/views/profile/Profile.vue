@@ -33,7 +33,9 @@
         <span v-if="['normal', 'manager'].includes(userProfile.role)" class="tab" :class="{active: activeTab === 'profile'}" @click="activeTab = 'profile'">个人资料</span>
         <span v-if="userProfile.role === 'normal'" class="tab" :class="{active: activeTab === 'reservation'}" @click="activeTab = 'reservation'">预约</span>
         <span v-if="userProfile.role === 'normal'" class="tab" :class="{active: activeTab === 'points'}" @click="activeTab = 'points'">积分</span>
-        <span v-if="['normal', 'manager'].includes(userProfile.role)" class="tab" :class="{active: activeTab === 'notification'}" @click="activeTab = 'notification'">信息通知中心</span>
+        <span v-if="['normal', 'manager'].includes(userProfile.role)" class="tab" :class="{active: activeTab === 'notification'}" @click="activeTab = 'notification'">信息通知中心
+          <span v-if="unreadNum" class="notification-badge"></span>
+        </span>
 
     </div>
         <div class="tab-content">
@@ -43,10 +45,24 @@
           title="个人资料" 
           :showAddButton="false"
         >
+          <!-- 加载状态 -->
           <div v-if="isLoading" class="loading-container">
             <div class="loading-spinner"></div>
             <span style="margin-left: 10px;">加载中...</span>
           </div>
+          
+          <!-- 错误状态 -->
+          <div v-else-if="profileError" class="error-state">
+            <div class="error-icon">⚠️</div>
+            <div class="error-text">{{ profileErrorMessage }}</div>
+            <div class="error-actions">
+              <el-button type="primary" @click="retryLoadProfile" :loading="isLoading">
+                重试
+              </el-button>
+            </div>
+          </div>
+          
+          <!-- 正常状态 -->
           <div v-else class="profile-details">
             <div class="profile-section">
               <h3>基本信息</h3>
@@ -102,10 +118,24 @@
           v-if="activeTab === 'reservation'" 
           title="我的预约"
         >
+          <!-- 加载状态 -->
           <div v-if="reservationLoading" class="loading-container">
             <div class="loading-spinner"></div>
             <span style="margin-left: 10px;">加载订单中...</span>
           </div>
+          
+          <!-- 错误状态 -->
+          <div v-else-if="reservationError" class="error-state">
+            <div class="error-icon">⚠️</div>
+            <div class="error-text">{{ reservationErrorMessage }}</div>
+            <div class="error-actions">
+              <el-button type="primary" @click="retryLoadReservation" :loading="reservationLoading">
+                重试
+              </el-button>
+            </div>
+          </div>
+          
+          <!-- 空状态 -->
           <div v-else-if="reservationList.length === 0" class="empty-state">
             <div class="empty-icon">📅</div>
             <div class="empty-text">暂无预约记录</div>
@@ -148,18 +178,34 @@
             <div class="loading-spinner"></div>
             <span style="margin-left: 10px;">加载通知中...</span>
           </div>
+          
+          <!-- 错误状态 -->
+          <div v-else-if="notificationError" class="error-state">
+            <div class="error-icon">⚠️</div>
+            <div class="error-text">{{ notificationErrorMessage }}</div>
+            <div class="error-actions">
+              <el-button type="primary" @click="retryLoadNotification" :loading="notificationLoading">
+                重试
+              </el-button>
+            </div>
+          </div>
+          
+          <!-- 空状态 -->
           <div v-else-if="notificationList.length === 0" class="empty-state">
             <div class="empty-icon">🔔</div>
             <div class="empty-text">暂无通知消息</div>
             <div class="empty-desc">有新消息时会显示在这里</div>
           </div>
+          
           <NotificationItem 
             v-else
             v-for="(item, index) in notificationList" 
-            :key="item.notificationId || index"
+            :key="`notif-${item.notificationId || index}`"
+            :notificationId="item.notificationId"
             :content="item.content"
             :time="item.time"
-            :isRead="item.isRead"
+            :isread="item.isRead"
+            @read="handleNotificationRead"
           />
           
           <!-- 通知分页组件 -->
@@ -195,11 +241,25 @@
             <div class="loading-spinner"></div>
             <span style="margin-left: 10px;">加载积分记录中...</span>
           </div>
+          
+          <!-- 错误状态 -->
+          <div v-else-if="pointsError" class="error-state">
+            <div class="error-icon">⚠️</div>
+            <div class="error-text">{{ pointsErrorMessage }}</div>
+            <div class="error-actions">
+              <el-button type="primary" @click="retryLoadPoints" :loading="pointsLoading">
+                重试
+              </el-button>
+            </div>
+          </div>
+          
+          <!-- 空状态 -->
           <div v-else-if="pointsList.length === 0" class="empty-state">
             <div class="empty-icon">🎯</div>
             <div class="empty-text">暂无积分记录</div>
             <div class="empty-desc">使用系统获得积分后会显示在这里</div>
           </div>
+          
           <PointsItem 
             v-else
             v-for="(item, index) in pointsList" 
@@ -230,9 +290,9 @@
     </div>
     </div>
     <BackToTop/>
-    <footer>
-        <FooterNavbar/>
-    </footer>
+    
+    <!-- 固定底部导航 -->
+    <FooterNavbar/>
     
     <!-- 编辑个人资料弹窗 -->
     <EditProfileDialog
@@ -291,6 +351,18 @@ export default {
       reservationLoading: false, // 预约订单加载状态
       pointsLoading: false, // 积分记录加载状态
       notificationLoading: false, // 通知加载状态
+      unreadNum: 0, // 是否有未读通知
+
+      // 错误状态
+      profileError: false,
+      profileErrorMessage: '',
+      reservationError: false,
+      reservationErrorMessage: '',
+      pointsError: false,
+      pointsErrorMessage: '',
+      notificationError: false,
+      notificationErrorMessage: '',
+      
       reservationPagination: {
         total: 0,
         page: 1,
@@ -299,12 +371,12 @@ export default {
       pointsPagination: {
         total: 0,
         page: 1,
-        pageSize: 20
+        pageSize: 10
       }, // 积分分页信息
       notificationPagination: {
         total: 0,
         page: 1,
-        pageSize: 20
+        pageSize: 10
       }, // 通知分页信息
       showEditDialog: false, // 控制编辑弹窗显示
       showQRCodeDialog: false,  // 控制二维码弹窗显示
@@ -341,9 +413,6 @@ export default {
        
     // 检查路由参数，设置默认Tab
     this.setActiveTabFromRoute()
-
-    // 设置测试登录信息（开发用）
-    AuthService.setTestLoginInfo()
     
     await this.checkLoginAndLoadProfile()
     
@@ -360,6 +429,9 @@ export default {
         this.loadNotificationData()
         break
     }
+    
+    // ✅ 主动检查未读消息
+    await this.checkUnreadNotifications()
   },
   watch: {
     // 监听tab切换，当切换到不同tab时加载相应数据
@@ -438,15 +510,16 @@ export default {
         const userProfile = await UserProfileService.loadUserProfile(userId)
         this.userProfile = userProfile
         this.currentPoints = userProfile.points || 0
-        console.log('用户信息更新成功:', this.userProfile)
+        console.log('用户信息加载成功:', this.userProfile)
         console.log('头像URL:', this.userProfile.avatarUrl)
         ElMessage.success('用户信息加载成功')
+        this.profileError = false
       } catch (error) {
-        console.error('获取用户信息失败:', error)
-        console.log('使用默认用户信息')
-        this.userProfile = UserProfileService.getDefaultUserProfile()
-        this.currentPoints = 1250
-        ElMessage.warning('无法获取用户信息，显示默认数据')
+        console.error('获取用户信息失败:', error)  
+ 
+        // 注意：401认证错误已在api.js拦截器中处理，这里只处理其他错误
+        this.profileError = true
+        this.profileErrorMessage = error.message || '获取用户信息失败'
       } finally {
         this.isLoading = false
       }
@@ -465,8 +538,6 @@ export default {
         ...updatedData
       }
       this.currentPoints = updatedData.points || this.currentPoints
-      
-      ElMessage.success('个人资料已更新')
     },
 
     // 加载预约订单数据
@@ -486,106 +557,23 @@ export default {
         if (result.reservationList && result.reservationList.length > 0) {
           this.reservationList = result.reservationList
           this.reservationPagination = result.paginationInfo
-        } else {
-          // 如果API没有数据，使用测试数据
-          console.log('API无数据，使用测试预约数据')
-          this.loadTestReservationData()
-        }
+        } 
+        
+        this.reservationList = result.reservationList
+        this.reservationPagination = result.paginationInfo
+        this.reservationError = false
       } catch (error) {
-        console.error('加载预约数据失败:', error, '使用测试数据')
-        // API失败时使用测试数据
-        this.loadTestReservationData()
+
+        console.error('加载预约数据失败:', error)
+        this.reservationError = true
+        this.reservationErrorMessage = error.message || '获取预约数据失败'
+        this.reservationList = []
       } finally {
         this.reservationLoading = false
       }
     },
 
-    // 加载测试预约数据
-    loadTestReservationData() {
-      const testReservations = [
-        {
-          appointmentId: 'test001',
-          id: 'test001',
-          content: '🏀 篮球场地 - 明天 15:00-17:00',
-          status: '已确认',
-          statusType: 'active',
-          venue_name: '四平校区篮球馆',
-          venue_subname: 'A区1号场地',
-          user_name: '测试用户',
-          begin_time: '2025-07-26T15:00:00Z',
-          end_time: '2025-07-26T17:00:00Z',
-          apply_time: '2025-07-25T10:30:00Z',
-          originalData: {
-            id: 'test001',
-            venue_name: '四平校区篮球馆',
-            venue_subname: 'A区1号场地',
-            user_name: '测试用户',
-            phone: '138****8888',
-            price: 30,
-            begin_time: '2025-07-26T15:00:00Z',
-            end_time: '2025-07-26T17:00:00Z',
-            apply_time: '2025-07-25T10:30:00Z'
-          }
-        },
-        {
-          appointmentId: 'test002',
-          id: 'test002',
-          content: '🏸 羽毛球场地 - 本周六 09:00-11:00',
-          status: '待确认',
-          statusType: 'pending',
-          venue_name: '嘉定校区羽毛球馆',
-          venue_subname: 'B区3号场地',
-          user_name: '测试用户',
-          begin_time: '2025-07-27T09:00:00Z',
-          end_time: '2025-07-27T11:00:00Z',
-          apply_time: '2025-07-25T14:20:00Z',
-          originalData: {
-            id: 'test002',
-            venue_name: '嘉定校区羽毛球馆',
-            venue_subname: 'B区3号场地',
-            user_name: '测试用户',
-            phone: '138****8888',
-            price: 25,
-            begin_time: '2025-07-27T09:00:00Z',
-            end_time: '2025-07-27T11:00:00Z',
-            apply_time: '2025-07-25T14:20:00Z'
-          }
-        },
-        {
-          appointmentId: 'test003',
-          id: 'test003',
-          content: '🏊 游泳池 - 本周日 14:00-15:00',
-          status: '已完成',
-          statusType: 'cancelled',
-          venue_name: '综合体育馆游泳池',
-          venue_subname: '标准泳道',
-          user_name: '测试用户',
-          begin_time: '2025-07-28T14:00:00Z',
-          end_time: '2025-07-28T15:00:00Z',
-          apply_time: '2025-07-25T09:15:00Z',
-          originalData: {
-            id: 'test003',
-            venue_name: '综合体育馆游泳池',
-            venue_subname: '标准泳道',
-            user_name: '测试用户',
-            phone: '138****8888',
-            price: 40,
-            begin_time: '2025-07-28T14:00:00Z',
-            end_time: '2025-07-28T15:00:00Z',
-            apply_time: '2025-07-25T09:15:00Z'
-          }
-        }
-      ]
-
-      this.reservationList = testReservations
-      this.reservationPagination = {
-        total: testReservations.length,
-        page: 1,
-        pageSize: 10
-      }
-      
-      console.log('已加载测试预约数据:', this.reservationList)
-    },
+    
 
     // 加载用户当前积分
     async loadUserPoints() {
@@ -619,8 +607,12 @@ export default {
         
         this.pointsList = result.pointsList
         this.pointsPagination = result.paginationInfo
+        this.pointsError = false
       } catch (error) {
         console.error('加载积分数据失败:', error)
+        this.pointsError = true
+        this.pointsErrorMessage = error.message || '获取积分数据失败'
+        this.pointsList = []
       } finally {
         this.pointsLoading = false
       }
@@ -641,8 +633,13 @@ export default {
         
         this.notificationList = result.notificationList
         this.notificationPagination = result.paginationInfo
+        this.unreadNum = result.unreadNum || 0
+        this.notificationError = false
       } catch (error) {
         console.error('加载通知数据失败:', error)
+        this.notificationError = true
+        this.notificationErrorMessage = error.message || '获取通知数据失败'
+        this.notificationList = []
       } finally {
         this.notificationLoading = false
       }
@@ -715,13 +712,7 @@ export default {
 
         // 🔥 关键：通过appointmentId调用Detail API获取完整信息
         let detailResponse
-        try {
-          detailResponse = await fetchOrderDetail(appointmentId)
-        } catch (apiError) {
-          console.log('API调用失败，使用测试数据:', apiError)
-          // API失败时使用测试数据
-          detailResponse = this.getTestOrderDetail(appointmentId)
-        }
+        detailResponse = await fetchOrderDetail(appointmentId)
         
         console.log('Detail API响应:', detailResponse)
 
@@ -759,6 +750,7 @@ export default {
             // 费用和状态
             price: apiData.bill?.bill_amount || 0,
             status: this.getAppointmentStatusText(apiData.appointment?.appointment_status),
+            statusType: this.getAppointmentStatusType(apiData.appointment?.appointment_status),
             bill_status: apiData.bill?.bill_status,
             
             // ID信息
@@ -783,26 +775,31 @@ export default {
         console.error('获取订单详情失败:', error)
         ElMessage.error('获取订单详情失败，请稍后重试')
         
-        // 错误时使用Summary的基础信息作为兜底
-        this.currentOrder = {
-          ...order,
-          appointmentId: order.appointmentId || order.id,
-          qrcode_data: `https://yourdomain.com/entry/${order.appointmentId || order.id}`,
-          loading: false,
-          error: true,
-          errorMessage: '详细信息获取失败，显示基础信息'
-        }
       }
+    },
+    
+
+    getAppointmentStatusType(status) {
+      const statusTypeMap = {
+        'upcoming': 'upcoming',
+        'ongoing': 'ongoing', 
+        'canceled': 'cancelled',
+        'cancelled': 'cancelled',
+        'overtime': 'expired',
+        'completed': 'completed'
+      }
+      return statusTypeMap[status] || 'pending'
     },
 
     // 获取预约状态文本
     getAppointmentStatusText(status) {
       const statusMap = {
         'upcoming': '即将开始',
-        'confirmed': '已确认', 
-        'pending': '待确认',
-        'completed': '已完成',
-        'cancelled': '已取消'
+        'ongoing': '进行中',
+        'canceled': '已取消',
+        'cancelled': '已取消',
+        'overtime': '已超时',
+        'completed': '已完成'
       }
       return statusMap[status] || status || '未知'
     },
@@ -844,135 +841,6 @@ export default {
       }
     },
 
-    // 获取测试订单详情 - 返回嵌套结构供转换
-    getTestOrderDetail(appointmentId) {
-      const testDetails = {
-        'test001': {
-          code: 0,
-          data: {
-            appointment: {
-              appointment_id: 1,
-              appointment_status: "upcoming",
-              apply_time: "2025-07-25T10:30:00Z",
-              begin_time: "2025-07-26T15:00:00Z",
-              end_time: "2025-07-26T17:00:00Z"
-            },
-            venue: {
-              venue_id: 1,
-              venue_name: "四平校区篮球馆",
-              venue_subname: "A区1号场地",
-              venue_type: "篮球",
-              venue_location: "上海市杨浦区四平路1239号体育中心",
-              venue_capacity: 20,
-              venue_status: "open"
-            },
-            bill: {
-              bill_id: 1,
-              bill_status: "paid",
-              bill_amount: 30,
-              begin_time: "2025-07-25T10:30:00Z"
-            },
-            user: {
-              user_id: 1,
-              user_name: "测试用户"
-            }
-          }
-        },
-        'test002': {
-          code: 0,
-          data: {
-            appointment: {
-              appointment_id: 2,
-              appointment_status: "pending",
-              apply_time: "2025-07-25T14:20:00Z",
-              begin_time: "2025-07-27T09:00:00Z",
-              end_time: "2025-07-27T11:00:00Z"
-            },
-            venue: {
-              venue_id: 2,
-              venue_name: "嘉定校区羽毛球馆",
-              venue_subname: "B区3号场地",
-              venue_type: "羽毛球",
-              venue_location: "上海市嘉定区曹安公路4800号",
-              venue_capacity: 4,
-              venue_status: "open"
-            },
-            bill: {
-              bill_id: 2,
-              bill_status: "pending",
-              bill_amount: 25,
-              begin_time: "2025-07-25T14:20:00Z"
-            },
-            user: {
-              user_id: 1,
-              user_name: "测试用户"
-            }
-          }
-        },
-        'test003': {
-          code: 0,
-          data: {
-            appointment: {
-              appointment_id: 3,
-              appointment_status: "completed",
-              apply_time: "2025-07-25T09:15:00Z",
-              begin_time: "2025-07-28T14:00:00Z",
-              end_time: "2025-07-28T15:00:00Z"
-            },
-            venue: {
-              venue_id: 3,
-              venue_name: "综合体育馆游泳池",
-              venue_subname: "标准泳道",
-              venue_type: "游泳",
-              venue_location: "上海市杨浦区四平路1239号综合体育馆",
-              venue_capacity: 50,
-              venue_status: "open"
-            },
-            bill: {
-              bill_id: 3,
-              bill_status: "paid",
-              bill_amount: 40,
-              begin_time: "2025-07-25T09:15:00Z"
-            },
-            user: {
-              user_id: 1,
-              user_name: "测试用户"
-            }
-          }
-        }
-      }
-
-      return testDetails[appointmentId] || {
-        code: 0,
-        data: {
-          appointment: {
-            appointment_id: appointmentId,
-            appointment_status: "upcoming",
-            apply_time: new Date().toISOString(),
-            begin_time: new Date(Date.now() + 24*60*60*1000).toISOString(),
-            end_time: new Date(Date.now() + 25*60*60*1000).toISOString()
-          },
-          venue: {
-            venue_id: 999,
-            venue_name: "测试场馆",
-            venue_subname: "测试场地",
-            venue_type: "测试",
-            venue_location: "测试地址",
-            venue_capacity: 10,
-            venue_status: "open"
-          },
-          bill: {
-            bill_id: 999,
-            bill_status: "paid",
-            bill_amount: 30
-          },
-          user: {
-            user_id: 1,
-            user_name: "测试用户"
-          }
-        }
-      }
-    },
 
     // 处理二维码弹窗关闭
     handleQRCodeDialogClose() {
@@ -989,6 +857,75 @@ export default {
     // 跳转到管理后台
     goToAdmin() {
       this.$router.push('/venue')
+    },
+
+    // 重试加载用户资料
+    async retryLoadProfile() {
+      const userId = localStorage.getItem('userId')
+      if (userId) {
+        this.profileError = false
+        await this.loadUserProfile(userId)
+      }
+    },
+
+    // 重试加载预约数据
+    async retryLoadReservation() {
+      const userId = localStorage.getItem('userId')
+      if (userId) {
+        this.reservationError = false
+        await this.loadReservationData(this.reservationPagination.page)
+      }
+    },
+
+    // 重试加载积分数据
+    async retryLoadPoints() {
+      const userId = localStorage.getItem('userId')
+      if (userId) {
+        this.pointsError = false
+        await this.loadPointsData(this.pointsPagination.page)
+      }
+    },
+
+    // 重试加载通知数据
+    async retryLoadNotification() {
+      const userId = localStorage.getItem('userId')
+      if (userId) {
+        this.notificationError = false
+        await this.loadNotificationData(this.notificationPagination.page)
+      }
+    },
+
+    // 新增方法
+    async checkUnreadNotifications() {
+      const userId = localStorage.getItem('userId')
+      if (!userId) return
+      
+      try {
+        // 只获取一条消息来检查是否有未读
+        const result = await NotificationService.loadNotificationData(userId, {
+          page: 1,
+          pageSize: 1
+        })
+        console.log('检查未读状态结果:', result)
+        this.unreadNum = result.unreadNum || 0
+        console.log('🔍 初始未读状态:', this.unreadNum)
+      } catch (error) {
+        console.error('检查未读状态失败:', error)
+      }
+    },
+
+    // 处理通知已读事件
+    handleNotificationRead(notificationId) {
+      console.log('通知已读:', notificationId)
+      // 更新本地通知列表中的状态
+      const notification = this.notificationList.find(item => item.notificationId == notificationId)
+      if (notification) {
+        notification.isRead = true
+      }
+      
+      // 重新计算未读状态
+      this.unreadNum = this.unreadNum - 1
+      console.log('更新后的未读状态:', this.unreadNum)
     }
   }
 }
@@ -1004,22 +941,24 @@ export default {
   margin: 0 auto;
   background: #F5F5F5;
   flex-direction: column;
-  padding-top: 90px;   /* 顶栏高度+适当间距 */
+  padding-top: 60px;   /* 顶栏高度+适当间距 */
+  padding-bottom: 50px; /* 底部间距，避免被固定footer遮挡 */
   overflow-x: hidden; /* 防止水平溢出 */
   box-sizing: border-box; /* 确保padding计算在宽度内 */
 } 
 /* 顶栏导航 */
 .navbar {
-  width: 100%; /* 改为100%而不是99vw */
+  width: 100%; 
   position: fixed;
   margin: 0 auto;
+  left: 0;
+  right: 0;
   top: 0; 
   z-index: 100; /* 顶层 */
 }
 /* 主内容区域 */
 .main-content {
-  
-  padding-top: 4px; /* 顶栏高度 */
+  padding-top: 1px; /* 顶栏高度 */
 }
 /* 顶部工具栏 */
 .top-bar {
@@ -1272,14 +1211,28 @@ export default {
   color: #999;
 }
 
-/* 底部footer */
-footer {
-  margin-top: auto;
-  width: 100%;
+/* 错误状态样式 */
+.error-state {
   text-align: center;
-  padding: 8px 0 4px 0; /* 上下各10px和8px的内边距 */
-  background: #FFF;
-  font-size: 14px;
+  padding: 60px 20px;
+  color: #f56c6c;
+}
+
+.error-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+
+.error-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: #f56c6c;
+  margin-bottom: 16px;
+}
+
+.error-actions {
+  margin-top: 16px;
 }
 
 /* 分页容器样式 */
@@ -1326,4 +1279,20 @@ footer {
   color: #fff;
 }
 
+/* 红点提示样式 */
+.notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: #ff4d4f;
+  border-radius: 50%;
+}
+ 
+/* Tab 相对定位，为红点提供定位基准 */
+.tab {
+  position: relative;
+  /* ...其他样式保持不变... */
+}
 </style>
