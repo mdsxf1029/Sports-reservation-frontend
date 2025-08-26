@@ -42,6 +42,7 @@
 
         <!-- 举报功能的 Popover -->
         <el-popover
+          ref="reportPopoverRef"
           placement="bottom"
           :width="100"
           trigger="click"
@@ -221,6 +222,9 @@ const handleCollect = async () => {
 
 // --- 举报功能 ---
 
+// Popover 的引用
+const reportPopoverRef = ref(null);
+
 // 举报模态框相关状态
 const showReportModal = ref(false);
 const reportReasons = [
@@ -239,6 +243,11 @@ const reportTip = ref('');
 
 // 举报操作的包裹函数，用于检查登录
 const handleReport = () => {
+  // 点击举报后，立即关闭 popover
+  if (reportPopoverRef.value) {
+    reportPopoverRef.value.hide();
+  }
+
   const authStatus = AuthService.checkLoginStatus();
   if (!authStatus.isValid) {
     loginPromptMessage.value = '登录后才能举报哦～';
@@ -393,7 +402,7 @@ const submitReport = async () => {
   color: #2980b9;
 }
 .action-icons-wrapper .fa-star.fa-solid {
-  color: #3498db;
+  color: #f59e0b;
 }
 .action-icons-wrapper .fa-heart.fa-solid {
   color: #e74c3c;
