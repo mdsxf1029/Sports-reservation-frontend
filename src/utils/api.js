@@ -346,7 +346,7 @@ export const uncollectCommunityPost = (postId) => {
 export const fetchMyCollectedPosts = (params) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.get(`/api/post-collection/user/${userId}`, {
+  return instance.get(`/api/post-collection/user/${userId}/posts`, {
     params: params,
     headers: { 'Authorization': `Bearer ${token}` }
   });

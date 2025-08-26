@@ -116,9 +116,7 @@
 <script setup>
 import { defineProps, computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
-// 重新引入 ElPopover
 import { ElMessage, ElPopover } from 'element-plus';
-// 引入所有需要用到的 API 函数
 import { 
   likeCommunityPost, 
   unlikeCommunityPost,
@@ -128,6 +126,7 @@ import {
 } from '../utils/api.js';
 import { AuthService } from '../utils/auth.js';
 import LoginPrompt from './LoginPrompt.vue';
+import { formatRelativeTime } from '../utils/formatters.js';
 
 
 const props = defineProps({
@@ -150,10 +149,9 @@ const handleLoginRedirect = () => {
   router.push('/login'); // 跳转到登录页
 };
 
-
 const formattedPublishTime = computed(() => {
-    if (!props.post.postTime) return '';
-    return new Date(props.post.postTime).toLocaleString();
+    // 直接调用 formatRelativeTime 函数
+    return formatRelativeTime(props.post.postTime);
 });
 
 // 实现完整的点赞/取消点赞逻辑，增加登录检查
@@ -213,7 +211,7 @@ const handleCollect = async () => {
     // 切换收藏状态
     props.post.currentUserInteraction.hasCollected = !props.post.currentUserInteraction.hasCollected;
   } catch (error) {
-    console.error("收藏操作失败:", error.response || error);
+    console.error("收藏操作失败:", error);
     ElMessage.error('操作失败，请稍后重试');
   } finally {
     isCollecting.value = false;
@@ -241,8 +239,6 @@ const reportTip = ref('');
 
 // 举报操作的包裹函数，用于检查登录
 const handleReport = () => {
-  // 注意：当从popover内部点击时，element-plus可能不会自动关闭它
-  // 如果需要点击后立即关闭，需要手动管理popover的显示状态
   const authStatus = AuthService.checkLoginStatus();
   if (!authStatus.isValid) {
     loginPromptMessage.value = '登录后才能举报哦～';
@@ -281,7 +277,7 @@ const submitReport = async () => {
 
   try {
     // 向后端发送举报请求
-    const combinedReason = `[${selectedReportReason.value}] ${reportDescription.value}`;
+    const combinedReason = `[${selectedReportReason.value}] ${reportDescription.value}`
     await reportCommunityPost(props.post.postId, {
       user_id: authStatus.userId, // 提交用户ID
       reportReason: combinedReason,

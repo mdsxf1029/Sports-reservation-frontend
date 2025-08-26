@@ -26,7 +26,7 @@
         </div>
 
         <div v-else-if="posts.length === 0" class="empty-list-indicator">
-            这里什么都没有哦～
+          这里什么都没有哦～
         </div>
 
         <div v-else class="post-list">
@@ -125,8 +125,20 @@ const getPosts = async () => {
     } else {
       console.log("正在获取我的收藏...");
       response = await fetchMyCollectedPosts(pagination.value);
-    }  
-    posts.value = response.data.list || [];
+    }
+    const rawPosts = Array.isArray(response.data.list) ? response.data.list : [];
+
+    // 遍历帖子列表，为可能缺失的 currentUserInteraction 字段提供默认值
+    posts.value = rawPosts.map(post => {
+      if (!post.currentUserInteraction) {
+        // 后端暂时没有返回这个字段，手动添加一个默认的(可能错误，仅测试用)
+        post.currentUserInteraction = {
+          hasLiked: true,
+          hasCollected: true,
+        };
+      }
+      return post;
+    });
 
   } catch (error) {
     console.error('获取帖子列表失败:', error);
