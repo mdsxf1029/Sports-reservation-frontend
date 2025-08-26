@@ -6,50 +6,69 @@
       <!-- 作者信息 + 发布时间 + 内容 -->
       <div class="post-card">
         <!-- 帖子标题，居中大字 -->
-        <h1 class="post-main-title">{{ post.title }}</h1>
+        <h1 class="post-main-title">{{ post.postTitle }}</h1>
         <div class="post-header">
           <div class="author-info">
-            <img :src="post.author.avatar" alt="作者头像" class="author-avatar" />
+            <img :src="post.author?.avatarUrl" alt="作者头像" class="author-avatar" />
             <div class="post-info">
-              <span class="author-name">{{ post.author.user_name }}</span>
-              <span class="post-time">发表于 {{ post.publish_time }}</span>
+              <span class="author-name">{{ post.author?.username }}</span>
+              <span class="post-time">发表于 {{ post.postTime }}</span>
             </div>
           </div>
-          <el-dropdown>
-            <button class="post-menu-btn" title="更多操作">
-              <span class="dot"></span>
-              <span class="dot"></span>
-              <span class="dot"></span>
-            </button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="handleReport">举报帖子</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
         </div>
 
         <!-- 帖子正文 -->
-        <p class="post-content">{{ post.content }}</p>
+        <p class="post-content">{{ post.postContent }}</p>
 
 
         <!-- 操作图标 - 现在会显示在右侧 -->
         <div class="post-actions-container">
           <div class="post-icons">
-            <i
-              :class="{ 'fa-solid': isFavorited, 'fa-regular': !isFavorited }"
-              class="fa-star"
-              @click="handleFavorite"
-              title="收藏"
-            ></i>
-            <span>{{ collection_count }}</span>
-            <i
-              :class="{ 'fa-solid': isLiked, 'fa-regular': !isLiked }"
-              class="fa-heart"
-              @click="handleLike"
-              title="喜欢"
-            ></i>
-            <span>{{ like_count }}</span>
+            <!-- 收藏按钮组 -->
+            <div>
+              <i
+                :class="{ 'fa-solid': isFavorited, 'fa-regular': !isFavorited }"
+                class="fa-star"
+                @click="handleFavorite"
+                title="收藏"
+              ></i>
+              <span>{{ collectionCount }}</span>
+            </div>
+            
+            <!-- 点赞按钮组 -->
+            <div>
+              <i
+                :class="{ 'fa-solid': isLiked, 'fa-regular': !isLiked }"
+                class="fa-heart"
+                @click="handleLike"
+                title="喜欢"
+              ></i>
+              <span>{{ likeCount }}</span>
+            </div>
+
+            <!-- 隐藏式举报按钮 -->
+            <el-popover
+              placement="bottom"
+              :width="100"
+              trigger="click"
+              popper-class="report-popper"
+              v-model:visible="isPopoverVisible"
+            >
+              <template #reference>
+                <i 
+                  class="fa-solid fa-ellipsis" 
+                  title="更多操作"
+                ></i>
+              </template>
+              <!-- 只有在未打开举报框时才显示举报选项 -->
+              <div 
+                class="popover-action-item" 
+                @click="handleReport"
+                v-if="!showReportModal && !showLoginDialog"
+              >
+                举报
+              </div>
+            </el-popover>
           </div>
         </div>
       </div>
@@ -79,13 +98,13 @@
           class="comment-item"
         >
           <!-- 评论者头像 -->
-          <img :src="comment.author.avatar" alt="评论者头像" class="comment-avatar">
+          <img :src="comment.author.avatarUrl" alt="评论者头像" class="comment-avatar">
           
           <!-- 评论内容区域 -->
           <div class="comment-content-wrapper">
             <!-- 评论者名称 -->
             <div class="comment-header">
-              <span class="comment-user_name">{{ comment.author.user_name }}</span>
+              <span class="comment-user_name">{{ comment.author.username }}</span>
             </div>
             
             <!-- 评论内容 -->
@@ -93,20 +112,20 @@
             
             <!-- 评论底部：发布时间、赞、踩 -->
             <div class="comment-footer">
-              <span class="comment-time">{{ comment.publish_time }}</span>
+              <span class="comment-time">{{ formatRelativeTime(comment.postTime) }}</span>
               <div class="comment-actions">
                 <i
                 :class="{ 'fa-solid': comment.isLiked, 'fa-regular': !comment.isLiked }"
                 class="fa-thumbs-up"
                 @click="handleCommentLike(comment.id)"
                 ></i>
-                <span>{{ comment.like_count }}</span>
+                <span>{{ comment.likeCount }}</span>
                 <i
                   :class="{ 'fa-solid': comment.isDisliked, 'fa-regular': !comment.isDisliked }"
                   class="fa-thumbs-down"
                   @click="handleCommentDislike(comment.id)"
                 ></i>
-                <span>{{ comment.dislike_count }}</span>
+                <span>{{ comment.dislikeCount }}</span>
               </div>
             </div>
           </div>
@@ -122,48 +141,48 @@
           {{ isCommentsExpanded ? '收起评论' : `显示全部 ${comments.length} 条评论` }}
         </el-button>
       </div>
-    </div>
 
-    <!-- 提示框和举报模态框 -->
-    <div v-if="showFavoriteTip" class="tip">{{ favoriteTip }}</div>
-    <div v-if="showLikeTip" class="tip">{{ likeTip }}</div>
-    <div v-if="showReportTip" class="tip">{{ reportTip }}</div>
-    
-    <!-- 帖子举报模态框 -->
-    <div v-if="showReportModal" class="modal-overlay" @click.self="closeReportModal">
-      <div class="report-modal">
-        <div class="modal-header">
-          <h3>举报</h3>
-          <button class="close-btn" @click="closeReportModal">×</button>
-        </div>
-        <div class="modal-body">
-          <p class="report-desc">请选择举报原因：</p>
-          <div class="report-reasons">
-            <label class="reason-item" v-for="(reason, index) in reportReasons" :key="index">
-              <input 
-                type="radio" 
-                v-model="selectedReportReason" 
-                :value="reason.value"
-              >
-              {{ reason.label }}
-            </label>
+      <!-- 提示框和举报模态框 -->
+      <div v-if="showFavoriteTip" class="tip">{{ favoriteTip }}</div>
+      <div v-if="showLikeTip" class="tip">{{ likeTip }}</div>
+      <div v-if="showReportTip" class="tip">{{ reportTip }}</div>
+      
+      <!-- 举报模态框 -->
+      <div v-if="showReportModal" class="modal-overlay" @click.self="closeReportModal">
+        <div class="report-modal">
+          <div class="modal-header">
+            <h3>举报帖子</h3>
+            <button class="close-btn" @click="closeReportModal">×</button>
           </div>
-          <textarea 
-            v-model="reportDescription" 
-            placeholder="请输入详细说明（可选）..." 
-            rows="3"
-            class="report-description"
-          ></textarea>
-        </div>
-        <div class="modal-footer">
-          <button class="cancel-btn" @click="closeReportModal">取消</button>
-          <button 
-            class="submit-btn" 
-            @click="submitReport" 
-            :disabled="!selectedReportReason"
-          >
-            提交举报
-          </button>
+          <div class="modal-body">
+            <p class="report-desc">请选择举报原因：</p>
+            <div class="report-reasons">
+              <label class="reason-item" v-for="reason in reportReasons" :key="reason.value">
+                <input 
+                  type="radio" 
+                  v-model="selectedReportReason" 
+                  :value="reason.label"
+                >
+                {{ reason.label }}
+              </label>
+            </div>
+            <textarea 
+              v-model="reportDescription" 
+              placeholder="请输入详细说明（可选）..." 
+              rows="3"
+              class="report-description"
+            ></textarea>
+          </div>
+          <div class="modal-footer">
+            <button class="cancel-btn" @click="closeReportModal">取消</button>
+            <button 
+              class="submit-btn" 
+              @click="submitReport" 
+              :disabled="!selectedReportReason"
+            >
+              提交举报
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -220,15 +239,21 @@ import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { 
   fetchPostById, reportCommunityPost, likeCommunityPost, unlikeCommunityPost, 
-  collectCommunityPost, uncollectCommunityPost,
+  collectCommunityPost, uncollectCommunityPost, fetchPostComments,
   likeComment, unlikeComment, dislikeComment, undislikeComment, createCommunityComment
 } from '../utils/api.js';
-import { ElDropdown, ElDropdownMenu, ElDropdownItem, ElButton, ElSelect, ElOption, ElMessage } from 'element-plus';
+import { ElDropdown, ElDropdownMenu, ElDropdownItem, ElButton, ElSelect, ElOption, ElMessage, ElPopover } from 'element-plus';
 import { MoreFilled } from '@element-plus/icons-vue';
 import BackToTop from '../components/BackToTop.vue';
 import TopNavbar from '../components/TopNavbar.vue';
 import LoginPrompt from '../components/LoginPrompt.vue';
 import { AuthService } from '../utils/auth.js';
+import { formatDate, formatRelativeTime } from '../utils/formatters.js';
+
+// 替换原有的 formatPostTime 方法
+const formatPostTime = (isoTime) => {
+  return formatRelativeTime(isoTime);
+};
 
 const router = useRouter();
 
@@ -245,17 +270,11 @@ const commentInput = ref(null);
 
 // 状态初始化
 const isLoading = ref(true);
-const post = ref({ author: {}, publish_time: '' });
+const post = ref({});
 const comments = ref([]);
 
 // 评论框显示/隐藏状态
 const isCommentBoxVisible = ref(true);
-
-// 模拟当前用户数据
-/*const currentUser = ref({
-  avatar: 'https://picsum.photos/id/64/200',
-  user_name: '当前用户'
-});*/
 
 // 折叠相关状态
 const isCommentsExpanded = ref(false);
@@ -274,10 +293,10 @@ const sortedComments = computed(() => {
   
   if (sortType.value === 'latest') {
     // 按发布时间降序排序（最新的在前）
-    return sorted.sort((a, b) => new Date(b.publish_time) - new Date(a.publish_time));
+    return sorted.sort((a, b) => new Date(b.postTime) - new Date(a.postTime));
   } else if (sortType.value === 'hottest') {
     // 按点赞数降序排序（最热的在前）
-    return sorted.sort((a, b) => b.like_count - a.like_count);
+    return sorted.sort((a, b) => b.likeCount - a.likeCount);
   }
   
   return sorted;
@@ -303,15 +322,22 @@ const favoriteTip = ref('');
 const likeTip = ref('');
 const reportTip = ref('');
 const newComment = ref('');
-const collection_count = ref(0);
-const like_count = ref(0);
+const collectionCount = ref(0);
+const likeCount = ref(0);
+
+// 登录设置
+const handleLoginRedirect = () => {
+  router.push('/login');
+};
 
 // 添加处理中的状态，防止用户连续快速点击
 const isLiking = ref(false);
 const isCollecting = ref(false);
+const isCommentInteracting = ref({});
 
-// 帖子举报相关状态
+// 帖子举报相关状态（新增isPopoverVisible控制弹窗显示）
 const showReportModal = ref(false);
+const isPopoverVisible = ref(false); // 控制三点弹出框的显示/隐藏
 const reportReasons = [
   { label: '广告', value: 'spam' },
   { label: '色情低俗', value: 'pornography' },
@@ -326,144 +352,57 @@ const reportDescription = ref('');
 const showLoginDialog = ref(false);
 const loginPromptMessage = ref('');
 
-// 模拟帖子数据
-const mockPostData = {
-  post: {
-    id: 1,
-    title: "分享我的马拉松训练计划",
-    content: "大家好，我想分享一下我为即将到来的城市马拉松准备的训练计划。\n\n每周一、三、五：早晨6点进行5-8公里的轻松跑\n每周二、四：力量训练+核心训练（各30分钟）\n每周六：长距离慢跑（从15公里开始，每周增加2公里）\n每周日：休息或轻度拉伸\n\n饮食方面，我主要以高蛋白、低碳水为主，每天保证3升以上的水分摄入。\n\n有没有跑友有更好的建议？欢迎交流！",
-    author: {
-      avatar: "https://picsum.photos/id/237/200",
-      user_name: "跑步达人"
-    },
-    publish_time: "2023-10-15 08:30",
-    stats: {
-      likeCount: 128,
-      collectionCount: 45
-    }
-  },
-  comments: [
-    {
-      id: 1,
-      content: "请问你跑前会做哪些热身运动？我每次跑完膝盖都会有点不舒服。",
-      author: {
-        avatar: "https://picsum.photos/id/1005/200",
-        user_name: "新手跑者"
-      },
-      publish_time: "2023-10-15 09:15",
-      isLiked: false,
-      isDisliked: false,
-      like_count: 8,
-      dislike_count: 0
-    },
-    {
-      id: 2,
-      content: "你的计划很科学，我之前也是这样训练的，成功完成了全马！",
-      author: {
-        avatar: "https://picsum.photos/id/1012/200",
-        user_name: "老马识途"
-      },
-      publish_time: "2023-10-15 10:02",
-      isLiked: true,
-      isDisliked: false,
-      like_count: 23,
-      dislike_count: 0
-    },
-    {
-      id: 3,
-      content: "长距离跑的时候你会补充能量胶吗？还是只用水？",
-      author: {
-        avatar: "https://picsum.photos/id/1025/200",
-        user_name: "越野爱好者"
-      },
-      publish_time: "2023-10-15 11:45",
-      isLiked: false,
-      isDisliked: false,
-      like_count: 5,
-      dislike_count: 0
-    },
-    {
-      id: 4,
-      content: "我觉得可以增加一些间歇训练，提高速度耐力",
-      author: {
-        avatar: "https://picsum.photos/id/1074/200",
-        user_name: "速度狂人"
-      },
-      publish_time: "2023-10-15 13:20",
-      isLiked: false,
-      isDisliked: true,
-      like_count: 3,
-      dislike_count: 1
-    },
-    {
-      id: 5,
-      content: "请问你的跑鞋是什么牌子的？我正在选一双适合长距离的跑鞋",
-      author: {
-        avatar: "https://picsum.photos/id/177/200",
-        user_name: "装备党"
-      },
-      publish_time: "2023-10-15 14:05",
-      isLiked: false,
-      isDisliked: false,
-      like_count: 12,
-      dislike_count: 0
-    },
-    {
-      id: 6,
-      content: "我也是这个时间参加马拉松，说不定到时候能遇到你！",
-      author: {
-        avatar: "https://picsum.photos/id/338/200",
-        user_name: "同城跑友"
-      },
-      publish_time: "2023-10-15 15:30",
-      isLiked: false,
-      isDisliked: false,
-      like_count: 2,
-      dislike_count: 0
-    },
-    {
-      id: 7,
-      content: "核心训练具体做哪些动作呢？能分享一下吗？",
-      author: {
-        avatar: "https://picsum.photos/id/349/200",
-        user_name: "健身小白"
-      },
-      publish_time: "2023-10-15 16:45",
-      isLiked: false,
-      isDisliked: false,
-      like_count: 7,
-      dislike_count: 0
-    }
-  ],
-  currentUserInteraction: {
-    hasLiked: false,
-    hasCollected: false
-  }
-};
-
-// 组件挂载时获取数据
+// 初始化帖子数据
 onMounted(async () => {
   try {
-    // 尝试获取真实数据
-    const response = await fetchPostById(props.postId);
-    if (response.data && response.data.code === 200) {
-      const postData = response.data.data;
-      post.value = postData.post;
-      comments.value = postData.comments;
+    // 获取帖子详情
+    const postResponse = await fetchPostById(props.postId);
+    if (postResponse.data) {
+      const postData = postResponse.data;
+      post.value = {
+        id: postData.postId,
+        postTitle: postData.title,
+        postContent: postData.content,
+        postTime: formatPostTime(postData.publishTime),
+        author: postData.author
+      };
       
-      // 初始化交互状态
-      isLiked.value = postData.currentUserInteraction.hasLiked;
-      isFavorited.value = postData.currentUserInteraction.hasCollected;
-      like_count.value = postData.post.stats.likeCount;
-      collection_count.value = postData.post.stats.collectionCount;
+      // 设置当前用户交互状态
+      isLiked.value = postData.currentUserInteraction?.hasLiked || false;
+      isFavorited.value = postData.currentUserInteraction?.hasCollected || false;
+      
+      // 设置喜欢和收藏数量
+      likeCount.value = postData.stats?.likeCount || 0;
+      collectionCount.value = postData.stats?.collectionCount || 0;
     } else {
-      console.warn("获取帖子详情失败，使用模拟数据:", response.data?.message || '未知错误');
-      // 使用模拟数据
+      console.warn("获取帖子详情失败，使用模拟数据:", postResponse.data?.message || '未知错误');
       initWithMockData();
     }
+
+    // 单独获取评论数据
+    const commentResponse = await fetchPostComments(props.postId);
+    if (commentResponse.data?.comments) {
+      // 转换评论数据结构以匹配前端需求
+      comments.value = commentResponse.data.comments.map(comment => ({
+        id: comment.commentId,  // 映射commentId到id
+        content: comment.content,
+        author: {
+          userId: comment.author.userId,
+          username: comment.author.username,
+          avatarUrl: comment.author.avatar  // 映射avatar到avatarUrl
+        },
+        postTime: comment.publishTime,  // 保留原始时间用于格式化
+        isLiked: false,  // 假设初始为未点赞
+        isDisliked: false,  // 假设初始为未点踩
+        likeCount: comment.likeCount,
+        dislikeCount: comment.dislikeCount
+      }));
+    } else {
+      comments.value = [];
+      console.warn("获取评论失败，使用空评论列表");
+    }
   } catch (error) {
-    console.warn("请求帖子详情时发生错误，使用模拟数据:", error);
-    // 使用模拟数据
+    console.warn("请求数据时发生错误，使用模拟数据:", error);
     initWithMockData();
   } finally {
     isLoading.value = false;
@@ -472,18 +411,38 @@ onMounted(async () => {
 
 // 使用模拟数据初始化
 const initWithMockData = () => {
-  post.value = mockPostData.post;
-  comments.value = mockPostData.comments;
-  isLiked.value = mockPostData.currentUserInteraction.hasLiked;
-  isFavorited.value = mockPostData.currentUserInteraction.hasCollected;
-  like_count.value = mockPostData.post.stats.likeCount;
-  collection_count.value = mockPostData.post.stats.collectionCount;
+  post.value = {
+    id: mockPostData.postId,
+    postTitle: mockPostData.title,
+    postContent: mockPostData.content,
+    postTime: formatPostTime(mockPostData.publishTime),
+    author: mockPostData.author
+  };
+  // 转换模拟评论数据结构
+  comments.value = (mockPostData.comments || []).map(comment => ({
+    id: comment.id,
+    content: comment.content,
+    author: {
+      userId: comment.author.userId || 0,  // 补充userId字段
+      username: comment.author.username,
+      avatarUrl: comment.author.avatarUrl
+    },
+    postTime: comment.postTime,
+    isLiked: comment.isLiked,
+    isDisliked: comment.isDisliked,
+    likeCount: comment.likeCount,
+    dislikeCount: comment.dislikeCount
+  }));
+  isLiked.value = mockPostData.currentUserInteraction?.hasLiked || false;
+  isFavorited.value = mockPostData.currentUserInteraction?.hasCollected || false;
+  likeCount.value = mockPostData.stats?.likeCount || 0;
+  collectionCount.value = mockPostData.stats?.collectionCount || 0;
 };
 
 // 方法定义
 const handleBack = () => router.back();
 
-// 修改收藏功能实现
+// 收藏功能实现
 const handleFavorite = async () => {
   const authStatus = AuthService.checkLoginStatus();
   if (!authStatus.isValid) {
@@ -492,20 +451,17 @@ const handleFavorite = async () => {
     return;
   }
 
-  if (isCollecting.value) return; // 如果正在处理中，则不执行任何操作
+  if (isCollecting.value) return;
   isCollecting.value = true;
   
   try {
     if (isFavorited.value) {
-      // 当前已收藏，执行取消收藏操作
       await uncollectCommunityPost(post.value.id);
-      collection_count.value--;
+      collectionCount.value--;
     } else {
-      // 当前未收藏，执行收藏操作
       await collectCommunityPost(post.value.id);
-      collection_count.value++;
+      collectionCount.value++;
     }
-    // 切换收藏状态
     isFavorited.value = !isFavorited.value;
     favoriteTip.value = isFavorited.value ? '已收藏该帖子' : '已取消收藏';
     showFavoriteTip.value = true;
@@ -514,33 +470,30 @@ const handleFavorite = async () => {
     console.error("收藏操作失败:", error);
     ElMessage.error('操作失败，请稍后重试');
   } finally {
-    isCollecting.value = false; // 无论成功或失败，都结束处理状态
+    isCollecting.value = false;
   }
 };
 
-// 修改点赞功能实现
+// 点赞功能实现
 const handleLike = async () => {
   const authStatus = AuthService.checkLoginStatus();
   if (!authStatus.isValid) {
-    loginPromptMessage.value = '登录后才能点赞哦～';
+    loginPromptMessage.value = '登录后才能点击喜欢哦～';
     showLoginDialog.value = true;
     return;
   }
 
-  if (isLiking.value) return; // 如果正在处理中，则不执行任何操作
+  if (isLiking.value) return;
   isLiking.value = true;
   
   try {
     if (isLiked.value) {
-      // 当前已点赞，执行取消点赞操作
       await unlikeCommunityPost(post.value.id);
-      like_count.value--;
+      likeCount.value--;
     } else {
-      // 当前未点赞，执行点赞操作
       await likeCommunityPost(post.value.id);
-      like_count.value++;
+      likeCount.value++;
     }
-    // 切换点赞状态
     isLiked.value = !isLiked.value;
     likeTip.value = isLiked.value ? '已喜欢该帖子' : '已取消喜欢';
     showLikeTip.value = true;
@@ -549,7 +502,7 @@ const handleLike = async () => {
     console.error("点赞操作失败:", error);
     ElMessage.error('操作失败，请稍后重试');
   } finally {
-    isLiking.value = false; // 无论成功或失败，都结束处理状态
+    isLiking.value = false;
   }
 };
 
@@ -557,7 +510,6 @@ const handleLike = async () => {
 const toggleCommentBox = () => {
   isCommentBoxVisible.value = !isCommentBoxVisible.value;
   
-  // 如果显示评论框，自动聚焦
   if (isCommentBoxVisible.value) {
     nextTick(() => {
       commentInput.value?.focus();
@@ -577,17 +529,18 @@ const focusCommentInput = () => {
   });
 };
 
-// 修改提交评论方法
+// 提交评论方法
 const isSubmittingComment = ref(false);
 
-// 修改提交评论方法
+// 在submitComment方法中修改参数传递
 const submitComment = async () => {
-  // 验证输入和状态
-  if (!newComment.value.trim() || !isCommentBoxVisible.value || isSubmittingComment.value) return;
+  if (!newComment.value.trim()) {
+    ElMessage.warning('请输入评论内容');
+    return;
+  }
   
-  // 检查登录状态
-  const authStatus = AuthService.checkLoginStatus();
-  if (!authStatus.isValid) {
+  const userId = localStorage.getItem('userId');
+  if (!userId) {
     loginPromptMessage.value = '登录后才能发表评论哦～';
     showLoginDialog.value = true;
     return;
@@ -595,31 +548,30 @@ const submitComment = async () => {
 
   isSubmittingComment.value = true;
   try {
-    // 调用评论API提交
-    const response = await createCommunityComment({
-      post_id: props.postId,
-      content: newComment.value.trim()
-    });
-
-    // 处理API返回结果
-    if (response.data?.code === 200 && response.data.data) {
-      // 将API返回的评论数据添加到列表
-      comments.value.unshift(response.data.data);
+    const response = await createCommunityComment(
+      props.postId, 
+      newComment.value.trim()
+    );
+    
+    if (response.status === 201) {
+      ElMessage.success('评论发表成功');
       newComment.value = '';
-      ElMessage.success('评论发布成功');
+      window.location.reload();
+      // 将新评论添加到评论列表头部
+      comments.value.unshift(response.data);
     } else {
-      ElMessage.error(response.data?.message || '评论发布失败，请重试');
+      ElMessage.error('发表评论失败：请稍后重试');
     }
   } catch (error) {
     console.error('评论提交失败:', error);
-    ElMessage.error('网络错误，无法提交评论');
+    ElMessage.error('网络错误，评论发表失败');
   } finally {
     isSubmittingComment.value = false;
   }
 };
 
+// 评论点赞处理方法
 const handleCommentLike = async (commentId) => {
-  // 检查登录状态
   const authStatus = AuthService.checkLoginStatus();
   if (!authStatus.isValid) {
     loginPromptMessage.value = '登录后才能点赞评论哦～';
@@ -627,26 +579,31 @@ const handleCommentLike = async (commentId) => {
     return;
   }
   
-  // 防止重复点击
+  // 获取当前用户ID
+  const userId = localStorage.getItem('userId');
+  if (!userId) {
+    loginPromptMessage.value = '请先登录再进行操作';
+    showLoginDialog.value = true;
+    return;
+  }
+  
   if (isCommentInteracting.value[commentId]) return;
   isCommentInteracting.value[commentId] = true;
   
   try {
-    // 找到对应的评论对象
     const comment = comments.value.find(item => item.id === commentId);
     if (!comment) return;
     
     if (comment.isLiked) {
       // 取消点赞
-      await unlikeComment(commentId);
-      comment.like_count--;
+      await unlikeComment(commentId, userId);
+      comment.likeCount--;
     } else {
       // 点赞
-      await likeComment(commentId);
-      comment.like_count++;
-      // 如果之前点了踩，需要取消踩
+      await likeComment(commentId, userId);
+      comment.likeCount++;
       if (comment.isDisliked) {
-        comment.dislike_count--;
+        comment.dislikeCount--;
         comment.isDisliked = false;
       }
     }
@@ -659,9 +616,8 @@ const handleCommentLike = async (commentId) => {
   }
 };
 
-// 修改评论点踩处理方法
+// 评论点踩处理方法
 const handleCommentDislike = async (commentId) => {
-  // 检查登录状态
   const authStatus = AuthService.checkLoginStatus();
   if (!authStatus.isValid) {
     loginPromptMessage.value = '登录后才能点踩评论哦～';
@@ -669,26 +625,31 @@ const handleCommentDislike = async (commentId) => {
     return;
   }
   
-  // 防止重复点击
+  // 获取当前用户ID
+  const userId = localStorage.getItem('userId');
+  if (!userId) {
+    loginPromptMessage.value = '请先登录再进行操作';
+    showLoginDialog.value = true;
+    return;
+  }
+  
   if (isCommentInteracting.value[commentId]) return;
   isCommentInteracting.value[commentId] = true;
   
   try {
-    // 找到对应的评论对象
     const comment = comments.value.find(item => item.id === commentId);
     if (!comment) return;
     
     if (comment.isDisliked) {
       // 取消点踩
-      await undislikeComment(commentId);
-      comment.dislike_count--;
+      await undislikeComment(commentId, userId);
+      comment.dislikeCount--;
     } else {
       // 点踩
-      await dislikeComment(commentId);
-      comment.dislike_count++;
-      // 如果之前点了赞，需要取消赞
+      await dislikeComment(commentId, userId);
+      comment.dislikeCount++;
       if (comment.isLiked) {
-        comment.like_count--;
+        comment.likeCount--;
         comment.isLiked = false;
       }
     }
@@ -701,16 +662,18 @@ const handleCommentDislike = async (commentId) => {
   }
 };
 
-// 帖子举报相关方法
+// 帖子举报相关方法（修改部分）
 const handleReport = () => {
-  // 检查登录状态
   const authStatus = AuthService.checkLoginStatus();
   if (!authStatus.isValid) {
     loginPromptMessage.value = '登录后才能举报哦～';
     showLoginDialog.value = true;
+    isPopoverVisible.value = false;
     return;
   }
-  // 登录后才打开举报窗口
+  
+  // 打开举报框时隐藏三点弹出框和举报选项
+  isPopoverVisible.value = false; // 关闭三点弹出框
   openReportModal();
 };
 
@@ -724,6 +687,7 @@ const closeReportModal = () => {
   showReportModal.value = false;
 };
 
+// 提交举报方法修改
 const submitReport = async () => {
   if (!selectedReportReason.value) {
     ElMessage.warning('请选择举报类别');
@@ -738,23 +702,18 @@ const submitReport = async () => {
   }
 
   try {
-    // 调用统一的举报API
-    await reportCommunityPost(props.postId, {
-      user_id: authStatus.userId,
-      category: selectedReportReason.value,
-      reason: reportDescription.value,
-    });
+    // 仅传递 postId 和举报描述，user_id 由 API 内部从 localStorage 获取
+    const reportData = {
+      description: `[${selectedReportReason.value}] ${reportDescription.value}`
+    };
+    await reportCommunityPost(props.postId, reportData); // 直接传 postId 即可
 
-    ElMessage.success('举报已提交，感谢您的反馈');
+    ElMessage.success('举报已提交');
     closeReportModal();
   } catch (err) {
     ElMessage.error('举报失败，请稍后重试');
     console.error("举报失败:", err);
   }
-};
-
-const handleLoginRedirect = () => {
-  router.push('/login'); // 跳转到登录页
 };
 </script>
 
@@ -829,9 +788,9 @@ const handleLoginRedirect = () => {
 }
 
 .author-name {
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 600;
-  color: #1f2937;
+  color: #1c388b;
 }
 
 .post-time {
@@ -845,7 +804,9 @@ const handleLoginRedirect = () => {
   line-height: 1.8;
   color: #1f2937;
   margin-bottom: 32px;
-  white-space: pre-line; /* 保留换行符 */
+  white-space: pre-line;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* 操作图标容器 - 用于将按钮定位在右侧 */
@@ -859,10 +820,10 @@ const handleLoginRedirect = () => {
 /* 帖子操作图标 - 确保图标和文字垂直居中对齐 */
 .post-icons {
   display: flex;
-  gap: 24px;
-  font-size: 20px;
+  align-items: center;
+  gap: 25px; /* 增大按钮组之间的距离 */
+  font-size: 18px;
   color: #6b7280;
-  align-items: center; /* 垂直居中 */
 }
 
 .post-icons span {
@@ -873,7 +834,13 @@ const handleLoginRedirect = () => {
 .post-icons i {
   cursor: pointer;
   transition: color 0.2s;
-  margin-right: 2px; /* 调整间距，使对齐更美观 */
+  font-size: 20px;
+}
+
+.post-icons > div {
+  display: flex;
+  align-items: center;
+  gap: 5px; /* 图标与数字的间距（调小） */
 }
 
 .post-icons i:hover {
@@ -933,8 +900,8 @@ const handleLoginRedirect = () => {
 
 .comment-user_name {
   font-weight: 600;
-  color: #1f2937;
-  font-size: 14px;
+  color: #1c388b;
+  font-size: 18px;
 }
 
 .comment-content {
@@ -1011,7 +978,6 @@ const handleLoginRedirect = () => {
 
 /* 评论框收起状态 */
 .fixed-comment-container.collapsed {
-  /* 整个容器向下移动，只露出切换按钮 */
   transform: translateY(calc(100% - 20px));
 }
 
@@ -1112,151 +1078,114 @@ const handleLoginRedirect = () => {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
   justify-content: center;
-  z-index: 1010;
+  align-items: center;
+  z-index: 1000;
 }
-
 .report-modal {
   background-color: white;
+  padding: 20px;
   border-radius: 8px;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
-
 .modal-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
 }
-
 .modal-header h3 {
   margin: 0;
   font-size: 18px;
-  font-weight: 600;
 }
-
 .close-btn {
-  background: transparent;
+  background: none;
   border: none;
-  font-size: 20px;
+  font-size: 24px;
   cursor: pointer;
-  color: #6b7280;
+  color: #999;
 }
-
-.modal-body {
-  padding: 24px;
+.modal-body .report-desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
 }
-
-.report-desc {
-  margin: 0 0 16px 0;
-  font-size: 16px;
-  color: #1f2937;
-}
-
 .report-reasons {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
 }
-
 .reason-item {
   display: flex;
   align-items: center;
-  gap: 8px;
   cursor: pointer;
+  font-size: 14px;
 }
-
-.reason-item input {
-  width: 16px;
-  height: 16px;
+.reason-item input[type="radio"] {
+  margin-right: 5px;
 }
-
 .report-description {
   width: 100%;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 10px;
-  resize: none;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  resize: vertical;
   box-sizing: border-box;
-  font-family: inherit;
 }
-
-.report-description:focus {
-  outline: none;
-  border-color: #3b82f6;
-}
-
 .modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid #e5e7eb;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
+  margin-top: 20px;
 }
-
+.cancel-btn, .submit-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  font-size: 14px;
+}
 .cancel-btn {
-  padding: 8px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background-color: white;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  background-color: #f0f0f0;
 }
-
-.cancel-btn:hover {
-  background-color: #f9fafb;
-}
-
 .submit-btn {
-  padding: 8px 16px;
-  background-color: #3b82f6;
+  background-color: #1e80ff;
   color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  border-color: #1e80ff;
 }
-
-.submit-btn:hover {
-  background-color: #2563eb;
-}
-
 .submit-btn:disabled {
-  background-color: #93c5fd;
+  background-color: #a0cfff;
+  border-color: #a0cfff;
   cursor: not-allowed;
 }
 
-/* 三个点按钮样式 */
-.post-menu-btn {
-  background: transparent;
-  border: none;
+/* 举报弹出菜单样式 */
+.popover-action-item {
+  text-align: center;
   cursor: pointer;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px; /* 控制点之间的距离 */
-  align-items: center;
-  justify-content: center;
+  padding: 8px 12px;
+  font-size: 16px;
+  border-radius: 4px;
 }
-
-.post-menu-btn .dot {
-  display: block;
-  width: 4px; /* 点的大小 */
-  height: 4px;
-  border-radius: 50%;
-  background-color: #666; /* 点的颜色 */
+.popover-action-item:hover {
+  background-color: #f7f8fa;
 }
+</style>
 
-.rotated-icon {
-  display: none;
+<style>
+/* Popover 的样式需要放在非 scoped 的 style 块中才能生效 */
+.el-popover.el-popper.report-popper {
+  min-width: 80px !important;
+  padding: 0 !important;
 }
 </style>

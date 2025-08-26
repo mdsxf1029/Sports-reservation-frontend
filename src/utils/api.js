@@ -1,11 +1,11 @@
 // src/utils/api.js
-import axios from 'axios'; 
+import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import { AuthService } from './auth';
 
 // 创建 axios 实例
 const instance = axios.create({
-  baseURL: 'http://127.0.0.1:4523/m1/6780458-6492819-default',
+  baseURL: '',
   timeout: 5000
 });
 
@@ -18,12 +18,12 @@ instance.interceptors.response.use(
     // 处理401未授权错误（通常表示token过期）
     if (error.response && error.response.status === 401) {
       const errorMsg = error.response.data?.msg || error.response.data?.message;
-      
+
       ElMessage.warning('登录已过期，请重新登录');
       console.log('token401未授权，清除token，清除本地存储，跳转到登录页');
       // 清除本地存储
       AuthService.clearLoginData();
-      
+
       // 跳转到登录页
       setTimeout(() => {
         window.location.href = '/login';
@@ -202,11 +202,11 @@ export const fetchUserNotifications = (userId, params = {}) => {
 export const markNotificationAsRead = (userId, notificationId) => {
   const token = localStorage.getItem('token');
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
   return instance.put(`/api/user/${userId}/notifications/${notificationId}/read`, {}, { headers });
 };
 
@@ -301,7 +301,7 @@ export const batchRemoveFromBlacklist = (userIds) => {
 
 // 获取社区帖子列表
 export const fetchCommunityPosts = (params) => {
-  return instance.get('/api/community/posts', {
+  return instance.get(`/api/post/public`, {
     params: params,
   });
 };
@@ -310,7 +310,7 @@ export const fetchCommunityPosts = (params) => {
 export const likeCommunityPost = (postId) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`/api/users/${userId}/community/posts/${postId}/like`, null, {
+  return instance.post(`/api/post-like/${postId}-${userId}`, null, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
@@ -319,7 +319,7 @@ export const likeCommunityPost = (postId) => {
 export const unlikeCommunityPost = (postId) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.delete(`/api/users/${userId}/community/posts/${postId}/like`, {
+  return instance.delete(`/api/post-like/${postId}-${userId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
@@ -328,7 +328,7 @@ export const unlikeCommunityPost = (postId) => {
 export const collectCommunityPost = (postId) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`/api/users/${userId}/community/posts/${postId}/collect`, null, {
+  return instance.post(`/api/post-collection/${userId}-${postId}`, null, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
@@ -337,7 +337,7 @@ export const collectCommunityPost = (postId) => {
 export const uncollectCommunityPost = (postId) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.delete(`/api/users/${userId}/community/posts/${postId}/collect`, {
+  return instance.delete(`/api/post-collection/${userId}-${postId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
@@ -346,7 +346,7 @@ export const uncollectCommunityPost = (postId) => {
 export const fetchMyCollectedPosts = (params) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.get(`/api/users/${userId}/community/posts/collections`, {
+  return instance.get(`/api/post-collection/user/${userId}/posts`, {
     params: params,
     headers: { 'Authorization': `Bearer ${token}` }
   });
@@ -356,47 +356,68 @@ export const fetchMyCollectedPosts = (params) => {
 export const reportCommunityPost = (postId, data) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`/api/users/${userId}/community/posts/${postId}/report`, data, {
+  return instance.post(`/api/post-report/${postId}-${userId}`, data, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
 // 获取帖子详情页
-export const fetchPostById = (postId) => {
-  return instance.get(`/api/community/posts/${postId}`);
+// 获取帖子内容
+export const fetchPostById = (id) => {
+  return instance.get(`/api/post/${id}`);
+};
+
+//获取帖子评论内容
+export const fetchPostComments = (postId) => {
+  return instance.get(`/api/comment/post/${postId}`);
 };
 
 // 发布社区帖子
 export const createCommunityPost = (postData) => {
+  const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
-  return instance.post('/api/community/posts/publishapost', postData, { headers });
+
+  return instance.post(`/api/post/user/${userId}`, postData, { headers });
 };
 
 // 帖子评论点赞、点踩、发布
-export const likeComment = (commentId) => {
-  return instance.post('/api/community/comments/like', { commentId });
+// 点赞评论
+export const likeComment = (commentId, userId) => {
+  return instance.post(`/api/comment-like/${commentId}-${userId}`);
 };
 
-export const unlikeComment = (commentId) => {
-  return instance.post('/api/community/comments/unlike', { commentId });
+// 取消点赞评论
+export const unlikeComment = (commentId, userId) => {
+  return instance.delete(`/api/comment-like/${commentId}-${userId}`);
 };
 
-export const dislikeComment = (commentId) => {
-  return instance.post('/api/community/comments/dislike', { commentId });
+// 点踩评论
+export const dislikeComment = (commentId, userId) => {
+  return instance.post(`/api/comment-dislike/${commentId}-${userId}`);
 };
 
-export const undislikeComment = (commentId) => {
-  return instance.post('/api/community/comments/undislike', { commentId });
+// 取消点踩评论
+export const undislikeComment = (commentId, userId) => {
+  return instance.delete(`/api/comment-dislike/${commentId}-${userId}`);
 };
 
-export const createCommunityComment = (data) => {
-  return instance.post(`/api/community/community/comments`, data);
+// 发布评论
+export const createCommunityComment = (postId, commentContent) => {
+  const userId = localStorage.getItem('userId');
+  const token = localStorage.getItem('token');
+  return instance.post(`/api/comment/post/${postId}-${userId}`, {
+    commentContent: commentContent  // 只传递必要的评论内容
+  }, {
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
 };
 
 // 获取订单详情（根据预约 ID）
