@@ -72,12 +72,9 @@ const handlePublish = async () => {
       content: post_content.value
     });
 
-    // 处理成功响应（code=200的情况）
-    if (response.data.code) {
-      console.log('发布成功，帖子ID：', response.data.data.post_id);
-      console.log('发布时间：', response.data.data.post_time);
-      console.log('作者信息：', response.data.data.author);
-      alert(`帖子发布成功！\n标题：${response.data.data.post_title}\n发布时间：${response.data.data.post_time}`);
+    // 处理成功响应（code=201的情况）
+    if (response.status === 201) {
+      alert(`帖子发布成功！`);
       router.back();
     } 
   } catch (error) {
