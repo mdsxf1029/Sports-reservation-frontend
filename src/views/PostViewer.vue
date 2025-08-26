@@ -20,6 +20,7 @@
         <!-- 帖子正文 -->
         <p class="post-content">{{ post.postContent }}</p>
 
+
         <!-- 操作图标 - 现在会显示在右侧 -->
         <div class="post-actions-container">
           <div class="post-icons">
@@ -593,6 +594,16 @@ const handleCommentLike = async (commentId) => {
     const comment = comments.value.find(item => item.id === commentId);
     if (!comment) return;
     
+    // 核心逻辑：如果已经点踩，先发送删除点踩的API请求
+    if (comment.isDisliked) {
+      // 调用删除点踩的API
+      await undislikeComment(commentId, userId);
+      // 更新本地状态
+      comment.dislikeCount--;
+      comment.isDisliked = false;
+    }
+    
+    // 处理点赞/取消点赞逻辑
     if (comment.isLiked) {
       // 取消点赞
       await unlikeComment(commentId, userId);
@@ -601,10 +612,6 @@ const handleCommentLike = async (commentId) => {
       // 点赞
       await likeComment(commentId, userId);
       comment.likeCount++;
-      if (comment.isDisliked) {
-        comment.dislikeCount--;
-        comment.isDisliked = false;
-      }
     }
     comment.isLiked = !comment.isLiked;
   } catch (error) {
@@ -639,6 +646,16 @@ const handleCommentDislike = async (commentId) => {
     const comment = comments.value.find(item => item.id === commentId);
     if (!comment) return;
     
+    // 核心逻辑：如果已经点赞，先发送删除点赞的API请求
+    if (comment.isLiked) {
+      // 调用删除点赞的API
+      await unlikeComment(commentId, userId);
+      // 更新本地状态
+      comment.likeCount--;
+      comment.isLiked = false;
+    }
+    
+    // 处理点踩/取消点踩逻辑
     if (comment.isDisliked) {
       // 取消点踩
       await undislikeComment(commentId, userId);
@@ -647,10 +664,6 @@ const handleCommentDislike = async (commentId) => {
       // 点踩
       await dislikeComment(commentId, userId);
       comment.dislikeCount++;
-      if (comment.isLiked) {
-        comment.likeCount--;
-        comment.isLiked = false;
-      }
     }
     comment.isDisliked = !comment.isDisliked;
   } catch (error) {
@@ -1085,7 +1098,6 @@ const submitReport = async () => {
   align-items: center;
   z-index: 1000;
 }
-
 .report-modal {
   background-color: white;
   padding: 20px;
@@ -1094,7 +1106,6 @@ const submitReport = async () => {
   max-width: 90%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
-
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -1103,12 +1114,10 @@ const submitReport = async () => {
   padding-bottom: 10px;
   margin-bottom: 15px;
 }
-
 .modal-header h3 {
   margin: 0;
   font-size: 18px;
 }
-
 .close-btn {
   background: none;
   border: none;
@@ -1116,31 +1125,26 @@ const submitReport = async () => {
   cursor: pointer;
   color: #999;
 }
-
 .modal-body .report-desc {
   font-size: 14px;
   color: #666;
   margin-bottom: 15px;
 }
-
 .report-reasons {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 15px;
 }
-
 .reason-item {
   display: flex;
   align-items: center;
   cursor: pointer;
   font-size: 14px;
 }
-
 .reason-item input[type="radio"] {
   margin-right: 5px;
 }
-
 .report-description {
   width: 100%;
   padding: 8px;
@@ -1150,14 +1154,12 @@ const submitReport = async () => {
   resize: vertical;
   box-sizing: border-box;
 }
-
 .modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
 }
-
 .cancel-btn, .submit-btn {
   padding: 8px 16px;
   border-radius: 4px;
@@ -1165,17 +1167,14 @@ const submitReport = async () => {
   cursor: pointer;
   font-size: 14px;
 }
-
 .cancel-btn {
   background-color: #f0f0f0;
 }
-
 .submit-btn {
   background-color: #1e80ff;
   color: white;
   border-color: #1e80ff;
 }
-
 .submit-btn:disabled {
   background-color: #a0cfff;
   border-color: #a0cfff;
@@ -1190,7 +1189,6 @@ const submitReport = async () => {
   font-size: 16px;
   border-radius: 4px;
 }
-
 .popover-action-item:hover {
   background-color: #f7f8fa;
 }
