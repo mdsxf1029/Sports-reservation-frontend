@@ -43,6 +43,15 @@
         <el-icon><ChatDotRound /></el-icon>
         <span>申诉管理</span>
       </el-menu-item>
+      
+      <el-menu-item 
+        index="/news-management" 
+        @click="$router.push('/news-management')"
+        :class="{ 'is-active': $route.path === '/news-management' }"
+      >
+        <el-icon><Document /></el-icon>
+        <span>新闻管理</span>
+      </el-menu-item>
     </div>
 
     <div class="flex-grow"/>
