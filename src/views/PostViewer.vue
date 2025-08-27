@@ -126,6 +126,29 @@
                   @click="handleCommentDislike(comment.id)"
                 ></i>
                 <span>{{ comment.dislikeCount }}</span>
+
+                <!-- 新增评论举报按钮 -->
+                <el-popover
+                  placement="bottom"
+                  :width="100"
+                  trigger="click"
+                  popper-class="report-popper"
+                  v-model:visible="comment.isPopoverVisible"
+                >
+                  <template #reference>
+                    <i 
+                      class="fa-solid fa-ellipsis" 
+                      title="评论操作"
+                    ></i>
+                  </template>
+                  <div 
+                    class="popover-action-item" 
+                    @click="handleCommentReport(comment.id)"
+                    v-if="!showReportModal && !showLoginDialog"
+                  >
+                    举报
+                  </div>
+                </el-popover>
               </div>
             </div>
           </div>
@@ -151,7 +174,7 @@
       <div v-if="showReportModal" class="modal-overlay" @click.self="closeReportModal">
         <div class="report-modal">
           <div class="modal-header">
-            <h3>举报帖子</h3>
+            <h3>举报</h3>
             <button class="close-btn" @click="closeReportModal">×</button>
           </div>
           <div class="modal-body">
@@ -240,7 +263,7 @@ import { useRouter } from 'vue-router';
 import { 
   fetchPostById, reportCommunityPost, likeCommunityPost, unlikeCommunityPost, 
   collectCommunityPost, uncollectCommunityPost, fetchPostComments,
-  likeComment, unlikeComment, dislikeComment, undislikeComment, createCommunityComment
+  likeComment, unlikeComment, dislikeComment, undislikeComment, createCommunityComment, reportCommunityComment
 } from '../utils/api.js';
 import { ElDropdown, ElDropdownMenu, ElDropdownItem, ElButton, ElSelect, ElOption, ElMessage, ElPopover } from 'element-plus';
 import { MoreFilled } from '@element-plus/icons-vue';
@@ -700,32 +723,75 @@ const closeReportModal = () => {
 };
 
 // 提交举报方法修改
+// 修改 submitReport 方法中的评论举报 API 调用部分
 const submitReport = async () => {
-  if (!selectedReportReason.value) {
-    ElMessage.warning('请选择举报类别');
-    return;
-  }
-
+  if (!selectedReportReason.value) return;
+  
   const authStatus = AuthService.checkLoginStatus();
   if (!authStatus.isValid) {
-    ElMessage.error('登录状态已失效，请重新登录');
+    loginPromptMessage.value = '登录状态失效，请重新登录';
     showLoginDialog.value = true;
+    showReportModal.value = false;
     return;
   }
-
+  
   try {
-    // 仅传递 postId 和举报描述，user_id 由 API 内部从 localStorage 获取
     const reportData = {
-      description: `[${selectedReportReason.value}] ${reportDescription.value}`
+      reason: selectedReportReason.value,
+      description: reportDescription.value || ''
     };
-    await reportCommunityPost(props.postId, reportData); // 直接传 postId 即可
-
-    ElMessage.success('举报已提交');
-    closeReportModal();
-  } catch (err) {
-    ElMessage.error('举报失败，请稍后重试');
-    console.error("举报失败:", err);
+    
+    if (reportedCommentId.value) {
+      // 举报评论 - 修改API调用方式
+      await reportCommunityComment(reportedCommentId.value, reportData);
+      ElMessage.success('评论举报已提交');
+      closeReportModal();
+    } else {
+      // 原有举报帖子逻辑
+      await reportCommunityPost(props.postId, reportData);
+      ElMessage.success('帖子举报已提交');
+      closeReportModal();
+    }
+    
+    showReportModal.value = false;
+    showReportTip.value = true;
+    setTimeout(() => showReportTip.value = false, 3000);
+    
+    // 重置举报相关状态
+    selectedReportReason.value = '';
+    reportDescription.value = '';
+    reportedCommentId.value = null;
+  } catch (error) {
+    console.error("举报操作失败:", error);
+    ElMessage.error('举报提交失败，请稍后重试');
   }
+};
+
+// 评论举报
+const reportedCommentId = ref(null); // 当前被举报的评论ID
+
+// 处理评论举报
+const handleCommentReport = async (commentId) => {
+  const authStatus = AuthService.checkLoginStatus();
+  if (!authStatus.isValid) {
+    loginPromptMessage.value = '登录后才能举报评论哦～';
+    showLoginDialog.value = true;
+    // 关闭评论的弹出框
+    const comment = comments.value.find(item => item.id === commentId);
+    if (comment) comment.isPopoverVisible = false;
+    return;
+  }
+  
+  // 记录当前举报的评论ID
+  reportedCommentId.value = commentId;
+  // 重置举报表单
+  selectedReportReason.value = '';
+  reportDescription.value = '';
+  // 关闭评论的弹出框
+  const comment = comments.value.find(item => item.id === commentId);
+  if (comment) comment.isPopoverVisible = false;
+  // 显示举报模态框
+  showReportModal.value = true;
 };
 </script>
 

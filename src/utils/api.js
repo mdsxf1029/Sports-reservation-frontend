@@ -420,6 +420,15 @@ export const createCommunityComment = (postId, commentContent) => {
   });
 };
 
+// 举报评论
+export const reportCommunityComment = (CommentId, data) => {
+  const userId = localStorage.getItem('userId');
+  const token = localStorage.getItem('token');
+  return instance.post(`/api/comment-report/${CommentId}-${userId}`, data, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+};
+
 // 获取订单详情（根据预约 ID）
 export const fetchOrderDetail = (appointmentId) => {
   /*return instance.get(`/api/appointments/${appointmentId}`);*/
