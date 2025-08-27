@@ -346,7 +346,7 @@ export const uncollectCommunityPost = (postId) => {
 export const fetchMyCollectedPosts = (params) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.get(`/api/post-collection/user/${userId}`, {
+  return instance.get(`/api/post-collection/user/${userId}/posts`, {
     params: params,
     headers: { 'Authorization': `Bearer ${token}` }
   });
@@ -356,14 +356,20 @@ export const fetchMyCollectedPosts = (params) => {
 export const reportCommunityPost = (postId, data) => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
-  return instance.post(`api/post-report/${postId}-${userId}`, data, {
+  return instance.post(`/api/post-report/${postId}-${userId}`, data, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
 // 获取帖子详情页
-export const fetchPostById = (postId) => {
-  return instance.get(`/api/post/${postId}`);
+// 获取帖子内容
+export const fetchPostById = (id) => {
+  return instance.get(`/api/post/${id}`);
+};
+
+//获取帖子评论内容
+export const fetchPostComments = (postId) => {
+  return instance.get(`/api/comment/post/${postId}`);
 };
 
 // 发布社区帖子
@@ -380,28 +386,47 @@ export const createCommunityPost = (postData) => {
 };
 
 // 帖子评论点赞、点踩、发布
-export const likeComment = (commentId) => {
-  const userId = localStorage.getItem('userId');
-  return instance.post(`api/comment-like/${commentId}-${userId}`, { commentId });
+// 点赞评论
+export const likeComment = (commentId, userId) => {
+  return instance.post(`/api/comment-like/${commentId}-${userId}`);
 };
 
-export const unlikeComment = (commentId) => {
-  const userId = localStorage.getItem('userId');
-  return instance.delete(`api/comment-like/${commentId}-${userId}`, { commentId });
+// 取消点赞评论
+export const unlikeComment = (commentId, userId) => {
+  return instance.delete(`/api/comment-like/${commentId}-${userId}`);
 };
 
-export const dislikeComment = (commentId) => {
-  const userId = localStorage.getItem('userId');
-  return instance.post(`api/comment-dislike/${commentId}-${userId}`, { commentId });
+// 点踩评论
+export const dislikeComment = (commentId, userId) => {
+  return instance.post(`/api/comment-dislike/${commentId}-${userId}`);
 };
 
-export const undislikeComment = (commentId) => {
-  const userId = localStorage.getItem('userId');
-  return instance.delete(`api/comment-dislike/${commentId}-${userId}`, { commentId });
+// 取消点踩评论
+export const undislikeComment = (commentId, userId) => {
+  return instance.delete(`/api/comment-dislike/${commentId}-${userId}`);
 };
 
-export const createCommunityComment = (data) => {
-  return instance.post(`/api/community/community/comments`, data);
+// 发布评论
+export const createCommunityComment = (postId, commentContent) => {
+  const userId = localStorage.getItem('userId');
+  const token = localStorage.getItem('token');
+  return instance.post(`/api/comment/post/${postId}-${userId}`, {
+    commentContent: commentContent  // 只传递必要的评论内容
+  }, {
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+};
+
+// 举报评论
+export const reportCommunityComment = (CommentId, data) => {
+  const userId = localStorage.getItem('userId');
+  const token = localStorage.getItem('token');
+  return instance.post(`/api/comment-report/${CommentId}-${userId}`, data, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
 // 获取订单详情（根据预约 ID）
