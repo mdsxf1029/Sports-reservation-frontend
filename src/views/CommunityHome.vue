@@ -6,15 +6,13 @@
       <div class="post-list-container">
         <div class="post-tabs">
           <span 
-            class="tab-item" 
-            :class="{ active: activeTab === 'recommend' }"
+            :class="{ 'tab-item': true, active: activeTab === 'recommend' }"
             @click="switchTab('recommend')"
           >
             推荐
           </span>
           <span 
-            class="tab-item" 
-            :class="{ active: activeTab === 'collections' }"
+            :class="{ 'tab-item': true, active: activeTab === 'collections' }"
             @click="switchTab('collections')"
           >
             我的收藏
@@ -34,6 +32,7 @@
             v-for="post in posts"
             :key="post.postId"
             :post="post"
+            @update-interaction="handleInteractionUpdate"
           />
         </div>
       </div>
@@ -114,6 +113,17 @@ const handleLoginRedirect = () => {
   router.push('/login');
 };
 
+// 添加一个处理子组件事件的方法
+const handleInteractionUpdate = (updateData) => {
+  // 在当前帖子列表中找到需要更新的帖子
+  const postToUpdate = posts.value.find(p => p.postId === updateData.postId);
+  if (postToUpdate) {
+    // 更新它的交互状态和统计数据
+    postToUpdate.currentUserInteraction = updateData.interaction;
+    postToUpdate.stats = updateData.stats;
+  }
+};
+
 // 获取推荐帖子列表
 const getPosts = async () => {
   isLoading.value = true;
@@ -127,18 +137,7 @@ const getPosts = async () => {
       response = await fetchMyCollectedPosts(pagination.value);
     }
     const rawPosts = Array.isArray(response.data.list) ? response.data.list : [];
-
-    // 遍历帖子列表，为可能缺失的 currentUserInteraction 字段提供默认值
-    posts.value = rawPosts.map(post => {
-      if (!post.currentUserInteraction) {
-        // 后端暂时没有返回这个字段，手动添加一个默认的(可能错误，仅测试用)
-        post.currentUserInteraction = {
-          hasLiked: true,
-          hasCollected: true,
-        };
-      }
-      return post;
-    });
+    posts.value = rawPosts;
 
   } catch (error) {
     console.error('获取帖子列表失败:', error);

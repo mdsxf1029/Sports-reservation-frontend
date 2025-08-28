@@ -301,8 +301,17 @@ export const batchRemoveFromBlacklist = (userIds) => {
 
 // 获取社区帖子列表
 export const fetchCommunityPosts = (params) => {
+  const token = localStorage.getItem('token');
+  const headers = {};
+
+  // 如果用户已登录（即存在token），则在请求头中添加Authorization
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   return instance.get(`/api/post/public`, {
     params: params,
+    headers: headers, // 添加headers
   });
 };
 
@@ -445,7 +454,7 @@ export const fetchConfirmInfo = (appointmentId) => {
 
 //帖子管理相关
 export const getPosts = (params) => {
-  /*  params - 包含过滤和分页参数的对象
+  /* params - 包含过滤和分页参数的对象
       e.g., { page: 1, pageSize: 10, status: 'pending', keyword: 'Vue' } */
   return instance.get('/api/posts', {
     params,
