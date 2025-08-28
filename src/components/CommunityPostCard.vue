@@ -23,8 +23,11 @@
         <!-- 收藏按钮和计数组 -->
         <div class="action-item">
           <i
-            :class="{ 'fa-solid': post.currentUserInteraction.hasCollected, 'fa-regular': !post.currentUserInteraction.hasCollected }"
-            class="fa-star"
+            :class="{
+              'fa-star': true,
+              'fa-solid': post.currentUserInteraction?.hasCollected,
+              'fa-regular': !post.currentUserInteraction?.hasCollected
+            }"
             @click="handleCollect"
           ></i>
           <span>{{ post.stats.collectionCount || 0 }}</span>
@@ -33,8 +36,11 @@
         <!-- 点赞按钮和计数组 -->
         <div class="action-item">
           <i
-            :class="{ 'fa-solid': post.currentUserInteraction.hasLiked, 'fa-regular': !post.currentUserInteraction.hasLiked }"
-            class="fa-heart"
+            :class="{
+              'fa-heart': true,
+              'fa-solid': post.currentUserInteraction?.hasLiked,
+              'fa-regular': !post.currentUserInteraction?.hasLiked
+            }"
             @click="handleLike"
           ></i>
           <span>{{ post.stats.likeCount }}</span>
@@ -115,7 +121,7 @@
 </template>
 
 <script setup>
-import { defineProps, computed, ref } from 'vue';
+import { defineProps, defineEmits, computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElPopover } from 'element-plus';
 import { 
@@ -129,13 +135,14 @@ import { AuthService } from '../utils/auth.js';
 import LoginPrompt from './LoginPrompt.vue';
 import { formatRelativeTime } from '../utils/formatters.js';
 
-
 const props = defineProps({
   post: {
     type: Object,
     required: true,
   },
 });
+
+const emit = defineEmits(['update-interaction']);
 
 // 添加处理中的状态，防止用户连续快速点击
 const isLiking = ref(false);
@@ -168,17 +175,27 @@ const handleLike = async () => {
   isLiking.value = true;
   
   try {
+    // 准备将要更新的数据
+    const newInteractionState = { ...props.post.currentUserInteraction };
+    const newStatsState = { ...props.post.stats };
+
     if (props.post.currentUserInteraction.hasLiked) {
       // 当前已点赞，执行取消点赞操作
       await unlikeCommunityPost(props.post.postId);
-      props.post.stats.likeCount--;
+      newStatsState.likeCount--;
+      newInteractionState.hasLiked = false;
     } else {
       // 当前未点赞，执行点赞操作
       await likeCommunityPost(props.post.postId);
-      props.post.stats.likeCount++;
+      newStatsState.likeCount++;
+      newInteractionState.hasLiked = true;
     }
-    // 切换点赞状态
-    props.post.currentUserInteraction.hasLiked = !props.post.currentUserInteraction.hasLiked;
+    // 触发事件，将更新后的状态传递给父组件，而不是直接修改 prop
+    emit('update-interaction', {
+      postId: props.post.postId,
+      interaction: newInteractionState,
+      stats: newStatsState
+    });
   } catch (error) {
     console.error("点赞操作失败:", error);
     ElMessage.error('操作失败，请稍后重试');
@@ -200,17 +217,26 @@ const handleCollect = async () => {
   isCollecting.value = true;
 
   try {
+    const newInteractionState = { ...props.post.currentUserInteraction };
+    const newStatsState = { ...props.post.stats };
+
     if (props.post.currentUserInteraction.hasCollected) {
       // 当前已收藏，执行取消收藏操作
       await uncollectCommunityPost(props.post.postId);
-        props.post.stats.collectionCount--;
+      newStatsState.collectionCount--;
+      newInteractionState.hasCollected = false;
     } else {
       // 当前未收藏，执行收藏操作
       await collectCommunityPost(props.post.postId);
-        props.post.stats.collectionCount++;
+      newStatsState.collectionCount++;
+      newInteractionState.hasCollected = true;
     }
-    // 切换收藏状态
-    props.post.currentUserInteraction.hasCollected = !props.post.currentUserInteraction.hasCollected;
+    // 触发事件，将更新后的状态传递给父组件
+    emit('update-interaction', {
+      postId: props.post.postId,
+      interaction: newInteractionState,
+      stats: newStatsState
+    });
   } catch (error) {
     console.error("收藏操作失败:", error);
     ElMessage.error('操作失败，请稍后重试');
@@ -407,7 +433,6 @@ const submitReport = async () => {
 .action-icons-wrapper .fa-heart.fa-solid {
   color: #e74c3c;
 }
-/* 为三点图标也添加悬停效果 */
 .action-icons-wrapper .fa-ellipsis:hover {
   color: #2980b9;
 }
