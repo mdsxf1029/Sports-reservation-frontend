@@ -393,7 +393,7 @@ onMounted(async () => {
       // 设置当前用户交互状态
       isLiked.value = postData.currentUserInteraction?.hasLiked || false;
       isFavorited.value = postData.currentUserInteraction?.hasCollected || false;
-      
+
       // 设置喜欢和收藏数量
       likeCount.value = postData.stats?.likeCount || 0;
       collectionCount.value = postData.stats?.collectionCount || 0;
@@ -415,8 +415,8 @@ onMounted(async () => {
           avatarUrl: comment.author.avatar  // 映射avatar到avatarUrl
         },
         postTime: comment.publishTime,  // 保留原始时间用于格式化
-        isLiked: false,  // 假设初始为未点赞
-        isDisliked: false,  // 假设初始为未点踩
+        isLiked: comment.isLiked || 0,
+        isDisliked: comment.isDisliked || 0,
         likeCount: comment.likeCount,
         dislikeCount: comment.dislikeCount
       }));
