@@ -442,7 +442,7 @@ export const createCommunityComment = (postId, commentContent) => {
   return instance.post(`/api/comment/post/${postId}-${userId}`, {
     commentContent: commentContent  // 只传递必要的评论内容
   }, {
-    headers: { 
+    headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
