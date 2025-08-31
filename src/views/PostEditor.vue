@@ -8,12 +8,12 @@
         <input 
           type="text" 
           class="title-input" 
-          placeholder="请输入标题" 
+          placeholder="请输入标题（标题不能为空）" 
           v-model="post_title"
         />
         <textarea 
           class="content-textarea" 
-          placeholder="请输入正文" 
+          placeholder="请输入正文（内容长度不能少于10个字符）" 
           v-model="post_content"
         ></textarea>
       </div>

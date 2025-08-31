@@ -8,8 +8,8 @@
       <!-- 轮播图 Banner -->
       <el-carousel :interval="4000" height="220px" arrow="always" class="news-carousel">
         <el-carousel-item v-for="(banner, idx) in banners.slice(0, 4)" :key="idx">
-          <img :src="banner.img" :alt="banner.title" class="carousel-image" />
-          <div class="carousel-caption">{{ banner.title }}</div>
+          <img :src="banner.coverUrl" :alt="banner.newsTitle" class="carousel-image" />
+          <div class="carousel-caption">{{ banner.newsTitle }}</div>
         </el-carousel-item>
       </el-carousel>
 
@@ -17,29 +17,48 @@
       <div class="tab-card category-tab-card">
         <div class="tabs">
           <span class="tab" :class="{ active: activeCategory === 'all' }" @click="activeCategory = 'all'">全部</span>
+          <span class="tab" :class="{ active: activeCategory === 'match-report' }" @click="activeCategory = 'match-report'">赛事报道</span>
           <span class="tab" :class="{ active: activeCategory === 'announcement' }" @click="activeCategory = 'announcement'">公告</span>
-          <span class="tab" :class="{ active: activeCategory === 'event' }" @click="activeCategory = 'event'">活动</span>
-          <span class="tab" :class="{ active: activeCategory === 'match' }" @click="activeCategory = 'match'">赛事</span>
+          <span class="tab" :class="{ active: activeCategory === 'commentary' }" @click="activeCategory = 'commentary'">实况</span>
+          <span class="tab" :class="{ active: activeCategory === 'interview' }" @click="activeCategory = 'interview'">采访</span>
+          <span class="tab" :class="{ active: activeCategory === 'off-the-field' }" @click="activeCategory = 'off-the-field'">场外</span>
         </div>
       </div>
 
       <!-- 新闻列表（改成一行一行） -->
-      <div v-if="filteredAnnouncements.length" class="announcement-list">
+      <div v-if="newsPagination.total" class="announcement-list">
         <div
-          v-for="item in filteredAnnouncements"
-          :key="item.id"
+          v-for="item in announcements"
+          :key="item.newsId"
           class="announcement-row"
           @click="openDialog(item)"
         >
-          <div class="announcement-title">{{ item.title }}</div>
-          <div class="announcement-date">{{ formatDate(item.date) }}</div>
+          <div class="announcement-title">{{ item.newsTitle }}</div>
+          <div class="announcement-date">{{ formatDate(item.newsTime) }}</div>
           <el-icon class="arrow-icon" size="20">
             <ArrowRight />
           </el-icon>
         </div>
       </div>
       <div v-else class="no-data">暂无相关公告</div>
+
+      <div v-if="newsPagination.total > 0" class="pagination-container">
+        <el-pagination
+          v-model:current-page="newsPagination.page"
+          v-model:page-size="newsPagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :small="false"
+          :disabled="newsLoading"
+          :background="true"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="newsPagination.total"
+          @size-change="handleNewsPageSizeChange"
+          @current-change="handleNewsPageChange"
+        />
+      </div>
     </div>
+
+    <BackToTop/>
 
     <el-dialog
       v-model="dialogVisible"
@@ -50,85 +69,92 @@
     >
       <div class="news-detail">
         <!-- 标题 -->
-        <h2 class="news-detail-title">{{ selectedNews?.title }}</h2>
-        <p class="news-detail-date">发布时间：{{ formatDate(selectedNews?.date) }}</p>
+        <h2 class="news-detail-title">{{ selectedNews?.newsTitle }}</h2>
+        <p class="news-detail-date">发布时间：{{ formatDate(selectedNews?.newsTime) }}</p>
         <hr class="news-detail-divider" />
 
         <!-- 正文 -->
-        <div class="news-detail-content" v-html="formatContent(selectedNews?.content || '暂无内容')"></div>
+        <div class="news-detail-content" v-html="formatContent(selectedNews?.newsContent || '暂无内容')"></div>
 
         <!-- 图片 -->
-        <img v-if="selectedNews?.img" :src="selectedNews.img" class="news-detail-img" />
+        <img v-if="selectedNews?.coverUrl" :src="selectedNews.coverUrl" class="news-detail-img" />
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ArrowRight } from '@element-plus/icons-vue'
+import axios from 'axios';
+import BackToTop from '../components/BackToTop.vue'
 
 const announcements = ref([])
 const activeCategory = ref('all')
+import defaultImage from '@/assets/Backgrounds/Flower1.jpg';
 
 // 弹窗状态
 const dialogVisible = ref(false)
 const selectedNews = ref(null)
 
-// 模拟公告数据（纯文本，多行）
-const allAnnouncements = [
-  { 
-    id: 1, 
-    title: '暑期运动场地开放公告', 
-    date: '2025-07-20', 
-    category: 'announcement', 
-    img: 'https://picsum.photos/800/400?random=5',
-    content: `关于暑期运动场地开放公告\n\n各位同学大家好：\n为方便暑期运动，学校决定在7月20日-8月31日期间延长开放时间。\n\n1. 开放时间：每天 8:00 - 21:00\n2. 使用须知：请自觉遵守场地秩序，注意安全。\n3. 特别提醒：遇到极端天气将临时关闭。\n\n感谢大家的理解与配合。`
-  },
-  { 
-    id: 2, 
-    title: '疫情期间场地预约须知', 
-    date: '2025-07-10', 
-    category: 'announcement', 
-    img: 'https://picsum.photos/800/400?random=2',
-    content: `疫情期间场地预约须知\n\n亲爱的同学们：\n为保障大家的健康安全，运动场地将采取预约使用制度。\n\n1. 场地需提前1天在系统内预约。\n2. 入场需佩戴口罩并测量体温。\n3. 建议保持1米以上间距，避免聚集。\n\n感谢配合，祝大家运动愉快！`
-  },
-  { 
-    id: 3, 
-    title: '社区运动活动精彩回顾', 
-    date: '2025-06-30', 
-    category: 'event', 
-    img: 'https://picsum.photos/800/400?random=3',
-    content: `社区运动活动精彩回顾\n\n在上个月的社区运动嘉年华中，大家踊跃参与，氛围热烈。\n\n活动亮点：\n- 趣味接力赛吸引了超过100名居民参与。\n- 篮球友谊赛展示了社区的青春活力。\n- 健身操表演赢得了热烈掌声。\n\n感谢所有参加的小伙伴们，我们下次再见！`
-  },
-  { 
-    id: 4, 
-    title: '夏季马拉松赛事报名开启', 
-    date: '2025-07-01', 
-    category: 'match', 
-    img: 'https://picsum.photos/800/400?random=4',
-    content: `夏季马拉松赛事报名开启\n\n亲爱的运动爱好者们：\n2025年夏季马拉松报名正式开始！\n\n赛事信息：\n- 日期：2025年8月15日\n- 路线：校园环线，全长10公里\n- 报名时间：即日起至8月5日\n\n报名方式：登录运动系统，在“赛事报名”模块提交申请。\n\n期待大家的参与！`
-  },
-]
+// 分页相关
+const newsPagination = ref({
+  page: 1,        // 当前页数
+  pageSize: 10,   // 每页显示条数
+  total: 0        // 总记录数
+})
 
-const banners = allAnnouncements.map(item => ({
-  img: item.img || new URL('@/assets/Backgrounds/Flower1.jpg', import.meta.url).href,
-  title: item.title
-}))
+const newsLoading = ref(false) // 加载状态
+
+// 轮播图数据
+const banners = computed(() => {
+  return announcements.value.map(item => ({
+    coverUrl: item.coverUrl || defaultImage,
+    newsTitle: item.newsTitle
+  }))
+})
 
 function formatContent(text) {
   if (!text) return '暂无内容'
-  return text.replace(/\n/g, '<br/>')  // 每个换行替换成 <br>
+  const formattedText = text.replace(/\\n/g, '\n');
+  return formattedText.replace(/\n/g, '<br/>');
 }
 
-const filteredAnnouncements = computed(() => {
-  if (activeCategory.value === 'all') return announcements.value
-  return announcements.value.filter(a => a.category === activeCategory.value)
-})
+const fetchAnnouncements = async () => {
+  try {
+    newsLoading.value = true;
 
-function fetchAnnouncements() {
-  announcements.value = allAnnouncements
-}
+    const response = await axios.get(`/api/news/status/${'published'}`, {
+      params: {
+        page: newsPagination.value.page,
+        pageSize: newsPagination.value.pageSize,
+        category: activeCategory.value !== 'all' ? activeCategory.value : null
+      }
+    });
+
+    newsPagination.value.page = response.data.page;
+    newsPagination.value.pageSize = response.data.pageSize;
+    newsPagination.value.total = response.data.totalCount;
+    announcements.value = response.data.list;
+  } catch (error) {
+    console.error("获取新闻数据失败：", error);
+  } finally {
+    newsLoading.value = false;  // 加载完毕，关闭加载状态
+  }
+};
+
+// 页码或每页条数变化时触发的数据加载函数
+const handleNewsPageChange = (newPage) => {
+  newsPagination.value.page = newPage;
+  fetchAnnouncements();
+};
+
+// 每页显示条数变化时触发的数据加载函数
+const handleNewsPageSizeChange = (newSize) => {
+  newsPagination.value.pageSize = newSize;
+  newsPagination.value.page = 1;  // 重置到第一页
+  fetchAnnouncements();
+};
 
 function formatDate(dateStr) {
   const d = new Date(dateStr)
@@ -139,6 +165,11 @@ function openDialog(item) {
   selectedNews.value = item
   dialogVisible.value = true
 }
+
+watch(activeCategory, () => {
+  newsPagination.value.page = 1;  // 切换分类时回到第一页
+  fetchAnnouncements();
+});
 
 onMounted(() => {
   fetchAnnouncements()
@@ -206,7 +237,7 @@ onMounted(() => {
 
 .category-tab-card { 
   width: 100%; 
-  max-width: 480px; 
+  max-width: 600px; 
   margin: 0 auto 28px auto; 
   background: #fff; 
   border-radius: 10px; 
@@ -314,11 +345,11 @@ onMounted(() => {
 /* 分隔线 */
 .news-detail-divider {
   border: none;
-  height: 2px;
-  background: linear-gradient(to right, transparent, #0f40f5, transparent);
-  margin: 0 auto 20px auto;
-  width: 60%;
-  border-radius: 1px;
+  height: 1px; 
+  background-color: #dcdcdc; 
+  margin: 0 auto 20px auto; 
+  width: 80%; 
+  border-radius: 2px; 
 }
 
 /* 图片 */
@@ -338,12 +369,57 @@ onMounted(() => {
   padding: 0 8px;
   word-break: break-word;
   margin-bottom: 28px;
+  white-space: pre-wrap;
 }
 .news-detail-content p {
   margin-bottom: 14px;
 }
 .news-detail-content strong {
   color: #0f40f5;
+}
+
+/* 分页容器样式 */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  margin-top: 20px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.pagination-container .el-pagination {
+  --el-pagination-font-size: 14px;
+  --el-pagination-bg-color: #fff;
+  --el-pagination-text-color: #606266;
+  --el-pagination-border-radius: 4px;
+  --el-pagination-button-disabled-color: #c0c4cc;
+  --el-pagination-button-disabled-bg-color: #fff;
+  --el-pagination-hover-color: #2062ea;
+}
+
+/* 修复分页按钮样式 */
+.pagination-container .el-pagination .el-pager li {
+  min-width: 30px;
+  height: 32px;
+  line-height: 30px;
+  margin: 0 2px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #606266;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.pagination-container .el-pagination .el-pager li:hover {
+  color: #2062ea;
+  border-color: #2062ea;
+}
+
+.pagination-container .el-pagination .el-pager li.is-active {
+  background-color: #2062ea;
+  border-color: #2062ea;
+  color: #fff;
 }
 </style>
 
