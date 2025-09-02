@@ -153,6 +153,34 @@ export const fetchMyOrderSummary = (userId, params = {}) => {
   });
 };
 
+export const cancelMyOrder = (userId, appointmentId) => {
+  const token = localStorage.getItem('token');
+  const headers = {};
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return instance.put(`/api/appointments/${appointmentId}/cancel`, {
+    userId: userId
+  }, {
+    headers
+  });
+};
+
+//申诉订单
+export const createOrderAppeal = (userId, appointmentId, appealData) => {
+  const token = localStorage.getItem('token');
+  const headers = {};
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return instance.post(`/api/appointments/${appointmentId}/appeal`, { userId, ...appealData }, { headers });
+};
+
+
 // 获取用户积分记录
 export const fetchUserPoints = (userId, params = {}) => {
   const token = localStorage.getItem('token');

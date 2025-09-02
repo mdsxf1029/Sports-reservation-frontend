@@ -187,7 +187,7 @@ export class ReservationService {
         break
       case 'overtime':
         statusText = '已超时'
-        statusType = 'error'
+        statusType = 'overtime'
         break
       case 'completed':
         statusText = '已完成'

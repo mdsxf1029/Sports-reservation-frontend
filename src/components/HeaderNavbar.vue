@@ -49,8 +49,8 @@
 
     <el-dropdown size="large"
                  style='margin-right: 20px; margin-bottom: 2px; outline: none'>
-      <el-avatar :size="40" :src="userAvatar">
-        <el-icon v-if="!userAvatar">
+      <el-avatar :size="40" :src="userAvatar && !avatarLoadError ? userAvatar : undefined" @error="handleAvatarError">
+        <el-icon v-if="!userAvatar || avatarLoadError">
           <Avatar />
         </el-icon>
       </el-avatar>
@@ -85,6 +85,13 @@ const route = useRoute()
 const activeIndex = ref('0')
 const isDarkMode = ref(false)
 const userAvatar = ref('') // 用户头像URL
+const avatarLoadError = ref(false) // 头像加载失败标记
+
+// 处理头像加载失败
+const handleAvatarError = () => {
+  console.log('头像加载失败，显示默认图标')
+  avatarLoadError.value = true
+}
 
 // 加载用户头像 - 通过API获取
 const loadUserAvatar = async () => {
@@ -98,6 +105,7 @@ const loadUserAvatar = async () => {
       if (cachedAvatar) {
         console.log('使用缓存的头像:', cachedAvatar)
         userAvatar.value = cachedAvatar
+        avatarLoadError.value = false // 重置错误状态
         return
       }
       
@@ -111,16 +119,20 @@ const loadUserAvatar = async () => {
           // 存储到localStorage并显示
           localStorage.setItem('userAvatar', avatarUrl)
           userAvatar.value = avatarUrl
+          avatarLoadError.value = false // 重置错误状态
         } else {
           userAvatar.value = '' // 没有头像则显示默认图标
+          avatarLoadError.value = false
         }
       }
     } catch (error) {
       console.error('获取用户头像失败:', error)
       userAvatar.value = '' // 出错时显示默认图标
+      avatarLoadError.value = false
     }
   } else {
     userAvatar.value = '' // 未登录时显示默认图标
+    avatarLoadError.value = false
   }
 }
 
@@ -135,6 +147,7 @@ const logout = () => {
   
   // 清空头像显示
   userAvatar.value = ''
+  avatarLoadError.value = false
   
   // 跳转到登录页面
   router.push('/home')
