@@ -151,6 +151,8 @@
             :statusType="item.appointmentStatus"
             :order-detail="item"
             @show-qr-code="openQRCodeDialog"
+            @appeal-order="handleAppealOrder"
+            @cancel-reservation="handleCancelReservation"
           />
           
           <!-- 分页组件 -->
@@ -308,6 +310,53 @@
       :displayDetail="currentOrder"
       @close="showQRCodeDialog = false"
     />
+    
+    <!-- 申诉弹窗 -->
+    <el-dialog
+      title="申诉订单"
+      v-model="showAppealDialog"
+      width="500px"
+      destroy-on-close
+    >
+      <!-- 订单信息 -->
+      <div class="order-info" v-if="selectedOrderForAppeal">
+        <p><strong>订单编号：</strong>{{ selectedOrderForAppeal.appointmentId }}</p>
+        <p><strong>预约场地：</strong>{{ selectedOrderForAppeal.facilityName || '未知场地' }}</p>
+        <p><strong>订单状态：</strong>{{ selectedOrderForAppeal.status }}</p>
+      </div>
+
+      <!-- 申诉表单 -->
+      <el-form ref="appealForm" :model="appealForm" :rules="appealRules" label-width="120px">
+        <el-form-item label="申诉标题" prop="title">
+          <el-input
+            v-model="appealForm.title"
+            placeholder="请输入申诉标题"
+            maxlength="10"
+            show-word-limit
+          />
+        </el-form-item>
+        
+        <el-form-item label="申诉内容" prop="content">
+          <el-input
+            v-model="appealForm.content"
+            type="textarea"
+            :rows="4"
+            placeholder="请详细描述您遇到的问题"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="showAppealDialog = false">取消</el-button>
+          <el-button type="primary" :loading="appealSubmitting" @click="submitAppeal">
+            提交申诉
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -330,6 +379,8 @@ import defaultAvatar from '@/assets/Backgrounds/Flower2.jpg'
 import { UserProfileService, ReservationService, PointsService, NotificationService } from '@/utils/profileService'
 import { AuthService } from '@/utils/auth'
 import { formatDate, getGenderText, getRoleText } from '@/utils/formatters'
+// 导入API方法
+import { cancelMyOrder } from '@/utils/api'
 import { fetchOrderDetail } from '@/utils/api'
         
 export default {
@@ -382,6 +433,23 @@ export default {
       showEditDialog: false, // 控制编辑弹窗显示
       showQRCodeDialog: false,  // 控制二维码弹窗显示
       currentOrder: {},         // 当前选中的订单信息
+      showAppealDialog: false,  // 控制申诉弹窗显示
+      selectedOrderForAppeal: {}, // 当前申诉的订单信息
+      appealSubmitting: false,  // 申诉提交状态
+      appealForm: {
+        title: '',
+        content: ''
+      },
+      appealRules: {
+        title: [
+          { required: true, message: '请输入申诉标题', trigger: 'blur' },
+          { min: 2, max: 10, message: '标题长度在2到10个字符', trigger: 'blur' }
+        ],
+        content: [
+          { required: true, message: '请输入申诉内容', trigger: 'blur' },
+          { min: 10, max: 500, message: '内容长度在10到500个字符', trigger: 'blur' }
+        ]
+      },
       
       // 用户个人资料数据（初始化为空，将从API获取）
       userProfile: {
@@ -927,6 +995,86 @@ export default {
       // 重新计算未读状态
       this.unreadNum = this.unreadNum - 1
       console.log('更新后的未读状态:', this.unreadNum)
+    },
+
+    // 处理申诉订单
+    handleAppealOrder(data) {
+      console.log('打开申诉弹窗:', data)
+      this.selectedOrderForAppeal = data.orderDetail
+      this.showAppealDialog = true
+      // 重置表单
+      this.appealForm = {
+        title: '',
+        content: ''
+      }
+    },
+
+    // 处理取消预约
+    async handleCancelReservation(data) {
+      try {
+        console.log('取消预约:', this.userProfile.userId, data.appointmentId)
+        
+        // 调用API取消预约
+        const res = await cancelMyOrder(this.userProfile.userId, data.appointmentId)
+        const resdata = res.data
+        console.log('取消预约API响应:', resdata)
+        if (resdata.success === false) {
+          throw new Error(resdata.message || '取消预约失败')
+        }
+        ElMessage.success('预约取消成功')
+        console.log('预约取消成功，预约ID:', data.appointmentId)
+        // 重新加载预约数据
+        await this.loadReservationData()
+        
+      } catch (error) {
+        console.error('取消预约失败:', error)
+        ElMessage.error(error.message || '取消预约失败，请稍后重试')
+      }
+    },
+
+    // 提交申诉
+    async submitAppeal() {
+      try {
+        // 表单验证
+        await this.$refs.appealForm.validate()
+        
+        this.appealSubmitting = true
+
+        // 准备申诉数据
+        const appealData = {
+          title: this.appealForm.title,
+          content: this.appealForm.content
+        }
+
+        console.log('提交申诉数据:', appealData)
+
+        // 这里调用申诉API
+        const res = await createOrderAppeal(this.userProfile.userId, this.selectedOrderForAppeal.appointmentId, appealData)
+        const resdata = res.data
+        if(resdata.success === false) {
+          throw new Error(resdata.message || '提交申诉失败')
+        }
+        ElMessage.success('申诉提交成功，我们将在3个工作日内处理')
+        console.log('申诉提交成功，响应数据:', resdata)
+        this.showAppealDialog = false
+        
+      } catch (error) {
+        console.error('提交申诉失败:', error)
+        if (error.message && !error.message.includes('validate')) {
+          ElMessage.error('提交申诉失败，请稍后重试')
+        }
+      } finally {
+        this.appealSubmitting = false
+      }
+    },
+
+    // 处理申诉提交成功
+    handleAppealSubmitted(data) {
+      console.log('申诉已提交:', data)
+      ElMessage.success('申诉提交成功，我们将在3个工作日内处理')
+      
+      // 可以更新订单状态或重新加载数据
+      // this.loadReservationData()
     }
   }
 }
@@ -1295,5 +1443,31 @@ export default {
 .tab {
   position: relative;
   /* ...其他样式保持不变... */
+}
+
+/* 申诉弹窗样式 */
+.order-info {
+  background: #f8f9fa;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.order-info p {
+  margin: 8px 0;
+  color: #606266;
+  font-size: 14px;
+}
+
+.order-info strong {
+  color: #303133;
+  font-weight: 500;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 </style>

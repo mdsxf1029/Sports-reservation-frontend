@@ -55,6 +55,10 @@ import { ElMessageBox, ElMessage } from 'element-plus'
 export default {
   name: 'ReservationItem',
   props: {
+    appointmentId: {
+      type: [String, Number],
+      required: true
+    },
     content: {
       type: String,
       required: true
@@ -126,11 +130,8 @@ export default {
       this.cancelling = true
       try {
         this.$emit('cancel-reservation', {
-          appointmentId: this.appointmentId,
-          orderDetail: this.orderDetail
+          appointmentId: this.appointmentId
         })
-        
-        ElMessage.success('预约取消成功')
       } catch (error) {
         console.error('取消预约失败:', error)
         ElMessage.error('取消预约失败，请稍后重试')
