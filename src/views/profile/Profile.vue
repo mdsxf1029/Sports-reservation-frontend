@@ -145,9 +145,10 @@
             v-else
             v-for="(item, index) in reservationList" 
             :key="item.appointmentId || index"
+            :appointmentId="item.appointmentId"
             :content="item.content"
             :status="item.status"
-            :statusType="item.statusType"
+            :statusType="item.appointmentStatus"
             :order-detail="item"
             @show-qr-code="openQRCodeDialog"
           />
