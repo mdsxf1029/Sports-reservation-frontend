@@ -35,6 +35,31 @@
             @update-interaction="handleInteractionUpdate"
           />
         </div>
+        
+        <!-- --- 分页控件 --- -->
+        <div v-if="!isLoading && posts.length > 0 && totalPages > 1" class="pagination-container">
+            <button @click="goToPage(1)" :disabled="pagination.page === 1" class="pagination-button">首页</button>
+            <button @click="goToPage(pagination.page - 1)" :disabled="pagination.page === 1" class="pagination-button">上一页</button>
+            
+            <span v-for="(page, index) in displayedPages" :key="index" class="page-number-item">
+                <button v-if="typeof page === 'number'" 
+                        @click="goToPage(page)" 
+                        :class="{ 'page-number': true, 'active': page === pagination.page }">
+                    {{ page }}
+                </button>
+                <span v-else class="page-ellipsis">...</span>
+            </span>
+
+            <button @click="goToPage(pagination.page + 1)" :disabled="pagination.page === totalPages" class="pagination-button">下一页</button>
+            <button @click="goToPage(totalPages)" :disabled="pagination.page === totalPages" class="pagination-button">尾页</button>
+
+            <span class="page-jump">
+                到第
+                <input type="number" v-model="jumpPage" @keyup.enter="handleJump" class="page-jump-input" min="1" :max="totalPages">
+                页
+                <button @click="handleJump" class="page-jump-button">确定</button>
+            </span>
+        </div>
       </div>
 
       <!-- --- 创作中心容器 --- -->
@@ -80,7 +105,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 // 引入组件和 API
@@ -96,8 +121,10 @@ import '../styles/community-home.css';
 
 // 定义组件状态
 const posts = ref([]);
-
 const isLoading = ref(true);
+const totalPosts = ref(0); // 新增：总帖子数
+const jumpPage = ref(''); // 新增：跳转输入框的值
+
 const pagination = ref({
   page: 1,
   pageSize: 10,
@@ -108,6 +135,49 @@ const activeTab = ref('recommend');
 const router = useRouter();
 const showLoginDialog = ref(false);
 const loginPromptMessage = ref('');
+
+// --- 分页相关计算属性 ---
+const totalPages = computed(() => {
+  if (totalPosts.value === 0) return 1;
+  return Math.ceil(totalPosts.value / pagination.value.pageSize);
+});
+
+const displayedPages = computed(() => {
+    const currentPage = pagination.value.page;
+    const total = totalPages.value;
+    const pages = [];
+
+    if (total <= 7) {
+        for (let i = 1; i <= total; i++) {
+            pages.push(i);
+        }
+    } else {
+        pages.push(1);
+        let start = Math.max(2, currentPage - 2);
+        let end = Math.min(total - 1, currentPage + 2);
+
+        // 根据当前页码动态调整显示的页码范围，避免省略号后紧跟2或省略号前紧跟最后一页的前一页
+        if (currentPage - 1 > 3 && start > 2) {
+            pages.push('...');
+        } else if (start > 2) {
+            start = 2; // 如果省略号和2之间没有间隔，则直接显示2
+        }
+
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+
+        if (total - currentPage > 3 && end < total -1) {
+            pages.push('...');
+        } else if (end < total - 1) {
+            end = total - 1; // 如果省略号和倒数第二页没有间隔，则直接显示
+        }
+
+        pages.push(total);
+    }
+    return [...new Set(pages)]; // 使用Set去除可能重复的页码
+});
+
 
 const handleLoginRedirect = () => {
   router.push('/login');
@@ -124,24 +194,26 @@ const handleInteractionUpdate = (updateData) => {
   }
 };
 
-// 获取推荐帖子列表
+// 获取帖子列表
 const getPosts = async () => {
   isLoading.value = true;
   try {
     let response;
     if (activeTab.value === 'recommend') {
-      console.log("正在获取推荐帖子...");
+      console.log(`正在获取推荐帖子... 页码: ${pagination.value.page}`);
       response = await fetchCommunityPosts(pagination.value);
     } else {
-      console.log("正在获取我的收藏...");
+      console.log(`正在获取我的收藏... 页码: ${pagination.value.page}`);
       response = await fetchMyCollectedPosts(pagination.value);
     }
     const rawPosts = Array.isArray(response.data.list) ? response.data.list : [];
     posts.value = rawPosts;
+    totalPosts.value = response.data.totalCount || 0; // 从API响应中获取总数
 
   } catch (error) {
     console.error('获取帖子列表失败:', error);
     posts.value = []; // 请求失败时清空列表
+    totalPosts.value = 0; // 请求失败时清空总数
   } finally {
     isLoading.value = false;
   }
@@ -164,6 +236,29 @@ const switchTab = (tabName) => {
   activeTab.value = tabName;
   pagination.value.page = 1;
   getPosts();
+};
+
+// --- 分页跳转方法 ---
+const goToPage = (page) => {
+  const pageNum = Number(page);
+  // 校验页码是否在有效范围内
+  if (pageNum < 1 || pageNum > totalPages.value || pageNum === pagination.value.page) {
+    return;
+  }
+  pagination.value.page = pageNum;
+  getPosts();
+  window.scrollTo(0, 0); // 跳转后回到页面顶部
+};
+
+const handleJump = () => {
+    const page = parseInt(jumpPage.value, 10);
+    if (!isNaN(page) && page >= 1 && page <= totalPages.value) {
+        goToPage(page);
+        jumpPage.value = '';
+    } else {
+        alert('请输入有效的页码！');
+        jumpPage.value = '';
+    }
 };
 
 // --- 跳转到帖子编辑页 ---
@@ -263,4 +358,81 @@ onMounted(() => {
   font-size: 20px;
   font-weight: bold;
 }
+
+/* --- 分页控件样式 --- */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px 20px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pagination-button,
+.page-number {
+    padding: 8px 14px;
+    margin: 0 2px;
+    border: 1px solid #dcdfe6;
+    background-color: #fff;
+    color: #606266;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.pagination-button:hover:not(:disabled),
+.page-number:hover {
+    color: #1e80ff;
+    border-color: #c6e2ff;
+}
+
+.pagination-button:disabled {
+    color: #c0c4cc;
+    cursor: not-allowed;
+}
+
+/* --- 关键样式：激活页码的高亮效果 --- */
+.page-number.active {
+    background-color: #1e80ff;
+    color: #fff;
+    border-color: #1e80ff;
+    font-weight: bold;
+}
+
+.page-ellipsis {
+    color: #606266;
+    padding: 0 5px;
+    align-self: flex-end;
+}
+
+.page-jump {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #606266;
+    margin-left: 10px;
+}
+
+.page-jump-input {
+    width: 50px;
+    padding: 8px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.page-jump-button {
+    padding: 8px 14px;
+    border: 1px solid #dcdfe6;
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.page-jump-button:hover {
+    background-color: #e4e7ed;
+}
+
 </style>

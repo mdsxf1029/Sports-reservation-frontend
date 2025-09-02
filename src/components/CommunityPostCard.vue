@@ -437,7 +437,7 @@ const submitReport = async () => {
   color: #2980b9;
 }
 
-/* 新增：Popover 内部项目的样式 */
+/* Popover 内部项目的样式 */
 .popover-action-item {
   text-align: center;
   cursor: pointer;
