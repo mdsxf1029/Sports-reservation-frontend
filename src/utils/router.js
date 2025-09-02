@@ -59,7 +59,7 @@ const routes = [
         component: AppealManagement
     },
     {
-        path: '/orderdetail',
+        path: '/order/:id',
         name: 'OrderDetail',
         component: OrderDetail
     },

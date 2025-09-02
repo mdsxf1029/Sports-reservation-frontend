@@ -460,8 +460,7 @@ export const reportCommunityComment = (CommentId, data) => {
 
 // 获取订单详情（根据预约 ID）
 export const fetchOrderDetail = (appointmentId) => {
-  /*return instance.get(`/api/appointments/${appointmentId}`);*/
-  return axios.get(`http://127.0.0.1:4523/m1/6319279-6014567-default/api/appointments/1`);
+  return instance.get(`/api/appointments/${appointmentId}`);
 };
 
 

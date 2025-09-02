@@ -363,10 +363,12 @@ const submitReport = async () => {
 .author-info {
   display: flex;
   align-items: center;
+  gap: 8px;
+  margin-left: 15px;
 }
 .author-avatar {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   margin-right: 12px;
 }
@@ -375,7 +377,7 @@ const submitReport = async () => {
   flex-direction: column;
 }
 .author-name {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 500;
   color: #333;
 }
@@ -386,13 +388,13 @@ const submitReport = async () => {
 
 /* --- 内容样式 --- */
 .post-title {
-  font-size: 18px;
-  margin: 0 0 10px 0;
+  font-size: 20px;
+  margin: 0 0 10px 15px;
   font-weight: 600;
   color: #1d2129;
 }
 .post-content {
-  font-size: 14px;
+  font-size: 16px;
   color: #4e5969;
   line-height: 1.7;
   display: -webkit-box;
@@ -400,19 +402,20 @@ const submitReport = async () => {
   -webkit-line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-left: 15px;
 }
 
 /* --- 底部操作区样式 --- */
 .post-actions {
   display: flex;
   justify-content: flex-end; /* 将图标容器推到右侧 */
-  margin-top: 15px; /* 与上方内容保持间距 */
+  margin-top: 4px; /* 与上方内容保持间距 */
 }
 .action-icons-wrapper {
   display: flex;
   align-items: center;
   gap: 18px; /* 各功能组之间的间距 */
-  font-size: 18px;
+  font-size: 16px;
   color: #7f8c8d;
 }
 .action-item {
