@@ -124,7 +124,7 @@
 
     async function loadVenues() {
         try {
-            const res = await axios.get('https://m1.apifoxmock.com/m1/6792249-6505029-default/api/venues1', {
+            const res = await axios.get('http://47.83.188.207:5101/api/venues/venuelist', {
                 params: {
                     campus: selectedCampus.value !== '全部' ? selectedCampus.value : undefined,
                     type: selectedType.value !== '全部' ? selectedType.value : undefined,

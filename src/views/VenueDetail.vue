@@ -78,7 +78,7 @@
     // ✅ 获取场馆详情
     async function loadVenue() {
         try {
-            const res = await axios.get(`https://m1.apifoxmock.com/m1/6792249-6505029-default/api/venues/${route.params.id}`)
+            const res = await axios.get(`http://47.83.188.207:5101/api/venues/${route.params.id}`)
             if (res.data.code === 200) {
                 venue.value = res.data.data
             }
@@ -90,7 +90,7 @@
     // ✅ 获取预约状态
     async function loadReservationStatus() {
         try {
-            const res = await axios.get(`https://m1.apifoxmock.com/m1/6792249-6505029-default/api/venues/${route.params.id}/reservations`)
+            const res = await axios.get(`http://47.83.188.207:5101/api/venues/${route.params.id}/reservations`)
             if (res.data.code === 200) {
                 reservationStatus.value = res.data.data
             }
