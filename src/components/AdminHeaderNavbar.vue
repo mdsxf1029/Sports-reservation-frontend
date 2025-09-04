@@ -108,7 +108,11 @@
           <el-dropdown-menu>
             <el-dropdown-item @click="$router.push('/profile')">
               <el-icon><User /></el-icon>
-              管理员信息
+              个人空间
+            </el-dropdown-item>
+            <el-dropdown-item @click="$router.push('/home')">
+              <el-icon><User /></el-icon>
+              返回系统
             </el-dropdown-item>
             <el-dropdown-item divided @click="logout">
               <el-icon><SwitchButton /></el-icon>
