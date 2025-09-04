@@ -520,19 +520,28 @@ export const rejectPost = (id) => {
 };
 
 //举报管理相关
-export const getReports = (params) => {
-  return instance.get('/api/reports', {
+export const getPostReports = (params) => {
+  return instance.get('/api/post-report', {
     params,
     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
   });
 };
-export const processReport = (reportId, data) => {
-  return instance.put(`/api/reports/${reportId}/process`, data, {
+export const processPostReport = (reportId, userId, data) => {
+  return instance.put(`/api/post-report/${reportId}/manager/${userId}`, data, {
     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
   });
 };
 export const fetchPostID = (postId) => {
   return instance.get(`/api/posts/${postId}`, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
+};
+export const getCommentReports = (params) => {
+  return instance.get('/api/comment-report', { params, headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+};
+
+export const processCommentReport = (reportId, userId, data) => {
+  return instance.put(`/api/comment-report/${reportId}/manager/${userId}`, data, {
     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
   });
 };
