@@ -57,7 +57,7 @@
               <div class="cell time-cell">{{ time.label }}</div>
               <div v-for="court in courts" :key="court.id + '-' + time.id"
                 :class="['cell', getStatusClass(court.id, time.id)]" @click="handleClick(court.id, time.id)">
-                🏸
+                🕭
               </div>
             </div>
           </template>
@@ -222,8 +222,16 @@ if (MOCK_MODE) {
 }
   */
 //用户限制
-/*
-async function loadUserLimitStatus() {
+// 用户限制
+async function loadUserLimitStatus(useMock = true) {
+  if (useMock) {
+    // 写死测试数据
+    dailyLimit.value = 2
+    remainingHours.value = 2
+    return
+  }
+
+  // 调接口
   try {
     const res = await fetch('http://47.83.188.207:5101/api/user-limit-status')
     const data = await res.json()
@@ -235,7 +243,36 @@ async function loadUserLimitStatus() {
     alert('加载预约额度失败')
   }
 }
-  */
+
+async function login() {
+  const res = await fetch("http://47.83.188.207:5101/api/auth/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      role: "user",
+      email: "2147896541@qq.com",
+      password: "12345678",
+      way: 0,
+    }),
+  })
+
+  const result = await res.json()
+  if (result.code === 0) {
+    const { userId, token, userName } = result.data
+
+    // 存到 localStorage
+    localStorage.setItem("userId", userId)
+    localStorage.setItem("token", token)
+    localStorage.setItem("userName", userName)
+
+    console.log("登录成功，已保存 userId 和 token:", userId, token)
+  } else {
+    console.error("登录失败:", result.msg)
+  }
+}
+
 
 // 场地列表
 async function loadCourtsFromBackend() {
@@ -339,6 +376,7 @@ function showSuccessPopup() {
 }
 
 // 跳转到“订单”页面
+
 function goToOrders() {
   clearInterval(timer)
   showPopup.value = false
@@ -384,6 +422,23 @@ async function handleClick(courtId, timeId) {
     return
   }
 
+  // ✅ 判断剩余次数
+  if (!selectedCells.value.has(key)) {
+    if (dailyLimit.value <= 0) {
+      alert('今天的预约次数已用完')
+      return
+    }
+    if (remainingHours.value <= 0) {
+      alert('本周的预约时长已用完')
+      return
+    }
+  }
+
+  // 如果已经选过一个，再点新的，直接提示
+  if (selectedCells.value.size >= 1 && !selectedCells.value.has(key)) {
+    alert('一次只能选择一个场地')
+    return
+  }
   // 先在前端切换选中状态（立即变蓝）
   toggleSelect(courtId, timeId)
 
@@ -397,10 +452,8 @@ async function handleClick(courtId, timeId) {
   }
 
   try {
-    const token =
-      localStorage.getItem('authToken') ||
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o'
-
+    //const token =localStorage.getItem('authToken') ||'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o'
+    const token = localStorage.getItem('token')
     const res = await fetch("http://47.83.188.207:5101/api/courtreservation/check", {
       method: "POST",
       headers: {
@@ -456,10 +509,8 @@ async function loadLockedCells(date, forceReload = false) {
     }
 
     // 3. 请求接口获取最新锁定数据
-    const yourToken =
-      localStorage.getItem("authToken") ||
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o"
-
+    //const yourToken =localStorage.getItem("authToken") ||"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o"
+    const yourToken = localStorage.getItem('token')
     const url = `http://47.83.188.207:5101/api/courtreservation/get-locked-cells?date=${date}`
     const res = await fetch(url, {
       method: "GET",
@@ -515,10 +566,8 @@ async function confirmBooking() {
   })
 
   try {
-    const token =
-      localStorage.getItem('access_token') ||
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o'
-
+    //const token = localStorage.getItem('access_token') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o'
+    const token = localStorage.getItem('token')
     if (!token) {
       alert('请先登录')
       return
@@ -565,23 +614,29 @@ async function confirmBooking() {
   }
 }
 
-
 onMounted(async () => {
+  await login()
   isLoading.value = true
-
-  // 先加载场地 + 时间段
   await Promise.allSettled([
     loadCourtsFromBackend(),
     loadTimeSlotsFromBackend(),
   ])
   isLoading.value = false
 
-  // ⚡ 开发调试：清空缓存并刷新格子（仅调试用）
-  sessionStorage.removeItem(`locked_${fullDate.value}`)
-  window.lockedCache.clear()
+  // 如果路由带了 date 参数，优先选中
+  if (route.query.date) {
+    const index = weekDates.findIndex(d => d.fullDate === route.query.date)
+    if (index !== -1) {
+      selectedDate.value = index
+    }
+  }
+
+  // 初始化锁定格子
   await loadLockedCells(fullDate.value, true)
-  console.log('✅ 锁定格子缓存已清空并刷新完成')
+  loadUserLimitStatus(true)  // true = 写死数据，false = 调接口
+
 })
+
 
 
 // watch：切换日期时，自动走缓存
