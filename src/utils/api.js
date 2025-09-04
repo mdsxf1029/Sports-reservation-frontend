@@ -162,7 +162,8 @@ export const cancelMyOrder = (userId, appointmentId) => {
   }
 
   return instance.put(`/api/appointments/${appointmentId}/cancel`, {
-    userId: userId
+    AppointmentId: appointmentId,  
+    UserId: userId
   }, {
     headers
   });
