@@ -147,6 +147,8 @@ import { getVenues } from '../utils/api.js'
 import HeaderNavbar from '../components/HeaderNavbar.vue'
 import FooterNavbar from '../components/FooterNavbar.vue'
 import BackToTop from '../components/BackToTop.vue'
+import axios from 'axios';
+import { pa } from 'element-plus/es/locales.mjs'
 
 export default {
   name: 'Home',
@@ -176,112 +178,60 @@ export default {
       try {
         this.venuesLoading = true
         console.log('开始加载热门场馆...')
-        const response = await getVenues()
-        console.log('场馆API响应:', response)
         
+        const params = {
+          page: 1,
+          pageSize: 50,
+          keyword: null,      // 首页不搜索，传null
+          status: '开放',     // 只获取开放的场馆
+          type: null          // 获取所有类型，传null
+        } 
+        const res = await getVenues(params)
+        console.log('场馆API响应:', res)
+        
+        // 根据你的后端响应格式解析数据
         let venuesData = []
         
-        // 处理不同的响应格式
-        if (response && response.data) {
-          if (response.code === 0 && response.data) {
-            // 格式: { code: 0, data: [...] }
-            venuesData = response.data
-          } else if (response.code === 0 && response.list) {
-            // 格式: { code: 0, list: [...] }
-            venuesData = response.list
-          } else if (Array.isArray(response.data)) {
-            // 格式: { data: [...] }
-            venuesData = response.data
-          } else if (response.venues) {
-            // 格式: { venues: [...] }
-            venuesData = response.venues
-          }
-        } else if (response && Array.isArray(response)) {
-          // 直接是数组格式
-          venuesData = response
+        if (res && res.data && res.data.code === 200) {
+          // 后端返回格式：{ code: 200, data: { list: [...] } }
+          venuesData = res.data.data.list || []
+          console.log('成功解析场馆数据:', venuesData)
+        } else {
+          console.warn('API响应格式不正确:', res)
+          throw new Error('API响应格式不正确')
         }
         
-        console.log('处理后的场馆数据:', venuesData)
-        
         if (Array.isArray(venuesData) && venuesData.length > 0) {
-          // 取前3个场馆作为热门场馆显示，并格式化数据
-          this.popularVenues = venuesData.slice(0, 3).map(venue => ({
-            id: venue.id || venue.venueId,
-            name: venue.name || venue.venueName || '未知场馆',
-            type: venue.type || venue.venueType || venue.category || '运动场馆',
-            price: venue.price || venue.hourlyRate || venue.cost || 30,
-            rating: venue.rating || venue.score || 4.5,
-            bookings: venue.bookings || venue.reservationCount || 0,
-            imageUrl: venue.imageUrl || venue.image || venue.photo || this.getDefaultVenueImage(venue.type || venue.venueType),
+          // 过滤并排序，选择真正的"热门"场馆
+          const openVenues = venuesData
+            .filter(venue => venue.status === '开放') // 确保只显示开放场馆
+            .sort((a, b) => {
+              // 按价格升序：显示最实惠的场馆
+              return (a.price || 0) - (b.price || 0)
+            })
+          
+          // 取前3个场馆作为热门场馆显示
+          this.popularVenues = openVenues.slice(0, 3).map(venue => ({
+            id: venue.id,
+            name: venue.name || '未知场馆',
+            type: venue.type || '运动场馆', 
+            price: venue.price || 0,
+            location: venue.location || '未知位置',
+            status: venue.status,
+            imageUrl: venue.pictureurl, // 使用后端提供的图片URL
             // 保留原始数据
             originalData: venue
           }))
+          
           console.log('设置热门场馆:', this.popularVenues)
         } else {
-          console.warn('没有获取到场馆数据或数据格式不正确')
-          // 设置吸引人的示例数据
-          this.popularVenues = [
-            {
-              id: 1,
-              name: '四平校区篮球馆',
-              type: '篮球场',
-              price: 30,
-              rating: 4.8,
-              bookings: 156,
-              imageUrl: this.getDefaultVenueImage('篮球')
-            },
-            {
-              id: 2,
-              name: '嘉定校区羽毛球馆',
-              type: '羽毛球场',
-              price: 25,
-              rating: 4.6,
-              bookings: 89,
-              imageUrl: this.getDefaultVenueImage('羽毛球')
-            },
-            {
-              id: 3,
-              name: '综合体育馆',
-              type: '多功能场馆',
-              price: 40,
-              rating: 4.7,
-              bookings: 127,
-              imageUrl: this.getDefaultVenueImage('综合')
-            }
-          ]
+          console.warn('没有获取到开放的场馆数据')
+          this.popularVenues = []
         }
+        
       } catch (error) {
         console.error('加载热门场馆失败:', error)
-        // 设置吸引人的示例数据
-        this.popularVenues = [
-          {
-            id: 1,
-            name: '四平校区篮球馆',
-            type: '篮球场',
-            price: 30,
-            rating: 4.8,
-            bookings: 156,
-            imageUrl: this.getDefaultVenueImage('篮球')
-          },
-          {
-            id: 2,
-            name: '嘉定校区羽毛球馆',
-            type: '羽毛球场',
-            price: 25,
-            rating: 4.6,
-            bookings: 89,
-            imageUrl: this.getDefaultVenueImage('羽毛球')
-          },
-          {
-            id: 3,
-            name: '综合体育馆',
-            type: '多功能场馆',
-            price: 40,
-            rating: 4.7,
-            bookings: 127,
-            imageUrl: this.getDefaultVenueImage('综合')
-          }
-        ]
+        this.popularVenues = []
       } finally {
         this.venuesLoading = false
       }
@@ -298,13 +248,12 @@ export default {
     },
 
     // 获取默认场馆图片
-    getDefaultVenueImage(venueType, venueName = '') {
-      const type = (venueType || '').toLowerCase()
-      const name = (venueName || '').toLowerCase()
-      
+    getDefaultVenueImage(Type, Name = '') {
+      const type = (Type || '').toLowerCase()
+      const name = (Name || '').toLowerCase()
+      console.log('获取默认图片，类型:', type, '名称:', name)
       // 篮球场馆
-      if (type.includes('篮球') || type.includes('basketball') || 
-          name.includes('篮球') || name.includes('basketball')) {
+      if (type.includes('篮球')) {
         // 随机选择篮球场图片
         const basketballImages = [
           '/src/assets/pictures/basketballplace1.png',
@@ -314,8 +263,7 @@ export default {
       }
       
       // 羽毛球场馆
-      else if (type.includes('羽毛球') || type.includes('badminton') || 
-               name.includes('羽毛球') || name.includes('badminton')) {
+      else if (type.includes('羽毛球')) {
         const badmintonImages = [
           '/src/assets/pictures/yumaoqiuplace1.png',
           '/src/assets/pictures/yumaoqiuplace2.png'
@@ -324,8 +272,7 @@ export default {
       }
       
       // 乒乓球场馆
-      else if (type.includes('乒乓') || type.includes('ping') || type.includes('table') ||
-               name.includes('乒乓') || name.includes('ping') || name.includes('table')) {
+      else if (type.includes('乒乓')) {
         const pingpongImages = [
           '/src/assets/pictures/pingpangplace1.png',
           '/src/assets/pictures/pingpangplace2.png'
@@ -334,8 +281,7 @@ export default {
       }
       
       // 网球场馆
-      else if (type.includes('网球') || type.includes('tennis') ||
-               name.includes('网球') || name.includes('tennis')) {
+      else if (type.includes('网球')) {
         const tennisImages = [
           '/src/assets/pictures/wangqiuplace1.png',
           '/src/assets/pictures/wangqiuplace2.png'
@@ -343,16 +289,24 @@ export default {
         return tennisImages[Math.floor(Math.random() * tennisImages.length)]
       }
       
-      // 健身房/体育馆
-      else if (type.includes('健身') || type.includes('gym') || type.includes('fitness') ||
-               name.includes('健身') || name.includes('gym') || name.includes('fitness') ||
-               name.includes('体育馆') || name.includes('训练馆')) {
+      // 健身房
+      else if (type.includes('健身')) {
         const gymImages = [
           '/src/assets/pictures/gym1.png',
           '/src/assets/pictures/gym2.png',
           '/src/assets/pictures/gym3.png'
         ]
         return gymImages[Math.floor(Math.random() * gymImages.length)]
+      }
+
+      // 瑜伽馆
+      else if (type.includes('瑜伽')) {
+        const yogaImages = [
+          '/src/assets/pictures/yoga1.png',
+          '/src/assets/pictures/yoga2.png',
+          '/src/assets/pictures/yoga3.png'
+        ]
+        return yogaImages[Math.floor(Math.random() * yogaImages.length)]
       }
       
       // 默认图片

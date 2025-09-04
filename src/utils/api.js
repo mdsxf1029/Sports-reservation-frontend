@@ -47,8 +47,9 @@ export function addToBlacklist(userId) {
 
 // 获取场地信息
 export const getVenues = (params) => {
+  console.log('获取场地信息参数:', params);
   const token = localStorage.getItem('token');
-  return instance.get('/api/venues', {
+  return instance.get('/api/venues/get', {
     params,
     headers: { 'Authorization': `Bearer ${token}` }
   });
