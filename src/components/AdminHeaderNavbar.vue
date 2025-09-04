@@ -32,7 +32,7 @@
         :class="{ 'is-active': $route.path === '/post' }"
       >
         <el-icon><Document /></el-icon>
-        <span>帖子管理</span>
+        <span>举报管理</span>
       </el-menu-item>
       
       <el-menu-item 
