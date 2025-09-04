@@ -361,7 +361,7 @@ async function loadTimeSlotsFromBackend() {
     alert("网络错误，无法加载时间段")
   }
 }
-/*
+
 //预约成功弹窗
 function showSuccessPopup() {
   showPopup.value = true
@@ -374,9 +374,9 @@ function showSuccessPopup() {
     }
   }, 1000)
 }
-*/
+
 // 跳转到“订单”页面
-/*
+
 function goToOrders() {
   clearInterval(timer)
   showPopup.value = false
@@ -386,7 +386,7 @@ function goToOrders() {
     alert('订单号缺失，跳转失败')
   }
 }
-*/
+
 // 返回上一页的函数
 function goBack() {
   window.history.back()
