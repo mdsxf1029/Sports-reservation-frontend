@@ -67,7 +67,6 @@
                 </div>
 
                 <div class="btn">
-                  <el-button class="cancel" @click="goBackToReservation">取消预约</el-button>
                   <el-button class="confirm" @click="confirmReservation">确认预约</el-button>
                 </div>
 
@@ -101,7 +100,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { ArrowLeft, Location, SuccessFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
-import { fetchOrderDetail, fetchConfirmInfo } from '../utils/api'
+import { fetchOrderDetail } from '../utils/api'
 import HeaderNavbar from '../components/HeaderNavbar.vue'
 
 const route = useRoute()
@@ -160,11 +159,7 @@ const goBackToReservation = () => {
 }
 
 const confirmReservation = async () => {
-  const id = route.params.id;
   try {
-    const res = await fetchConfirmInfo(id)
-
-    if (res.data.success) {
       visible.value = true
       countdown.value = 5
 
@@ -175,18 +170,14 @@ const confirmReservation = async () => {
           router.push('/profile')
         }
       }, 1000)
-    } else {
-      ElMessage.error('预约失败：' + (res.data.message || '请重试'));
-    } 
   } catch (err) {
-    ElMessage.error('预约失败，网络异常');
+    ElMessage.error('跳转失败，网络异常');
   }
 }
 
 onMounted(() => {
   loadDetail();
 })
-
 </script>
 
 <style scoped>

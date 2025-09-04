@@ -104,6 +104,8 @@ import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, SuccessFilled } from '@element-plus/icons-vue'
+import { AuthService } from '@/utils/auth.js'
+import axios from 'axios'
 
 const isLoading = ref(true)
 const router = useRouter()
@@ -159,7 +161,7 @@ const remainingHours = ref(2)
 const pricePerSlot = 20  // 测试每个时间段价格 ¥20
 const totalPrice = ref(0)
 const showPopup = ref(false)
-const countdown = ref(5)
+const countdown = ref(3)
 let timer = null
 let orderId = null
 
@@ -233,46 +235,21 @@ async function loadUserLimitStatus(useMock = true) {
 
   // 调接口
   try {
-    const res = await fetch('http://47.83.188.207:5101/api/user-limit-status')
-    const data = await res.json()
+    const res = await axios.get('/api/user-limit-status', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+
+    const data = res.data
     if (data.success) {
       dailyLimit.value = data.daily_limit
       remainingHours.value = data.remaining_hours
     }
-  } catch {
+  } catch(err) {
     alert('加载预约额度失败')
   }
 }
-
-async function login() {
-  const res = await fetch("http://47.83.188.207:5101/api/auth/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      role: "user",
-      email: "2147896541@qq.com",
-      password: "12345678",
-      way: 0,
-    }),
-  })
-
-  const result = await res.json()
-  if (result.code === 0) {
-    const { userId, token, userName } = result.data
-
-    // 存到 localStorage
-    localStorage.setItem("userId", userId)
-    localStorage.setItem("token", token)
-    localStorage.setItem("userName", userName)
-
-    console.log("登录成功，已保存 userId 和 token:", userId, token)
-  } else {
-    console.error("登录失败:", result.msg)
-  }
-}
-
 
 // 场地列表
 async function loadCourtsFromBackend() {
@@ -291,10 +268,14 @@ async function loadCourtsFromBackend() {
 
   // 如果没有缓存，再请求接口
   try {
-    const res = await fetch(
-      `http://47.83.188.207:5101/api/venues?name=${encodeURIComponent(venueName)}`
-    )
-    const data = await res.json()
+    const res = await axios.get('/api/venues', {
+      params: { name: venueName },
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+
+    const data = res.data
     if (data.success) {
       courts.value = data.venues.map(v => ({
         id: v.venue_id,
@@ -333,11 +314,13 @@ async function loadTimeSlotsFromBackend() {
 
   // 没缓存 / 缓存过期 → 请求接口
   try {
-    const res = await fetch("http://47.83.188.207:5101/api/courtreservation/time-slots")
-    if (!res.ok) {
-      throw new Error("网络响应失败")
-    }
-    const data = await res.json()
+    const res = await axios.get('/api/courtreservation/time-slots', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+
+    const data = res.data
     if (data.success && Array.isArray(data.slots)) {
       timeSlots.value = data.slots.map(slot => ({
         time_slot_id: slot.time_slot_id,
@@ -452,17 +435,21 @@ async function handleClick(courtId, timeId) {
   }
 
   try {
-    //const token =localStorage.getItem('authToken') ||'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o'
-    const token = localStorage.getItem('token')
-    const res = await fetch("http://47.83.188.207:5101/api/courtreservation/check", {
-      method: "POST",
+    const authResult = AuthService.checkLoginStatus()
+    if (!authResult.isValid) {
+      toggleSelect(courtId, timeId)
+      AuthService.handleAuthFailure(authResult.reason, router)
+      return
+    }
+    
+    const res = await axios.post('/api/courtreservation/check', body, {
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify(body)
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
     })
-    const data = await res.json()
+
+    const data = res.data
 
     if (!data.success) {
       // 已被锁定 → 回滚 UI
@@ -509,18 +496,24 @@ async function loadLockedCells(date, forceReload = false) {
     }
 
     // 3. 请求接口获取最新锁定数据
+    const authResult = AuthService.checkLoginStatus()
+    if (!authResult.isValid) {
+      toggleSelect(courtId, timeId)
+      AuthService.handleAuthFailure(authResult.reason, router)
+      return
+    }
+
     //const yourToken =localStorage.getItem("authToken") ||"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o"
-    const yourToken = localStorage.getItem('token')
-    const url = `http://47.83.188.207:5101/api/courtreservation/get-locked-cells?date=${date}`
-    const res = await fetch(url, {
-      method: "GET",
+
+    const res = await axios.get('/api/courtreservation/get-locked-cells', {
+      params: { date },
       headers: {
         accept: "*/*",
-        Authorization: `Bearer ${yourToken}`,
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
     })
 
-    const data = await res.json()
+    const data = res.data
     if (data.success) {
       const cells = data.locked.map(item => `${item.venue_id}-${item.time_slot_id}`)
 
@@ -567,30 +560,35 @@ async function confirmBooking() {
 
   try {
     //const token = localStorage.getItem('access_token') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o'
+
+    const authResult = AuthService.checkLoginStatus()
+    if (!authResult.isValid) {
+      AuthService.handleAuthFailure(authResult.reason, router)
+      return
+    }
+
     const token = localStorage.getItem('token')
     if (!token) {
       alert('请先登录')
       return
     }
 
-    const res = await fetch('http://47.83.188.207:5101/api/courtreservation/confirm-booking', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
+    const res = await axios.post(
+      '/api/courtreservation/confirm-booking',
+      {
         success: true,
         appointments: selectedList
-      })
-    })
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    )
 
-    if (res.status === 401) {
-      alert('Token 已过期，请重新登录')
-      return
-    }
+    const data = res.data
 
-    const data = await res.json()
     if (data.success) {
       orderId = data.appointment_id
 
@@ -615,7 +613,6 @@ async function confirmBooking() {
 }
 
 onMounted(async () => {
-  await login()
   isLoading.value = true
   await Promise.allSettled([
     loadCourtsFromBackend(),
