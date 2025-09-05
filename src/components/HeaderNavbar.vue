@@ -150,7 +150,7 @@ const logout = () => {
   avatarLoadError.value = false
   
   // 跳转到登录页面
-  router.push('/home')
+  router.push('/login')
   
   // 可以添加提示消息
   alert('已退出登录')

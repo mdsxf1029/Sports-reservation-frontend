@@ -827,7 +827,8 @@ export default {
             bill_id: apiData.bill?.bill_id,
             
             // 为二维码生成数据
-            qrcode_data: `https://yourdomain.com/entry/${apiData.appointment?.appointment_id || appointmentId}`,
+            qrcode_data: `http://47.83.188.207:5101/api/appointments/check-in?appointment_id=${apiData.appointment?.appointment_id || appointmentId}`,
+
             
             // 清除加载状态
             loading: false 

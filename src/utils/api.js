@@ -47,6 +47,7 @@ export function addToBlacklist(userId) {
 
 // 获取场地信息
 export const getVenues = (params) => {
+  console.log('获取场地信息参数:', params);
   const token = localStorage.getItem('token');
   return instance.get('/api/venues/get', {
     params,
@@ -162,7 +163,8 @@ export const cancelMyOrder = (userId, appointmentId) => {
   }
 
   return instance.put(`/api/appointments/${appointmentId}/cancel`, {
-    userId: userId
+    AppointmentId: appointmentId,  
+    UserId: userId
   }, {
     headers
   });
@@ -488,15 +490,12 @@ export const reportCommunityComment = (CommentId, data) => {
 
 // 获取订单详情（根据预约 ID）
 export const fetchOrderDetail = (appointmentId) => {
-  return instance.get(`/api/appointments/${appointmentId}`);
-};
-
-
-
-// 获取预约是否成功信息
-export const fetchConfirmInfo = (appointmentId) => {
-  /*return instance.get(`/api/appointments/{appointmentId}/confirm-info`);*/
-  return axios.get(`http://127.0.0.1:4523/m1/6319279-6014567-default/api/appointments/1/confirm-info`);
+  const token = localStorage.getItem('token');
+  return instance.get(`/api/appointments/${appointmentId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
 };
 
 //帖子管理相关

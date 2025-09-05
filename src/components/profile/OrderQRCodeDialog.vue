@@ -31,8 +31,11 @@
 </template>
 
 <script setup>
+import { ref, computed, watch, onUnmounted, defineProps, defineEmits } from 'vue'
+import { ElMessage } from 'element-plus'
+import axios from 'axios'
 import QrcodeVue from 'qrcode.vue'
-import { defineProps, defineEmits, computed } from 'vue'
+
 
 const props = defineProps({
     visible: Boolean,

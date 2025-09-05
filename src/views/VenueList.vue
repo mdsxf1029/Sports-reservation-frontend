@@ -5,7 +5,7 @@
     <LoginPrompt
         v-model="showLoginDialog"
         message="登录后可进行预约操作"
-        @login="handleLogin"
+        @login="login"
     />
 
     <div class="venue-list-page">
@@ -14,7 +14,7 @@
             <h3 class="section-title">个人预约</h3>
 
             <!-- 校区筛选 -->
-            <div class="filter-group">
+            <div class="filter-group">  
                 <span class="label">校区：</span>
                 <div class="button-group">
                     <el-button v-for="campus in campuses"
@@ -86,7 +86,7 @@
     const campuses = ['全部', '四平校区', '彰武校区', '嘉定校区', '沪西校区', '南校区']
     const types = ['全部', '羽毛球', '乒乓球', '网球', '健身', '足球', '田径', '排球', '篮球', '拳操']
     const selectedCampus = ref('全部')
-    const selectedType = ref('羽毛球')
+    const selectedType = ref('全部')
     const searchQuery = ref('')
     const venues = ref([])
     const isLoggedIn = ref(false)
@@ -118,18 +118,19 @@
 
     async function loadVenues() {
         try {
-            const res = await axios.get('http://47.83.188.207:5101/api/venues/venuelist', {
+            const res = await axios.get('/api/venues/venuelist', {
                 params: {
                     campus: selectedCampus.value !== '全部' ? selectedCampus.value : undefined,
                     type: selectedType.value !== '全部' ? selectedType.value : undefined,
                     search: searchQuery.value || undefined
                 }
             })
+
             if (res.data.code === 200) {
                 venues.value = res.data.data
             }
         } catch (err) {
-            console.error('加载场馆失败', err)
+            console.error('加载场馆失败', err.message)
         }
     }
 

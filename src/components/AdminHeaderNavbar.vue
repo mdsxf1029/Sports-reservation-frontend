@@ -1,3 +1,4 @@
+
 <template>
   <el-menu :default-active='activeIndex' class='admin-header-navbar' mode='horizontal' :ellipsis='false'>
     <el-container>
@@ -99,8 +100,8 @@
 
       <el-dropdown size="large"
                    style='margin-right: 20px; margin-bottom: 2px; outline: none'>
-        <el-avatar :size="40" :src="userAvatar">
-          <el-icon v-if="!userAvatar">
+        <el-avatar :size="40" :src="userAvatar && !avatarLoadError ? userAvatar : undefined" @error="handleAvatarError">
+          <el-icon v-if="!userAvatar || avatarLoadError">
             <Avatar />
           </el-icon>
         </el-avatar>
@@ -108,7 +109,11 @@
           <el-dropdown-menu>
             <el-dropdown-item @click="$router.push('/profile')">
               <el-icon><User /></el-icon>
-              管理员信息
+              个人空间
+            </el-dropdown-item>
+            <el-dropdown-item @click="$router.push('/home')">
+              <el-icon><User /></el-icon>
+              返回系统
             </el-dropdown-item>
             <el-dropdown-item divided @click="logout">
               <el-icon><SwitchButton /></el-icon>
@@ -145,6 +150,13 @@ const router = useRouter()
 const route = useRoute()
 const isDarkMode = ref(false)
 const userAvatar = ref('') // 用户头像URL
+const avatarLoadError = ref(false) // 头像加载失败标记
+
+// 处理头像加载失败
+const handleAvatarError = () => {
+  console.log('头像加载失败，显示默认图标')
+  avatarLoadError.value = true
+}
 
 // 计算当前激活的菜单项
 const activeIndex = computed(() => {
@@ -161,12 +173,15 @@ const loadUserAvatar = async () => {
       // 首先检查是否已经有缓存的头像
       const cachedAvatar = localStorage.getItem('userAvatar')
       if (cachedAvatar) {
+        console.log('使用缓存的头像:', cachedAvatar)
         userAvatar.value = cachedAvatar
+        avatarLoadError.value = false // 重置错误状态
         return
       }
       
       // 如果没有缓存，通过API获取用户信息
       const res = await getUserInfo(userId)
+      console.log('获取用户信息:', res)
       const response = res.data
       if (response && response.code === 0 && response.data) {
         const avatarUrl = response.data.avatarUrl
@@ -174,16 +189,20 @@ const loadUserAvatar = async () => {
           // 存储到localStorage并显示
           localStorage.setItem('userAvatar', avatarUrl)
           userAvatar.value = avatarUrl
+          avatarLoadError.value = false // 重置错误状态
         } else {
           userAvatar.value = '' // 没有头像则显示默认图标
+          avatarLoadError.value = false
         }
       }
     } catch (error) {
       console.error('获取用户头像失败:', error)
       userAvatar.value = '' // 出错时显示默认图标
+      avatarLoadError.value = false
     }
   } else {
     userAvatar.value = '' // 未登录时显示默认图标
+    avatarLoadError.value = false
   }
 }
 
@@ -198,6 +217,7 @@ const logout = () => {
   
   // 清空头像显示
   userAvatar.value = ''
+  avatarLoadError.value = false
   
   // 跳转到登录页面
   router.push('/login')
