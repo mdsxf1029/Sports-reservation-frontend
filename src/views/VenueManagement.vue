@@ -218,18 +218,14 @@
         </el-form-item>
         <el-form-item label="场地图片">
           <el-upload
-            name="Avatar" class="avatar-uploader"
-            action="/api/upload/avatar" 
-            :headers="{ 'Authorization': `Bearer ${token}` }"
-            :show-file-list="false"
-            :on-success="handleAvatarSuccess"
-            :before-upload="beforeAvatarUpload"
+            name="File" class="avatar-uploader"  action="/api/upload/venue-image"        :headers="{ 'Authorization': `Bearer ${token}` }" :show-file-list="false"
+            :on-success="handleUploadSuccess" :before-upload="beforeAvatarUpload"
           >
-            <img v-if="form.pictureurl" :src="form.pictureurl" class="avatar" />
-            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+          <img v-if="form.pictureurl" :src="form.pictureurl" class="avatar" />
+          <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
           </el-upload>
           <div class="el-upload__tip">
-            建议上传大小不超过 2MB 的图片
+          建议上传大小不超过 2MB 的图片
           </div>
         </el-form-item>
         <el-form-item label="场地类型">
@@ -350,9 +346,9 @@ const resetForm = () => {
   currentVenueId.value = null;
 };
 
-const handleAvatarSuccess: UploadProps['onSuccess'] = (response) => {
-  if (response && response.code == 0 && response.data && response.data.avatarUrl) {
-    form.value.pictureurl = response.data.avatarUrl; // 将返回的URL赋值给表单
+const handleUploadSuccess: UploadProps['onSuccess'] = (response) => {
+  if (response && response.code == 0 && response.data && response.data.url) {
+    form.value.pictureurl = response.data.url;
     ElMessage.success('图片上传成功！');
   } else {
     ElMessage.error(response.msg || '图片上传失败或返回格式不正确');

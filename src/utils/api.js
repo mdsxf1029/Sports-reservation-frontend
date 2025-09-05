@@ -556,3 +556,14 @@ export const deleteComment = (commentId) => {
     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
   });
 };
+
+export function uploadImage(formData) {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return instance.post('/api/upload/venue-image', formData, {
+    headers: headers
+  });
+}
