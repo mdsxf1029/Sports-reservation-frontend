@@ -48,7 +48,7 @@ export function addToBlacklist(userId) {
 // 获取场地信息
 export const getVenues = (params) => {
   const token = localStorage.getItem('token');
-  return instance.get('/api/venues', {
+  return instance.get('/api/venues/get', {
     params,
     headers: { 'Authorization': `Bearer ${token}` }
   });
@@ -542,6 +542,18 @@ export const getCommentReports = (params) => {
 
 export const processCommentReport = (reportId, userId, data) => {
   return instance.put(`/api/comment-report/${reportId}/manager/${userId}`, data, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
+};
+
+export const deletePost = (postId) => {
+  return instance.delete(`/api/post/${postId}`, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
+};
+
+export const deleteComment = (commentId) => {
+  return instance.delete(`/api/comment/${commentId}`, {
     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
   });
 };
