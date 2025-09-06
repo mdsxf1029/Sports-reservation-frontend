@@ -40,6 +40,72 @@ export function getViolations() {
   return instance.get('/api/violations');
 }
 
+/* 新闻管理相关API */
+
+// 获取新闻列表
+export const getNewsList = (params = {}) => {
+  const token = localStorage.getItem('token');
+  return instance.get('/api/news', {
+    params: {
+      page: params.page || 1,
+      pageSize: params.pageSize || 10,
+      status: params.status || '',
+      category: params.category || ''
+    },
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+};
+
+// 根据状态获取新闻
+export const getNewsByStatus = (status, params = {}) => {
+  const token = localStorage.getItem('token');
+  return instance.get(`/api/news/status/${status}`, {
+    params: {
+      page: params.page || 1,
+      pageSize: params.pageSize || 10,
+      category: params.category || ''
+    },
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+};
+
+// 创建新闻
+export const createNews = (newsData) => {
+  const token = localStorage.getItem('token');
+  return instance.post('/api/news', newsData, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+};
+
+// 更新新闻
+export const updateNews = (newsId, newsData) => {
+  const token = localStorage.getItem('token');
+  return instance.put(`/api/news/${newsId}`, newsData, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+};
+
+// 删除新闻
+export const deleteNews = (newsId) => {
+  const token = localStorage.getItem('token');
+  return instance.delete(`/api/news/${newsId}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+};
+
+// 上传新闻封面
+export const uploadNewsCover = (file) => {
+  const token = localStorage.getItem('token');
+  const formData = new FormData();
+  formData.append('file', file);
+  return instance.post('/api/news/upload-cover', formData, {
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+};
+
 // 加入黑名单
 export function addToBlacklist(userId) {
   return instance.post('/api/blacklist/add', { userId });
@@ -214,10 +280,20 @@ export const markNotificationAsRead = (userId, notificationId) => {
 
 // 获取违约记录列表
 export const getViolationRecords = (params = {}) => {
+  const token = localStorage.getItem('token');
   return instance.get('/api/violations', {
     params: {
       ...params // 支持传入page、pageSize、status、venue、dateRange等参数
-    }
+    },
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+};
+
+// 添加违约记录
+export const addViolation = (violationData) => {
+  const token = localStorage.getItem('token');
+  return instance.post('/api/violations', violationData, {
+    headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
@@ -240,32 +316,56 @@ export const cancelViolation = (violationId) => {
 
 // 获取申诉列表
 export const getAppealRecords = (params = {}) => {
+  const token = localStorage.getItem('token');
   return instance.get('/api/appeals', {
     params: {
-      ...params // 支持传入page、pageSize、status、venue等参数
-    }
+      page: params.page || 1,
+      pageSize: params.pageSize || 10,
+      status: params.status || '',
+      venue: params.venue || '',
+      processor: params.processor || '',
+      keyword: params.keyword || ''
+    },
+    headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
 // 获取申诉详情
 export const getAppealDetail = (appealId) => {
-  return instance.get(`/api/appeals/${appealId}`);
+  const token = localStorage.getItem('token');
+  return instance.get(`/api/appeals/${appealId}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+};
+
+// 提交申诉
+export const submitAppeal = (appealData) => {
+  const token = localStorage.getItem('token');
+  return instance.post('/api/appeals', appealData, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
 // 处理申诉（通过或拒绝）
 export const processAppeal = (appealId, action, reason = '') => {
+  const token = localStorage.getItem('token');
   return instance.put(`/api/appeals/${appealId}/process`, {
     action, // 'approve' 或 'reject'
-    reason  // 拒绝理由（可选）
+    rejectReason: reason  // 拒绝理由（可选）
+  }, {
+    headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
 // 批量处理申诉
 export const batchProcessAppeals = (appealIds, action, reason = '') => {
+  const token = localStorage.getItem('token');
   return instance.put('/api/appeals/batch-process', {
     appealIds,
     action,
-    reason
+    rejectReason: reason
+  }, {
+    headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
@@ -273,16 +373,21 @@ export const batchProcessAppeals = (appealIds, action, reason = '') => {
 
 // 获取黑名单用户列表
 export const getBlacklistUsers = (params = {}) => {
+  const token = localStorage.getItem('token');
   return instance.get('/api/blacklist', {
     params: {
       ...params // 支持传入page、pageSize等参数
-    }
+    },
+    headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
 // 添加用户到黑名单
 export const addUserToBlacklist = (userData) => {
-  return instance.post('/api/blacklist/add', userData);
+  const token = localStorage.getItem('token');
+  return instance.post('/api/blacklist/add', userData, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
 };
 
 // 从黑名单移除用户
