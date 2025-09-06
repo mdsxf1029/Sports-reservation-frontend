@@ -725,8 +725,11 @@ const closeReportModal = () => {
 // 提交举报方法修改
 // 修改 submitReport 方法中的评论举报 API 调用部分
 const submitReport = async () => {
-  if (!selectedReportReason.value) return;
-  
+  if (!selectedReportReason.value) {
+    ElMessage.warning('请选择举报类别');
+    return;
+  }
+
   const authStatus = AuthService.checkLoginStatus();
   if (!authStatus.isValid) {
     loginPromptMessage.value = '登录状态失效，请重新登录';
@@ -734,23 +737,24 @@ const submitReport = async () => {
     showReportModal.value = false;
     return;
   }
-  
+
   try {
+    // 无论详细原因是否为空，都为选择的原因添加括号
+    const combinedReason = reportDescription.value 
+      ? `[${selectedReportReason.value}] ${reportDescription.value}`
+      : `[${selectedReportReason.value}]`;  // 详细原因空时也保留括号
+      
     const reportData = {
-      reason: selectedReportReason.value,
-      description: reportDescription.value || ''
+      user_id: authStatus.userId,
+      reportReason: combinedReason
     };
     
     if (reportedCommentId.value) {
-      // 举报评论 - 修改API调用方式
       await reportCommunityComment(reportedCommentId.value, reportData);
       ElMessage.success('评论举报已提交');
-      closeReportModal();
     } else {
-      // 原有举报帖子逻辑
       await reportCommunityPost(props.postId, reportData);
       ElMessage.success('帖子举报已提交');
-      closeReportModal();
     }
     
     showReportModal.value = false;
