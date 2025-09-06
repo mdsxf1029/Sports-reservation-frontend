@@ -213,10 +213,25 @@
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" @close="resetForm">
       <el-form :model="form" label-width="120px">
         <el-form-item label="场地名称"><el-input v-model="form.name" /></el-form-item>
+        <el-form-item label="子场地">
+          <el-input v-model="form.subname" placeholder="请输入场地的子场地(如场地1)" />
+        </el-form-item>
+        <el-form-item label="场地图片">
+          <el-upload
+            name="File" class="avatar-uploader"  action="/api/upload/venue-image"        :headers="{ 'Authorization': `Bearer ${token}` }" :show-file-list="false"
+            :on-success="handleUploadSuccess" :before-upload="beforeAvatarUpload"
+          >
+          <img v-if="form.pictureurl" :src="form.pictureurl" class="avatar" />
+          <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+          </el-upload>
+          <div class="el-upload__tip">
+          建议上传大小不超过 2MB 的图片
+          </div>
+        </el-form-item>
         <el-form-item label="场地类型">
           <el-select v-model="form.type" placeholder="请选择场地类型">
-            <el-option v-for="type in venueTypes" :key="type" :label="type" :value="type" />
-             <el-option label="其他" value="其他" />
+            <el-option v-for="type in venueTypeOptions" :key="type" :label="type" :value="type" />
+            <el-option label="其他" value="其他" />
           </el-select>
         </el-form-item>
         <el-form-item label="场地价格">
@@ -245,7 +260,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { 
   Search, Location, CircleCheck, CircleClose, Menu,
@@ -254,7 +269,9 @@ import {
 import { getVenues, createVenue, updateVenue, deleteVenue, batchUpdateVenueStatus } from '../utils/api'; 
 import '../styles/venue-management.css';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import type { UploadProps } from 'element-plus';
 import AdminHeaderNavbar from '../components/AdminHeaderNavbar.vue';
+
 
 // 筛选和搜索响应式引用
 const searchKeyword = ref('');
@@ -280,8 +297,23 @@ const dialogTitle = computed(() => dialogMode.value === 'create' ? '发布新场
 const currentVenueId = ref(null);
 const selectedVenue = ref(null);
 
+const token = localStorage.getItem('token');
+const venueTypeOptions = ref([
+  '羽毛球',
+  '乒乓球',
+  '网球',
+  '健身',
+  '足球',
+  '田径',
+  '排球',
+  '篮球',
+  '拳操'
+]);
+
 const form = ref({
   name: '',
+  subname: '',
+  pictureurl: '',
   type: '',
   price: 0,
   location: '',
@@ -300,6 +332,8 @@ const closedVenues = ref(0);
 const resetForm = () => {
   form.value = {
     name: '',
+    subname: '',
+    pictureurl: '',
     type: '',
     price: 0,
     location: '',
@@ -310,6 +344,29 @@ const resetForm = () => {
     price_unit: '小时'
   };
   currentVenueId.value = null;
+};
+
+const handleUploadSuccess: UploadProps['onSuccess'] = (response) => {
+  if (response && response.code == 0 && response.data && response.data.url) {
+    form.value.pictureurl = response.data.url;
+    ElMessage.success('图片上传成功！');
+  } else {
+    ElMessage.error(response.msg || '图片上传失败或返回格式不正确');
+  }
+};
+
+// 上传前校验
+const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
+  const isJPGorPNG = rawFile.type === 'image/jpeg' || rawFile.type === 'image/png';
+  const isLt2M = rawFile.size / 1024 / 1024 < 2;
+
+  if (!isJPGorPNG) {
+    ElMessage.error('上传的图片只能是 JPG/PNG 格式!');
+  }
+  if (!isLt2M) {
+    ElMessage.error('上传图片大小不能超过 2MB!');
+  }
+  return isJPGorPNG && isLt2M;
 };
 
 // 获取场地数据
@@ -379,17 +436,36 @@ const handleCreate = () => {
 };
 
 const handleEdit = (row) => {
-  resetForm();
+  console.log('点击“修改”时，从表格获取的原始数据(row):', row); 
+  resetForm(); 
   dialogMode.value = 'edit';
-  form.value = JSON.parse(JSON.stringify(row));
   currentVenueId.value = row.id;
+  form.value = { ...form.value, ...JSON.parse(JSON.stringify(row)) };
+
   dialogVisible.value = true;
 };
 
 const handleSubmit = () => {
-  if (!form.value.name || !form.value.type) {
-      ElMessage.warning('场地名称和类型不能为空');
-      return;
+  const requiredFields = {
+    name: '场地名称',
+    subname: '子场地',
+    pictureurl: '场地图片',
+    type: '场地类型',
+    price: '场地价格',
+    location: '位置',
+    openingHours: '开放时间',
+    bookingHours: '预约时间段',
+    maxOccupancy: '最大容量',
+  };
+
+  for (const key in requiredFields) {
+    if (Object.prototype.hasOwnProperty.call(requiredFields, key)) {
+      const value = form.value[key];
+      if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) {
+        ElMessage.warning(`${requiredFields[key]}不能为空，请填写完整`);
+        return; 
+      }
+    }
   }
   
   // 确保价格和容量是数字
@@ -664,5 +740,38 @@ const handleCurrentChange = (newPage) => {
 
 @media (max-width: 768px) {
   .detail-grid { grid-template-columns: 1fr; }
+}
+
+.avatar-uploader .avatar {
+  width: 120px;
+  height: 120px;
+  display: block;
+}
+
+.avatar-uploader .el-upload {
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: var(--el-transition-duration-fast);
+}
+
+.avatar-uploader .el-upload:hover {
+  border-color: var(--el-color-primary);
+}
+
+.el-icon.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 120px;
+  height: 120px;
+  text-align: center;
+}
+
+.el-upload__tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
 }
 </style>

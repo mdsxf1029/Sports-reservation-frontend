@@ -544,3 +544,26 @@ export const processCommentReport = (reportId, userId, data) => {
     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
   });
 };
+
+export const deletePost = (postId) => {
+  return instance.delete(`/api/post/${postId}`, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
+};
+
+export const deleteComment = (commentId) => {
+  return instance.delete(`/api/comment/${commentId}`, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+  });
+};
+
+export function uploadImage(formData) {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return instance.post('/api/upload/venue-image', formData, {
+    headers: headers
+  });
+}

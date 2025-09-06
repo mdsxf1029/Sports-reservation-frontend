@@ -209,6 +209,8 @@ import {
   processPostReport,
   getCommentReports,
   processCommentReport,
+  deletePost,
+  deleteComment,
 } from '../utils/api.js'; 
 
 // --- 举报管理状态 ---
@@ -324,6 +326,24 @@ const handleProcessReport = async (result, report) => {
     const res = await processApi(report.reportId, adminId, data);
     if (res.status === 200) {
       ElMessage.success(res.data.message || `${actionText}操作成功`);
+      if (result === 'accepted') {
+        try {
+          if (report.type === '帖子') {
+            const deleteRes = await deletePost(report.reportedPost.postId);
+            if (deleteRes.status === 200) {
+              ElMessage.success('违规帖子已成功删除');
+            }
+          } else if (report.type === '评论') {
+            const deleteRes = await deleteComment(report.reportedComment.commentId);
+            if (deleteRes.status === 200) {
+              ElMessage.success('违规评论已成功删除');
+            }
+          }
+        } catch (deleteError) {
+          console.error("删除内容失败:", deleteError);
+          ElMessage.error('删除被举报内容时发生错误');
+        }
+      }
       await fetchAllReports();
     } else {
       ElMessage.error(res.data.message || '操作失败');
