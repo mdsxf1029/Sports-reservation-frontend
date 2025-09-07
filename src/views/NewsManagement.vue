@@ -236,8 +236,7 @@ import {
 } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
-// TODO: 替换为真实 API
-// import { getNewsList, createNews, updateNews, deleteNews, publishNews } from '../utils/api';
+import { getNewsList, getNewsByStatus, createNews, updateNews, deleteNews, uploadNewsCover } from '../utils/api';
 
 const loading = ref(true);
 const tableRef = ref(null);
@@ -307,10 +306,31 @@ const filteredNews = computed(() => {
 const fetchNewsData = async () => {
   loading.value = true;
   try {
-    // const response = await getNewsList();
-    // allNews.value = response?.data?.data ?? [];
-    allNews.value = [];
+    const response = await getNewsList({
+      page: 1,
+      pageSize: 100 // 获取更多数据用于前端筛选
+    });
+    
+    if (response && response.data) {
+      // 后端返回的数据结构: { page, pageSize, totalCount, totalPages, list }
+      allNews.value = response.data.list || [];
+      
+      // 转换数据格式以匹配前端组件
+      allNews.value = allNews.value.map(news => ({
+        id: news.newsId,
+        title: news.newsTitle,
+        source: news.newsSource || '系统管理员', // 使用后端来源字段
+        content: news.newsContent,
+        coverUrl: news.coverUrl || '',
+        publishTime: news.newsTime,
+        status: news.newsStatus,
+        publishedBy: news.publishedBy || localStorage.getItem('userName') || '当前管理员'
+      }));
+    } else {
+      allNews.value = [];
+    }
   } catch (e) {
+    console.error('获取新闻失败:', e);
     ElMessage.error('获取新闻失败');
     allNews.value = [];
   } finally {
@@ -346,15 +366,34 @@ const handleEdit = (row) => {
 const handleSubmit = async () => {
   try {
     if (dialogMode.value === 'create') {
-      // await createNews(form.value)
-      ElMessage.success('已创建（模拟）');
+      const newsData = {
+        newsTitle: form.value.title,
+        newsContent: form.value.content,
+        newsStatus: form.value.status,
+        coverUrl: form.value.coverUrl || '',
+        newsSource: form.value.source || '系统管理员',
+        publishedBy: form.value.publishedBy || localStorage.getItem('userName') || '当前管理员'
+      };
+      
+      await createNews(newsData);
+      ElMessage.success('新闻创建成功');
     } else {
-      // await updateNews(currentNewsId.value, form.value)
-      ElMessage.success('已保存（模拟）');
+      const newsData = {
+        newsTitle: form.value.title,
+        newsContent: form.value.content,
+        newsStatus: form.value.status,
+        coverUrl: form.value.coverUrl || '',
+        newsSource: form.value.source || '系统管理员',
+        publishedBy: form.value.publishedBy || localStorage.getItem('userName') || '当前管理员'
+      };
+      
+      await updateNews(currentNewsId.value, newsData);
+      ElMessage.success('新闻更新成功');
     }
     dialogVisible.value = false;
     await fetchNewsData();
   } catch (e) {
+    console.error('操作失败:', e);
     ElMessage.error('操作失败');
   }
 };
@@ -366,10 +405,11 @@ const handleDelete = (row) => {
     type: 'warning',
   }).then(async () => {
     try {
-      // await deleteNews(row.id)
-      ElMessage.success('已删除（模拟）');
+      await deleteNews(row.id);
+      ElMessage.success('新闻删除成功');
       await fetchNewsData();
     } catch (e) {
+      console.error('删除失败:', e);
       ElMessage.error('删除失败');
     }
   });
@@ -377,26 +417,47 @@ const handleDelete = (row) => {
 
 const handlePublish = async (row) => {
   try {
-    // await publishNews(row.id)
-    ElMessage.success('已发布（模拟）');
+    const newsData = {
+      newsTitle: row.title,
+      newsContent: row.content,
+      newsStatus: 'published',
+      coverUrl: row.coverUrl || ''
+    };
+    
+    await updateNews(row.id, newsData);
+    ElMessage.success('新闻发布成功');
     await fetchNewsData();
   } catch (e) {
+    console.error('发布失败:', e);
     ElMessage.error('发布失败');
   }
 };
 
-// 处理封面图本地上传（允许为空）：转换为 dataURL 直接预览或上传到你的服务器
-const onCoverFileChange = (file) => {
+// 处理封面图本地上传
+const onCoverFileChange = async (file) => {
   const raw = file.raw || file;
   if (!raw) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    // 这里将本地文件转换为 base64 预览。若后端需要文件上传，请在此改为表单上传并设置返回的 URL。
-    form.value.coverUrl = reader.result;
-    ElMessage.success('已选择图片');
-  };
-  reader.onerror = () => ElMessage.error('读取图片失败');
-  reader.readAsDataURL(raw);
+  
+  try {
+    // 上传到后端服务器
+    const response = await uploadNewsCover(raw);
+    if (response && response.data && response.data.coverUrl) {
+      form.value.coverUrl = response.data.coverUrl;
+      ElMessage.success('图片上传成功');
+    } else {
+      throw new Error('上传响应格式错误');
+    }
+  } catch (error) {
+    console.error('图片上传失败:', error);
+    ElMessage.error('图片上传失败，将使用本地预览');
+    
+    // 如果上传失败，使用本地预览作为备选方案
+    const reader = new FileReader();
+    reader.onload = () => {
+      form.value.coverUrl = reader.result;
+    };
+    reader.readAsDataURL(raw);
+  }
 };
 
 const onSelectionChange = (rows) => {

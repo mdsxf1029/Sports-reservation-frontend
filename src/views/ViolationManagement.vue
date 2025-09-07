@@ -101,13 +101,6 @@
             <el-table-column prop="violationTime" label="违约时间" width="180" />
             <el-table-column prop="venue" label="预约场馆" width="120" />
             <el-table-column prop="timeSlot" label="预约时间段" width="150" />
-            <el-table-column prop="violationType" label="违约类型" width="120">
-              <template #default="scope">
-                <el-tag :type="getViolationTypeTag(scope.row.violationType)" size="small">
-                  {{ getViolationTypeText(scope.row.violationType) }}
-                </el-tag>
-              </template>
-            </el-table-column>
             <el-table-column prop="status" label="处理状态" width="120">
               <template #default="scope">
                 <el-tag :type="getCombinedStatusType(scope.row)" size="small">
@@ -180,14 +173,6 @@
             <div class="detail-item">
               <span class="label">预约时间段：</span>
               <span class="value">{{ selectedViolation.timeSlot }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">违约类型：</span>
-              <span class="value">
-                <el-tag :type="getViolationTypeTag(selectedViolation.violationType)" size="small">
-                  {{ getViolationTypeText(selectedViolation.violationType) }}
-                </el-tag>
-              </span>
             </div>
           </div>
         </div>
@@ -349,8 +334,26 @@ export default {
           keyword: this.searchKeyword
         });
         
-        if (response && response.data && response.data.code === 200) {
+        if (response && response.data && response.data.success) {
+          // 后端返回的数据结构: { success: true, data: [...] }
           this.violations = response.data.data || [];
+          
+          // 转换数据格式以匹配前端组件
+          this.violations = this.violations.map(violation => ({
+            id: violation.id,
+            userName: violation.userName,
+            userId: violation.userId.toString(),
+            violationTime: violation.violationDate + ' ' + violation.timeSlot.split('-')[0] + ':00',
+            venue: violation.venue,
+            timeSlot: violation.timeSlot,
+            status: 'confirmed',
+            appealStatus: violation.appealStatus || 'none', // 使用后端申诉状态
+            appealTime: violation.appealTime || '',
+            appealReason: violation.appealReason || '',
+            rejectReason: violation.rejectReason || '',
+            userViolationCount: 1, // 后端暂时没有统计，使用默认值
+            lastViolationTime: ''
+          }));
         } else {
           // 如果API未实现，使用模拟数据
           this.violations = [
@@ -361,7 +364,6 @@ export default {
               violationTime: "2024-01-15 08:00",
               venue: "乒乓球馆",
               timeSlot: "8:00-9:00",
-              violationType: "no_checkin",
               status: "confirmed",
               appealStatus: "pending",
               appealTime: "2024-01-15 09:30",
@@ -377,7 +379,6 @@ export default {
               violationTime: "2024-01-16 14:00",
               venue: "羽毛球馆",
               timeSlot: "14:00-15:00",
-              violationType: "late_checkin",
               status: "confirmed",
               appealStatus: "none",
               appealTime: "",
@@ -393,7 +394,6 @@ export default {
               violationTime: "2024-01-17 16:00",
               venue: "篮球馆",
               timeSlot: "16:00-17:00",
-              violationType: "no_checkin",
               status: "confirmed",
               appealStatus: "approved",
               appealTime: "2024-01-17 17:00",
@@ -409,7 +409,6 @@ export default {
               violationTime: "2024-01-18 10:00",
               venue: "乒乓球馆",
               timeSlot: "10:00-11:00",
-              violationType: "no_checkin",
               status: "confirmed",
               appealStatus: "rejected",
               appealTime: "2024-01-18 11:00",
@@ -425,7 +424,6 @@ export default {
               violationTime: "2024-01-19 09:00",
               venue: "网球场",
               timeSlot: "9:00-10:00",
-              violationType: "late_checkin",
               status: "confirmed",
               appealStatus: "none",
               appealTime: "",
@@ -441,7 +439,6 @@ export default {
               violationTime: "2024-01-20 15:00",
               venue: "攀岩馆",
               timeSlot: "15:00-16:00",
-              violationType: "no_checkin",
               status: "confirmed",
               appealStatus: "pending",
               appealTime: "2024-01-20 16:00",
@@ -462,23 +459,6 @@ export default {
       }
     },
 
-    // 违约类型相关方法
-    getViolationTypeText(type) {
-      const typeMap = {
-        'no_checkin': '未签到',
-        'late_checkin': '迟到签到',
-        'early_leave': '提前离场'
-      };
-      return typeMap[type] || '未知';
-    },
-    getViolationTypeTag(type) {
-      const tagMap = {
-        'no_checkin': 'danger',
-        'late_checkin': 'warning',
-        'early_leave': 'info'
-      };
-      return tagMap[type] || 'info';
-    },
     
     // 综合状态相关方法
     getCombinedStatusText(violation) {

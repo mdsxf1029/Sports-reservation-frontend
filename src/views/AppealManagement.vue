@@ -503,6 +503,7 @@ import {
 import { 
   getAppealRecords, 
   getAppealDetail, 
+  submitAppeal,
   processAppeal, 
   batchProcessAppeals,
   getBlacklistUsers,
@@ -751,8 +752,20 @@ export default {
           pageSize: this.blacklistPageSize
         });
         
-        if (response && response.data && response.data.code === 200) {
+        if (response && response.data && response.data.success) {
+          // 后端返回的数据结构: { success: true, data: [...] }
           this.blacklistUsers = response.data.data || [];
+          
+          // 转换数据格式以匹配前端组件
+          this.blacklistUsers = this.blacklistUsers.map(user => ({
+            id: user.userId,
+            userName: `用户${user.userId}`, // 后端没有用户名，使用默认格式
+            userId: user.userId.toString(),
+            userAvatar: '',
+            violationCount: 1, // 后端暂时没有违约次数统计，使用默认值
+            blacklistTime: user.beginTime,
+            blacklistReason: user.bannedReason || '违约次数过多'
+          }));
         } else {
           // 如果API未实现，使用模拟数据
           this.blacklistUsers = [
@@ -996,15 +1009,21 @@ export default {
     },
     
     async confirmAddBlacklist() {
-      if (!this.addBlacklistForm.userName || !this.addBlacklistForm.userId || !this.addBlacklistForm.blacklistReason) {
-        ElMessage.warning('请填写完整信息');
+      if (!this.addBlacklistForm.userId || !this.addBlacklistForm.blacklistReason) {
+        ElMessage.warning('请填写用户ID和加入原因');
         return;
       }
       
       try {
-        const response = await addUserToBlacklist(this.addBlacklistForm);
+        const blacklistData = {
+          id: parseInt(this.addBlacklistForm.userId),
+          endTime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30天后
+          bannedReason: this.addBlacklistForm.blacklistReason
+        };
         
-        if (response && response.data && response.data.code === 200) {
+        const response = await addUserToBlacklist(blacklistData);
+        
+        if (response && response.data && response.data.success) {
           this.addBlacklistDialogVisible = false;
           ElMessage.success('已成功加入黑名单');
           await this.fetchBlacklistData();
