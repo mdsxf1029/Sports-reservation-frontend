@@ -13,8 +13,6 @@
         </div>
     </el-dialog>
 
-
-
     <div class="venue-list-page">
         <!-- 筛选区域 -->
         <div class="filter-bar">
@@ -47,6 +45,8 @@
                     </el-button>
                 </div>
             </div>
+
+
         </div>
 
         <!-- 搜索框 -->
@@ -64,18 +64,30 @@
         <div class="venue-card-list">
             <div v-for="venue in venues"
                  :key="venue.id"
-                 class="venue-card">
+                 class="venue-card"
+                 :class="{ 'closed': venue.status !== '开放' }">
+                <!-- 状态标签 -->
+                <div class="status-tag" :class="venue.status === '开放' ? 'status-open' : 'status-closed'">
+                    {{ venue.status === '开放' ? '开放' : '未开放' }}
+                </div>
+                <!-- 未开放场馆的遮罩层 -->
+                <div v-if="venue.status !== '开放'" class="closed-overlay"></div>
+
                 <img :src="venue.image" class="venue-img" />
                 <div class="venue-info">
                     <h4>{{ venue.name }}</h4>
                     <p class="ellipsis">地址：{{ venue.address }}</p>
                     <p>时间：{{ venue.hours }}</p>
                 </div>
-                <el-button class="reserve-btn" size="small" @click="goToDetail(venue.id)">预约</el-button>
+                <el-button class="reserve-btn"
+                           size="small"
+                           :disabled="venue.status !== '开放'"
+                           @click="goToDetail(venue.id)">
+                    {{ venue.status === '开放' ? '预约' : '暂停预约' }}
+                </el-button>
             </div>
         </div>
     </div>
-
 </template>
 
 <script setup>
@@ -86,13 +98,19 @@
     import axios from 'axios'
     import { AuthService } from '@/utils/auth.js' // 路径根据你项目调整
 
-
     const router = useRouter()
 
-    const campuses = ['全部', '四平校区', '彰武校区', '嘉定校区', '沪西校区', '南校区']
+    const campuses = ['全部', '四平校区', '嘉定校区']
     const types = ['全部', '羽毛球', '乒乓球', '网球', '健身', '足球', '田径', '排球', '篮球', '拳操']
+    const statusOptions = [
+        { value: 'all', label: '全部' },
+        { value: 'open', label: '开放' },
+        { value: 'closed', label: '未开放' }
+    ]
+
     const selectedCampus = ref('全部')
     const selectedType = ref('羽毛球')
+    const selectedStatus = ref('all') // 新增状态筛选
     const searchQuery = ref('')
     const venues = ref([])
     const isLoggedIn = ref(false)
@@ -103,7 +121,6 @@
         router.push('/login')
     }
 
-
     function goBack() {
         router.back()
     }
@@ -111,12 +128,11 @@
     function goToDetail(id) {
         const result = AuthService.checkLoginStatus()
         if (!result.isValid) {
-            showLoginDialog.value = true // 用你自己的 el-dialog 弹窗
+            showLoginDialog.value = true
             return
         }
         router.push(`/venue/${id}`)
     }
-
 
     function doSearch() {
         loadVenues()
@@ -124,15 +140,52 @@
 
     async function loadVenues() {
         try {
-            const res = await axios.get('http://47.83.188.207:5101/api/venues/venuelist', {
+            // 1. 获取场馆列表
+            const venueListRes = await axios.get('http://47.83.188.207:5101/api/venues/venuelist', {
                 params: {
                     campus: selectedCampus.value !== '全部' ? selectedCampus.value : undefined,
                     type: selectedType.value !== '全部' ? selectedType.value : undefined,
                     search: searchQuery.value || undefined
                 }
             })
-            if (res.data.code === 200) {
-                venues.value = res.data.data
+
+            console.log('场馆列表响应:', venueListRes.data) // 调试日志
+
+            if (venueListRes.data.code === 200) {
+                const venueList = venueListRes.data.data
+                console.log('场馆列表数据:', venueList) // 调试日志
+
+                // 2. 获取场馆状态
+                try {
+                    const statusRes = await axios.get('http://47.83.188.207:5101/api/venues/get')
+                    console.log('状态响应:', statusRes.data) // 调试日志
+
+                    if (statusRes.data.code === 200) {
+                        const statusData = statusRes.data.data.list
+                        console.log('状态数据:', statusData) // 调试日志
+
+                        // 3. 合并数据，给场馆列表添加状态信息
+                        venues.value = venueList.map(venue => {
+                            const statusInfo = statusData.find(status => status.id === venue.id)
+                            return {
+                                ...venue,
+                                status: statusInfo ? statusInfo.status : 'closed' // 默认为未开放
+                            }
+                        })
+                    } else {
+                        // 如果获取状态失败，所有场馆默认为未开放
+                        venues.value = venueList.map(venue => ({
+                            ...venue,
+                            status: 'closed'
+                        }))
+                    }
+                } catch (statusErr) {
+                    console.error('获取状态失败，使用默认状态:', statusErr)
+                    // 状态接口失败时，直接使用场馆列表数据
+                    venues.value = venueList
+                }
+            } else {
+                console.error('场馆列表接口返回错误:', venueListRes.data)
             }
         } catch (err) {
             console.error('加载场馆失败', err)
@@ -145,7 +198,7 @@
 
 <style scoped>
     .venue-list-page {
-        padding: 20px 40px 40px 80px; /* 顶部预留导航栏高度 + 左侧留白 */
+        padding: 20px 40px 40px 80px;
     }
 
     .back-icon {
@@ -185,10 +238,12 @@
         flex-wrap: wrap;
         gap: 16px;
     }
+
     :global(.login-dialog) {
         border-radius: 24px !important;
-        overflow: hidden; /* 防止标题栏溢出 */
+        overflow: hidden;
     }
+
     .login-content {
         display: flex;
         flex-direction: column;
@@ -196,14 +251,15 @@
         justify-content: center;
         height: 100%;
     }
+
     .login-img {
         width: 120px;
-        margin-bottom: 50px; /* 图片和文字间隔 */
+        margin-bottom: 50px;
     }
 
     .login-text {
         font-size: 16px;
-        margin-bottom: 50px; /* 文字和按钮间隔 */
+        margin-bottom: 50px;
     }
 
     .login-btn {
@@ -211,7 +267,6 @@
         padding: 8px 24px;
     }
 
-    /* 筛选按钮样式 */
     ::v-deep(.filter-btn) {
         border-radius: 20px;
         padding: 6px 18px;
@@ -233,7 +288,6 @@
         color: #0070C0;
     }
 
-    /* 搜索区域 */
     .search-section {
         margin: 24px 0;
         max-width: 500px;
@@ -253,7 +307,6 @@
         border: none;
     }
 
-    /* 场馆卡片 */
     .venue-card-list {
         display: flex;
         flex-wrap: wrap;
@@ -268,6 +321,46 @@
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
         position: relative;
         padding-bottom: 50px;
+        transition: all 0.3s ease;
+    }
+
+        /* 未开放场馆样式 */
+        .venue-card.closed {
+            opacity: 0.7;
+        }
+
+    .closed-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.1);
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    /* 状态标签 */
+    .status-tag {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 2;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .status-open {
+        background-color: #67c23a;
+        color: white;
+    }
+
+    .status-closed {
+        background-color: #f56c6c;
+        color: white;
     }
 
     .venue-img {
@@ -295,5 +388,19 @@
         background-color: #0070C0;
         color: white;
         border: none;
+        z-index: 2;
     }
+
+        /* 禁用状态的按钮样式 */
+        .reserve-btn:disabled {
+            background-color: #c0c4cc;
+            color: #fff;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+            .reserve-btn:disabled:hover {
+                background-color: #c0c4cc;
+                color: #fff;
+            }
 </style>
