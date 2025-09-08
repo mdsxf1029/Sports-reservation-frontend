@@ -16,7 +16,7 @@
                     <p><strong>📍 地址：</strong>{{ venue.address }}</p>
                     <p><strong>⏰ 开放时间：</strong>{{ venue.hours }}</p>
                     <p><strong>🏟️ 场地设施：</strong>{{ venue.facilities }}</p>
-                    <p><strong>💰 收费：</strong>{{ venue.fees }}</p>
+                    <p><strong>💰 收费：</strong>{{ venue.fees }}元/次</p>
                     <p><strong>📋 使用须知：</strong>每日2次，每次1小时</p>
                 </div>
             </div>
