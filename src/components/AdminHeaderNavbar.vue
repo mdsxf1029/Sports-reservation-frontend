@@ -1,3 +1,4 @@
+
 <template>
   <el-menu :default-active='activeIndex' class='admin-header-navbar' mode='horizontal' :ellipsis='false'>
     <el-container>
@@ -32,7 +33,7 @@
         :class="{ 'is-active': $route.path === '/post' }"
       >
         <el-icon><Document /></el-icon>
-        <span>帖子管理</span>
+        <span>举报管理</span>
       </el-menu-item>
       
       <el-menu-item 
@@ -42,6 +43,15 @@
       >
         <el-icon><ChatDotRound /></el-icon>
         <span>申诉管理</span>
+      </el-menu-item>
+      
+      <el-menu-item 
+        index="/news-management" 
+        @click="$router.push('/news-management')"
+        :class="{ 'is-active': $route.path === '/news-management' }"
+      >
+        <el-icon><Document /></el-icon>
+        <span>新闻管理</span>
       </el-menu-item>
     </div>
 
@@ -90,20 +100,20 @@
 
       <el-dropdown size="large"
                    style='margin-right: 20px; margin-bottom: 2px; outline: none'>
-        <el-avatar :size="40" :src="userAvatar">
-          <el-icon v-if="!userAvatar">
+        <el-avatar :size="40" :src="userAvatar && !avatarLoadError ? userAvatar : undefined" @error="handleAvatarError">
+          <el-icon v-if="!userAvatar || avatarLoadError">
             <Avatar />
           </el-icon>
         </el-avatar>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item @click="$router.push('/admin/profile')">
+            <el-dropdown-item @click="$router.push('/profile')">
               <el-icon><User /></el-icon>
-              管理员信息
+              个人空间
             </el-dropdown-item>
-            <el-dropdown-item @click="$router.push('/admin/account')">
-              <el-icon><Key /></el-icon>
-              账户设置
+            <el-dropdown-item @click="$router.push('/home')">
+              <el-icon><User /></el-icon>
+              返回系统
             </el-dropdown-item>
             <el-dropdown-item divided @click="logout">
               <el-icon><SwitchButton /></el-icon>
@@ -140,6 +150,13 @@ const router = useRouter()
 const route = useRoute()
 const isDarkMode = ref(false)
 const userAvatar = ref('') // 用户头像URL
+const avatarLoadError = ref(false) // 头像加载失败标记
+
+// 处理头像加载失败
+const handleAvatarError = () => {
+  console.log('头像加载失败，显示默认图标')
+  avatarLoadError.value = true
+}
 
 // 计算当前激活的菜单项
 const activeIndex = computed(() => {
@@ -156,28 +173,36 @@ const loadUserAvatar = async () => {
       // 首先检查是否已经有缓存的头像
       const cachedAvatar = localStorage.getItem('userAvatar')
       if (cachedAvatar) {
+        console.log('使用缓存的头像:', cachedAvatar)
         userAvatar.value = cachedAvatar
+        avatarLoadError.value = false // 重置错误状态
         return
       }
       
       // 如果没有缓存，通过API获取用户信息
-      const response = await getUserInfo(userId)
+      const res = await getUserInfo(userId)
+      console.log('获取用户信息:', res)
+      const response = res.data
       if (response && response.code === 0 && response.data) {
         const avatarUrl = response.data.avatarUrl
         if (avatarUrl) {
           // 存储到localStorage并显示
           localStorage.setItem('userAvatar', avatarUrl)
           userAvatar.value = avatarUrl
+          avatarLoadError.value = false // 重置错误状态
         } else {
           userAvatar.value = '' // 没有头像则显示默认图标
+          avatarLoadError.value = false
         }
       }
     } catch (error) {
       console.error('获取用户头像失败:', error)
       userAvatar.value = '' // 出错时显示默认图标
+      avatarLoadError.value = false
     }
   } else {
     userAvatar.value = '' // 未登录时显示默认图标
+    avatarLoadError.value = false
   }
 }
 
@@ -192,6 +217,7 @@ const logout = () => {
   
   // 清空头像显示
   userAvatar.value = ''
+  avatarLoadError.value = false
   
   // 跳转到登录页面
   router.push('/login')
@@ -209,30 +235,40 @@ watch(() => route.path, () => {
   loadUserAvatar()
 })
 
-document.addEventListener('DOMContentLoaded', () => {
-  const htmlElement = document.documentElement
+// 深色模式相关逻辑
+const applyDarkMode = () => {
   const savedTheme = localStorage.getItem('theme')
   if (savedTheme === 'dark') {
     isDarkMode.value = true
-    htmlElement.classList.add('dark')
+    // 为导航栏添加深色模式类
+    const navbar = document.querySelector('.admin-header-navbar')
+    if (navbar) {
+      navbar.classList.add('dark')
+    }
   } else {
-    htmlElement.classList.remove('dark')
-  }
-})
-
-const toggleDarkMode = () => {
-  const htmlElement = document.documentElement
-  localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light')
-  if (isDarkMode.value) {
-    htmlElement.classList.add('dark')
-  } else {
-    htmlElement.classList.remove('dark')
+    isDarkMode.value = false
+    // 移除导航栏的深色模式类
+    const navbar = document.querySelector('.admin-header-navbar')
+    if (navbar) {
+      navbar.classList.remove('dark')
+    }
   }
 }
+
+const toggleDarkMode = () => {
+  localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light')
+  applyDarkMode()
+}
+
+onMounted(() => {
+  loadUserAvatar() // 组件挂载时加载用户头像
+  applyDarkMode() // 应用深色模式
+})
 </script>
 
 <style scoped>
-:global(:root) {
+/* 使用CSS变量，但限制在组件范围内 */
+.admin-header-navbar {
   --header-background-initial-color: rgba(255, 255, 255, 1);
   --header-background-transparent-color: rgba(255, 255, 255, 0.8);
   --header-shadow-color-1: rgba(0, 0, 0, 0.1);
@@ -240,7 +276,8 @@ const toggleDarkMode = () => {
   --header-text-color: #000000;
 }
 
-:global(.dark) {
+/* 深色模式变量 */
+.admin-header-navbar.dark {
   --header-background-initial-color: rgba(0, 0, 0, 0.9);
   --header-background-transparent-color: rgba(0, 0, 0, 0.8);
   --header-shadow-color-1: rgba(255, 255, 255, 0.1);
@@ -248,7 +285,7 @@ const toggleDarkMode = () => {
   --header-text-color: #ffffff;
 }
 
-/* 让 header 里的所有文字都用变量色 */
+/* 让 header 里的所有文字都用变量色，限制在组件范围内 */
 .admin-header-navbar,
 .admin-header-navbar h1,
 .admin-header-navbar .navbar-item,
@@ -274,9 +311,8 @@ const toggleDarkMode = () => {
   padding: 0 20px;
 }
 
-
-
-h1 {
+/* 限制h1样式在组件范围内 */
+.admin-header-navbar h1 {
   font-size: 24px;
   margin: 0 20px 0 0;
 }

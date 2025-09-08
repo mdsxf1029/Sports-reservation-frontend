@@ -10,7 +10,6 @@
       </el-button>
       <div class="title">{{ venueName }}</div>
     </header>
-    
     <!-- 主体区域 -->
     <main class="content-wrapper">
       <!-- 中间主要内容 -->
@@ -23,17 +22,47 @@
           </div>
         </div>
         <!-- 表格区域 -->
-        <div class="court-grid">
-          <div class="header-row">
-            <div class="cell time-header"></div>
-            <div class="cell" v-for="court in courts" :key="court">{{ court }}</div>
-          </div>
-          <div v-for="time in timeSlots" :key="time" class="row">
-            <div class="cell time-cell">{{ time }}</div>
-            <div v-for="court in courts" :key="court + time" :class="['cell', getStatusClass(court, time)]"
-              @click="handleClick(court, time)">🏸</div>
-          </div>
+        <!-- 表格区域 -->
+        <div class="court-grid" :style="{ gridTemplateColumns: `120px repeat(${courts.length || 3}, 1fr)` }">
+          <!-- 加载中骨架屏 -->
+          <template v-if="isLoading">
+            <!-- 表头骨架 -->
+            <div class="header-row">
+              <div class="cell time-header"></div>
+              <div class="cell" v-for="n in 3" :key="'skeleton-head-' + n">
+                <el-skeleton :rows="1" animated style="width: 80px" />
+              </div>
+            </div>
+
+            <!-- 时间行骨架 -->
+            <div v-for="n in 5" :key="'skeleton-row-' + n" class="row">
+              <div class="cell time-cell">
+                <el-skeleton :rows="1" animated style="width: 60px" />
+              </div>
+              <div v-for="m in 3" :key="'skeleton-cell-' + n + '-' + m" class="cell">
+                <el-skeleton :rows="1" animated style="width: 30px" />
+              </div>
+            </div>
+          </template>
+
+          <!-- 真正的数据表格 -->
+          <template v-else>
+            <!-- 表头 -->
+            <div class="header-row">
+              <div class="cell time-header"></div>
+              <div class="cell" v-for="court in courts" :key="court.id">{{ court.name }}</div>
+            </div>
+            <!-- 时间行 -->
+            <div v-for="time in filteredTimeSlots" :key="time.id" class="row">
+              <div class="cell time-cell">{{ time.label }}</div>
+              <div v-for="court in courts" :key="court.id + '-' + time.id"
+                :class="['cell', getStatusClass(court.id, time.id)]" @click="handleClick(court.id, time.id)">
+                🕭
+              </div>
+            </div>
+          </template>
         </div>
+
         <!-- 底部栏 -->
         <footer class="footer">
           <div class="summary">
@@ -52,7 +81,6 @@
           <p style="text-align: center;font-size: 16px;">页面将在 {{ countdown }} 秒后跳转订单详情页</p>
         </el-dialog>
       </section>
-
       <!-- 右侧图例 -->
       <aside class="legend">
         <div class="legend-item"><span class="color available"></span>未被选定</div>
@@ -64,7 +92,11 @@
 </template>
 <script setup>
 
+const lockedCache = new Map()
+window.lockedCache = lockedCache
+
 //console.log('route.query.date =', route.query.date)
+
 import { ref } from 'vue'
 import { computed } from 'vue'
 import { watch } from 'vue'
@@ -72,21 +104,42 @@ import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, SuccessFilled } from '@element-plus/icons-vue'
+import { AuthService } from '@/utils/auth.js'
+import axios from 'axios'
+
+const isLoading = ref(true)
 const router = useRouter()
 const route = useRoute()
 // 拿到前一页传来的球场名称，没有时显示默认
 const venueName = route.query.venueName || '未知球类场馆'
-
 // 球场和时间段数据
-//const courts = ref([])         
+const courts = ref([])
+const timeSlots = ref([])
 // 测试：场地列表
-const courts = ref(['场地1', '场地2', '场地3', '场地4', '场地5', '场地6', '小场地1', '小场地2'])
-const timeSlots = ['09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00', '19:00-20:00', '20:00-21:00']
+//const courts = ref(['场地1', '场地2', '场地3', '场地4', '场地5', '场地6', '小场地1', '小场地2'])
+//const timeSlots = ['09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00', '19:00-20:00', '20:00-21:00']
 const weekLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 // 获取今天的日期
 const today = new Date()
 // 生成从今天开始的连续 7 天（包含今天）
-
+const selectedDate = ref(0)
+const filteredTimeSlots = computed(() => {
+  return timeSlots.value
+    .filter(slot => {
+      const slotDate = slot.begin_time.split(' ')[0].replace(/\//g, '-') // 例如 "2025-08-27"
+      // 这里用 weekDates[selectedDate.value].fullDate 来比对
+      return slotDate === weekDates[selectedDate.value].fullDate
+    })
+    .map(slot => {
+      const begin = slot.begin_time.split(' ')[1].slice(0, 5)
+      const end = slot.end_time.split(' ')[1].slice(0, 5)
+      return {
+        id: slot.time_slot_id,
+        label: `${begin} - ${end}`,
+        ...slot
+      }
+    })
+})
 const weekDates = Array.from({ length: 7 }, (_, i) => {
   const date = new Date()
   date.setDate(today.getDate() + i)
@@ -99,20 +152,23 @@ const weekDates = Array.from({ length: 7 }, (_, i) => {
     fullDate: `${yyyy}-${mm}-${dd}`   // 用于传后端
   }
 })
-
 const fullDate = computed(() => weekDates[selectedDate.value].fullDate)
 const lockedCells = ref(new Set())
-const selectedDate = ref(1)
+//const selectedDate = ref(1)
 const selectedCells = ref(new Set())
 const dailyLimit = ref(2)
 const remainingHours = ref(2)
 const pricePerSlot = 20  // 测试每个时间段价格 ¥20
 const totalPrice = ref(0)
 const showPopup = ref(false)
-const countdown = ref(5)
+const countdown = ref(3)
 let timer = null
 let orderId = null
-const hasRouteDateHandled = ref(false)
+
+window.lockedCache = lockedCache
+window.lockedCells = lockedCells
+window.fullDate = fullDate
+window.loadLockedCells = loadLockedCells
 
 async function selectDate(index) {
   selectedDate.value = index
@@ -120,8 +176,7 @@ async function selectDate(index) {
   totalPrice.value = 0
   //await loadLockedCells()
 }
-
-
+/*
 // 模拟接口拦截
 const MOCK_MODE = true
 if (MOCK_MODE) {
@@ -167,47 +222,129 @@ if (MOCK_MODE) {
     return new Response(JSON.stringify({ success: false, message: 'Unknown API' }))
   }
 }
+  */
 //用户限制
-async function loadUserLimitStatus() {
+// 用户限制
+async function loadUserLimitStatus(useMock = true) {
+  if (useMock) {
+    // 写死测试数据
+    dailyLimit.value = 2
+    remainingHours.value = 2
+    return
+  }
+
+  // 调接口
   try {
-    const res = await fetch('/api/user-limit-status')
-    const data = await res.json()
+    const res = await axios.get('/api/user-limit-status', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+
+    const data = res.data
     if (data.success) {
       dailyLimit.value = data.daily_limit
       remainingHours.value = data.remaining_hours
     }
-  } catch {
+  } catch(err) {
     alert('加载预约额度失败')
   }
 }
+
 // 场地列表
 async function loadCourtsFromBackend() {
+  const cacheKey = `courts_${venueName}`
+
+  // 先尝试读缓存
+  const cached = sessionStorage.getItem(cacheKey)
+  if (cached) {
+    try {
+      courts.value = JSON.parse(cached)
+      return   // ✅ 命中缓存直接返回，不再请求接口
+    } catch (err) {
+      console.warn("缓存解析失败:", err)
+    }
+  }
+
+  // 如果没有缓存，再请求接口
   try {
-    const res = await fetch(`/api/venues?name=${encodeURIComponent(venueName)}`)
-    const data = await res.json()
+    const res = await axios.get('/api/venues', {
+      params: { name: venueName },
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+
+    const data = res.data
     if (data.success) {
-      courts.value = data.venues.map(v => v.venue_subname)
+      courts.value = data.venues.map(v => ({
+        id: v.venue_id,
+        name: v.venue_subname
+      }))
+
+      // 写缓存
+      sessionStorage.setItem(cacheKey, JSON.stringify(courts.value))
     } else {
-      alert('加载场地失败：' + data.message)
+      alert("加载场地失败：" + data.message)
     }
   } catch (e) {
-    alert('网络错误，无法加载场地')
+    console.error("加载场地错误:", e)
+    alert("网络错误，无法加载场地")
   }
 }
-// 时间段列表
+
 async function loadTimeSlotsFromBackend() {
+  const cacheKey = "timeSlots_cache"
+  const cacheTTL = 1000 * 60 * 60 // 缓存 1 小时
+
+  //先读缓存
+  const cached = localStorage.getItem(cacheKey)
+  if (cached) {
+    try {
+      const { data, timestamp } = JSON.parse(cached)
+      if (Date.now() - timestamp < cacheTTL) {
+        timeSlots.value = data
+        //console.log("使用缓存的 timeSlots")
+        return // 命中缓存直接返回
+      }
+    } catch (err) {
+      console.warn("缓存解析失败:", err)
+    }
+  }
+
+  // 没缓存 / 缓存过期 → 请求接口
   try {
-    const res = await fetch('/api/time-slots')
-    const data = await res.json()
-    if (data.success) {
-      timeSlots.splice(0, timeSlots.length, ...data.slots.map(slot => `${slot.begin_time}-${slot.end_time}`))
+    const res = await axios.get('/api/courtreservation/time-slots', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+
+    const data = res.data
+    if (data.success && Array.isArray(data.slots)) {
+      timeSlots.value = data.slots.map(slot => ({
+        time_slot_id: slot.time_slot_id,
+        begin_time: slot.begin_time,
+        end_time: slot.end_time
+      }))
+
+      // 写缓存
+      localStorage.setItem(
+        cacheKey,
+        JSON.stringify({
+          data: timeSlots.value,
+          timestamp: Date.now()
+        })
+      )
     } else {
-      alert('加载时间段失败')
+      alert("加载时间段失败：返回格式不符合预期")
     }
   } catch (e) {
-    alert('网络错误，无法加载时间段')
+    console.error("加载时间段错误:", e)
+    alert("网络错误，无法加载时间段")
   }
 }
+
 //预约成功弹窗
 function showSuccessPopup() {
   showPopup.value = true
@@ -220,7 +357,9 @@ function showSuccessPopup() {
     }
   }, 1000)
 }
+
 // 跳转到“订单”页面
+
 function goToOrders() {
   clearInterval(timer)
   showPopup.value = false
@@ -230,13 +369,15 @@ function goToOrders() {
     alert('订单号缺失，跳转失败')
   }
 }
+
 // 返回上一页的函数
 function goBack() {
   window.history.back()
 }
+
 //根据“当前格子是否被选中”来返回对应的 CSS 样式类名
-function getStatusClass(court, time) {
-  const key = `${court}-${time}`
+function getStatusClass(courtId, timeId) {
+  const key = `${courtId}-${timeId}`
   if (lockedCells.value.has(key) && !selectedCells.value.has(key)) {
     return 'locked'
   }
@@ -244,141 +385,266 @@ function getStatusClass(court, time) {
 }
 
 // 点击一个格子时，切换选中/取消状态（不做异步锁定）
-function toggleSelect(court, time) {
-  const key = `${court}-${time}`
+function toggleSelect(courtId, timeId) {
+  const key = `${courtId}-${timeId}`
   if (selectedCells.value.has(key)) {
     selectedCells.value.delete(key)
     totalPrice.value -= pricePerSlot
-    remainingHours.value += 1
-    dailyLimit.value += 1
-    return
+  } else {
+    selectedCells.value.add(key)
+    totalPrice.value += pricePerSlot
   }
-  if (selectedCells.value.size >= dailyLimit.value) {
-    alert(`您的预约超过上限，最多预约 ${dailyLimit.value} 个时间段`)
-    return
-  }
-  selectedCells.value.add(key)
-  totalPrice.value += pricePerSlot
-  remainingHours.value -= 1
-  dailyLimit.value -= 1
 }
+
 //点击场地后显示
-function handleClick(court, time) {
-  const key = `${court}-${time}`
+async function handleClick(courtId, timeId) {
+  const key = `${courtId}-${timeId}`
+
   if (lockedCells.value.has(key)) {
     alert('该场地已被预约，无法选择')
     return
   }
-  toggleSelect(court, time)
-}
-//调用后端接口检查并锁定选中的场地和时间
-/*async function checkAndLock(court, time) {
-  const key = `${court}-${time}`
-  try {
-    const res = await fetch('/api/check-and-lock', {                                      //需要后端接口：检查是否锁定选中的场地和时间
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        venue_id: court, 
-        date: fullDate.value, 
-        time_slot: time,
-      }),
-    })
-    const data = await res.json()
-    if (data.success) {
-      lockedCells.value.add(key)
-      return true
-    } else {
-      alert(data.message || '该场地已被预约，无法选择')
-      return false
+
+  // ✅ 判断剩余次数
+  if (!selectedCells.value.has(key)) {
+    if (dailyLimit.value <= 0) {
+      alert('今天的预约次数已用完')
+      return
     }
-  } catch {
-    alert('网络错误，请稍后再试')
-    return false
+    if (remainingHours.value <= 0) {
+      alert('本周的预约时长已用完')
+      return
+    }
   }
-}*/
+
+  // 如果已经选过一个，再点新的，直接提示
+  if (selectedCells.value.size >= 1 && !selectedCells.value.has(key)) {
+    alert('一次只能选择一个场地')
+    return
+  }
+  // 先在前端切换选中状态（立即变蓝）
+  toggleSelect(courtId, timeId)
+
+  // 异步调用后端接口校验锁定
+  const courtObj = courts.value.find(c => c.id == courtId)
+  const body = {
+    venueId: parseInt(courtId),
+    venueSubname: courtObj ? courtObj.name : '',
+    date: fullDate.value,
+    timeSlotId: parseInt(timeId)
+  }
+
+  try {
+    const authResult = AuthService.checkLoginStatus()
+    if (!authResult.isValid) {
+      toggleSelect(courtId, timeId)
+      AuthService.handleAuthFailure(authResult.reason, router)
+      return
+    }
+    
+    const res = await axios.post('/api/courtreservation/check', body, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+
+    const data = res.data
+
+    if (!data.success) {
+      // 已被锁定 → 回滚 UI
+      toggleSelect(courtId, timeId) // 撤销选中状态
+      alert(data.message || "该时段已被锁定")
+
+      // 刷新 lockedCells 保持前端状态与后端一致
+      await loadLockedCells(fullDate.value, true)
+    }
+  } catch (err) {
+    // 网络异常 → 回滚
+    toggleSelect(courtId, timeId)
+    alert("网络错误，请稍后重试")
+  }
+}
+
+//调用后端接口检查并锁定选中的场地和时间
+// 拉取某天所有已锁定的格子
+// 定义缓存
+async function loadLockedCells(date, forceReload = false) {
+  try {
+    const cacheKey = `locked_${date}`
+
+    if (!forceReload) {
+      // 1. 优先从 sessionStorage 取缓存
+      const cached = sessionStorage.getItem(cacheKey)
+      if (cached) {
+        try {
+          const cells = JSON.parse(cached)
+          lockedCells.value = new Set(cells)
+          // 顺便写进内存缓存
+          lockedCache.set(date, cells)
+          return
+        } catch (err) {
+          console.warn("锁定数据缓存解析失败:", err)
+        }
+      }
+
+      // 2. 内存缓存兜底
+      if (lockedCache.has(date)) {
+        lockedCells.value = new Set(lockedCache.get(date))
+        return
+      }
+    }
+
+    // 3. 请求接口获取最新锁定数据
+    const authResult = AuthService.checkLoginStatus()
+    if (!authResult.isValid) {
+      toggleSelect(courtId, timeId)
+      AuthService.handleAuthFailure(authResult.reason, router)
+      return
+    }
+
+    //const yourToken =localStorage.getItem("authToken") ||"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o"
+
+    const res = await axios.get('/api/courtreservation/get-locked-cells', {
+      params: { date },
+      headers: {
+        accept: "*/*",
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    })
+
+    const data = res.data
+    if (data.success) {
+      const cells = data.locked.map(item => `${item.venue_id}-${item.time_slot_id}`)
+
+      // 更新内存缓存
+      lockedCache.set(date, cells)
+
+      // 更新 sessionStorage 持久缓存
+      sessionStorage.setItem(cacheKey, JSON.stringify(cells))
+
+      // 更新响应式数据
+      // 更新响应式数据
+      lockedCells.value.clear()
+      cells.forEach(cell => lockedCells.value.add(cell))
+    } else {
+      console.warn("接口返回失败:", data.message)
+      alert(data.message || "获取锁定信息失败")
+    }
+  } catch (err) {
+    console.error("网络错误:", err)
+    alert("网络错误，请稍后再试")
+  }
+}
 
 //点击预约按钮时，提交预约信息
 //需要后端接口：确认预约
+//调用后端接口获取指定日期的预约数据
 async function confirmBooking() {
   if (selectedCells.value.size === 0) {
     alert('请先选择时间段')
     return
   }
+
   const selectedList = Array.from(selectedCells.value).map(key => {
-    const [court, time] = key.split('-')
+    const [courtId, timeSlotId] = key.split('-')
+    const courtObj = courts.value.find(c => c.id == courtId)
     return {
-      venue_id: court,
+      venueId: parseInt(courtId),
+      venueSubname: courtObj ? courtObj.name : '',
       date: fullDate.value,
-      time_slot: time
+      timeSlotId: parseInt(timeSlotId),
+      status: "upcoming"
     }
   })
+
   try {
-    const res = await fetch('/api/confirm-booking', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reservations: selectedList })
-    })
-    const data = await res.json()
+    //const token = localStorage.getItem('access_token') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o'
+
+    const authResult = AuthService.checkLoginStatus()
+    if (!authResult.isValid) {
+      AuthService.handleAuthFailure(authResult.reason, router)
+      return
+    }
+
+    const token = localStorage.getItem('token')
+    if (!token) {
+      alert('请先登录')
+      return
+    }
+
+    const res = await axios.post(
+      '/api/courtreservation/confirm-booking',
+      {
+        success: true,
+        appointments: selectedList
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    )
+
+    const data = res.data
+
     if (data.success) {
-      // 存下 orderId
-      orderId = data.order_id
-      // 加入 lockedCells
-      selectedList.forEach(item => {
-        const key = `${item.venue_id}-${item.time_slot}`
-        lockedCells.value.add(key)
-      })
+      orderId = data.appointment_id
+
+      // 1. 等待锁定状态刷新完成
+      await loadLockedCells(fullDate.value, true) // forceReload = true，强制刷新
+
+      // 2. 再清空选中格子和更新 UI
       selectedCells.value.clear()
       totalPrice.value = 0
+      dailyLimit.value = Math.max(0, dailyLimit.value - 1)
+      remainingHours.value = Math.max(0, remainingHours.value - selectedList.length)
+
+      // 3. 弹窗提示
       showSuccessPopup()
     } else {
       alert(data.message || '预约失败')
     }
   } catch (err) {
+    console.error(err)
     alert('网络错误，请稍后再试')
   }
 }
-//调用后端接口获取指定日期的预约数据
-async function loadLockedCells() {
-  const date = fullDate.value
-  try {
-    const res = await fetch(`/api/get-locked-cells?date=${date}`)
-    const data = await res.json()
-    if (data.success) {
-      // 清空原锁定格子
-      lockedCells.value.clear()
-      // 将后端返回的预约数据加入 lockedCells
-      data.locked.forEach(item => {
-        const key = `${item.court_id}-${item.time_slot}`
-        lockedCells.value.add(key)
-      })
-    } else {
-      alert(data.message || '加载预约信息失败')
-    }
-  } catch {
-    alert('网络错误，加载预约信息失败')
-  }
-}
-//增加监听 selectedDate 变化，加载当天预约
-watch(selectedDate, async (newVal, oldVal) => {
-  await loadLockedCells()
-})
-//页面加载时，调用一次初始化当前日期的锁定数据
+
 onMounted(async () => {
-  console.log('venueName:', venueName)
-  console.log('weekDates:', weekDates)
-  console.log('selectedDate:', selectedDate.value)
-  console.log('courts:', courts.value)
-  if (!hasRouteDateHandled.value && route.query.date) {
+  isLoading.value = true
+  await Promise.allSettled([
+    loadCourtsFromBackend(),
+    loadTimeSlotsFromBackend(),
+  ])
+  isLoading.value = false
+
+  // 如果路由带了 date 参数，优先选中
+  if (route.query.date) {
     const index = weekDates.findIndex(d => d.fullDate === route.query.date)
-    selectedDate.value = index !== -1 ? index : 0
-    hasRouteDateHandled.value = true
+    if (index !== -1) {
+      selectedDate.value = index
+    }
   }
-  //await loadTimeSlotsFromBackend()   // 加载开放时间段
-  //await loadCourtsFromBackend()     // 先加载场地列表
-  //await loadLockedCells()           // 然后加载预约信息
+
+  // 初始化锁定格子
+  await loadLockedCells(fullDate.value, true)
+  loadUserLimitStatus(true)  // true = 写死数据，false = 调接口
+
+})
+
+
+
+// watch：切换日期时，自动走缓存
+watch(selectedDate, async newVal => {
+  const date = weekDates[newVal].fullDate
+  selectedCells.value.clear()
+  totalPrice.value = 0
+  await loadLockedCells(date)
 })
 </script>
+
 <style scoped>
 .court-reservation {
   font-family: "Segoe UI", sans-serif;
@@ -448,18 +714,19 @@ onMounted(async () => {
 }
 
 .court-grid {
-  overflow-x: auto;
+  display: grid;
   border: 1px solid #ddd;
   margin-bottom: 2rem;
 }
 
-.row,
-.header-row {
-  display: flex;
+.header-row,
+.row {
+  display: contents;
+  /* 让子元素跟随 grid 分布 */
 }
 
 .cell {
-  width: 100px;
+  min-width: 80px;
   height: 48px;
   line-height: 48px;
   text-align: center;

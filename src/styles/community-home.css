@@ -2,40 +2,54 @@
 .community-main-container {
   display: flex;
   justify-content: center;
-  gap: 20px; /* 左右两栏的间距 */
-  padding: 20px;
-  background-color: #f4f5f7; /* 背景色，让白色卡片更突出 */
-  min-width: 900px;
-  max-width: 1200px;
-  min-height: 700px;
-  margin: 0 auto; /* 居中显示 */
+  gap: 32px;
+  /* 左右两栏的间距 */
+  padding: 40px 20px;
+  background-color: #f5f6f8;
+  /* 背景色，让白色卡片更突出 */
+  width: 90%;
+  min-height: 100vh;
+  margin: 0 auto;
+  box-sizing: border-box;
+  /* 居中显示 */
 }
 
 /* 左侧帖子列表容器 */
 .post-list-container {
-  flex: 1; /* 占据更多空间 */
-  max-width: 720px;
-  min-height: 500px; /* 加一个最小高度，防止加载时塌陷 */
+  flex: 1;
+  /* 占据更多空间 */
+  max-width: 900px;
+  min-height: 500px;
+  /* 加一个最小高度，防止加载时塌陷 */
   background-color: #fff;
-  border-radius: 4px;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  padding: 16px;
 }
 
 .post-tabs {
-  padding: 15px 20px;
-  border-bottom: 1px solid #eee;
   display: flex;
-  gap: 30px;
-  font-size: 16px;
+  border-bottom: 1.5px solid #ececec;
+  margin-bottom: 4px;
+  margin-left: 30px;
+  margin-right: 30px;
 }
 
 .tab-item {
-  color: #555;
+  margin-right: 36px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
   cursor: pointer;
+  padding: 6px 4px 4px 12px;
+  transition: color 0.2s, border 0.2s;
+  border-bottom: 2.5px solid transparent;
+  border-radius: 4px;
 }
 
 .tab-item.active {
-  color: #1e80ff; /* 激活状态的颜色 */
-  font-weight: bold;
+  color: #2062ea;
+  font-weight: 600;
 }
 
 .loading-indicator {
@@ -46,13 +60,14 @@
 
 /* 右侧创作中心容器 */
 .creation-center-container {
-  width: 280px;
+  width: 360px;
 }
 
 .creation-card {
   background-color: #fff;
   padding: 20px;
-  border-radius: 4px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   text-align: center;
 }
 

@@ -19,6 +19,7 @@ import CourtReservation from '../views/CourtReservation.vue';
 import VenueList from '../views/VenueList.vue';
 import News from '../views/News.vue';
 import PostEditor from '../views/PostEditor.vue';
+import NewsManagement from '../views/NewsManagement.vue';
 
 const Dummy = { template: '<div style="padding:20px;"><h2>页面建设中...</h2></div>' }
 
@@ -58,7 +59,7 @@ const routes = [
         component: AppealManagement
     },
     {
-        path: '/orderdetail',
+        path: '/order/:id',
         name: 'OrderDetail',
         component: OrderDetail
     },
@@ -92,12 +93,17 @@ const routes = [
     },
     {
         path: '/community/posteditor',
+        name: 'PostEditor',
         component: PostEditor
     },
     {
         path: '/news',
         name: 'News',
         component: News
+    },
+    {
+        path: '/news-management',
+        component: NewsManagement
     },
     {
         path: '/venue/:id',

@@ -6,13 +6,16 @@
         <router-link to="/home"  class="title-link">运动场地预约系统</router-link>
       </h1>
     </el-container>
-    <el-menu-item class="navbar-item" index="1" @click="$router.push('/community')">
-      运动社区
+    <el-menu-item class="navbar-item" index="1" @click="$router.push('/home')">
+      首页
     </el-menu-item>
     <el-menu-item class="navbar-item" index="2" @click="$router.push('/news')">
       运动新闻
     </el-menu-item>
-    <el-menu-item class="navbar-item" index="3"@click="$router.push('/venuelist')">
+    <el-menu-item class="navbar-item" index="3" @click="$router.push('/community')">
+      运动社区
+    </el-menu-item>
+    <el-menu-item class="navbar-item" index="4"@click="$router.push('/venuelist')">
       运动场地预约
     </el-menu-item>
 
@@ -46,8 +49,8 @@
 
     <el-dropdown size="large"
                  style='margin-right: 20px; margin-bottom: 2px; outline: none'>
-      <el-avatar :size="40" :src="userAvatar">
-        <el-icon v-if="!userAvatar">
+      <el-avatar :size="40" :src="userAvatar && !avatarLoadError ? userAvatar : undefined" @error="handleAvatarError">
+        <el-icon v-if="!userAvatar || avatarLoadError">
           <Avatar />
         </el-icon>
       </el-avatar>
@@ -82,6 +85,13 @@ const route = useRoute()
 const activeIndex = ref('0')
 const isDarkMode = ref(false)
 const userAvatar = ref('') // 用户头像URL
+const avatarLoadError = ref(false) // 头像加载失败标记
+
+// 处理头像加载失败
+const handleAvatarError = () => {
+  console.log('头像加载失败，显示默认图标')
+  avatarLoadError.value = true
+}
 
 // 加载用户头像 - 通过API获取
 const loadUserAvatar = async () => {
@@ -93,28 +103,36 @@ const loadUserAvatar = async () => {
       // 首先检查是否已经有缓存的头像
       const cachedAvatar = localStorage.getItem('userAvatar')
       if (cachedAvatar) {
+        console.log('使用缓存的头像:', cachedAvatar)
         userAvatar.value = cachedAvatar
+        avatarLoadError.value = false // 重置错误状态
         return
       }
       
       // 如果没有缓存，通过API获取用户信息
-      const response = await getUserInfo(userId)
+      const res = await getUserInfo(userId)
+      console.log('获取用户信息:', res)
+      const response = res.data
       if (response && response.code === 0 && response.data) {
         const avatarUrl = response.data.avatarUrl
         if (avatarUrl) {
           // 存储到localStorage并显示
           localStorage.setItem('userAvatar', avatarUrl)
           userAvatar.value = avatarUrl
+          avatarLoadError.value = false // 重置错误状态
         } else {
           userAvatar.value = '' // 没有头像则显示默认图标
+          avatarLoadError.value = false
         }
       }
     } catch (error) {
       console.error('获取用户头像失败:', error)
       userAvatar.value = '' // 出错时显示默认图标
+      avatarLoadError.value = false
     }
   } else {
     userAvatar.value = '' // 未登录时显示默认图标
+    avatarLoadError.value = false
   }
 }
 
@@ -129,9 +147,10 @@ const logout = () => {
   
   // 清空头像显示
   userAvatar.value = ''
+  avatarLoadError.value = false
   
   // 跳转到登录页面
-  router.push('/home')
+  router.push('/login')
   
   // 可以添加提示消息
   alert('已退出登录')

@@ -19,7 +19,7 @@
             <h3 class="section-title">个人预约</h3>
 
             <!-- 校区筛选 -->
-            <div class="filter-group">
+            <div class="filter-group">  
                 <span class="label">校区：</span>
                 <div class="button-group">
                     <el-button v-for="campus in campuses"
@@ -93,8 +93,9 @@
 <script setup>
     import { ref, onMounted, watch } from 'vue'
     import { useRouter } from 'vue-router'
-    import { ArrowLeft } from '@element-plus/icons-vue'
+    import { ArrowLeft, Lock } from '@element-plus/icons-vue'
     import TopNavbar from '../components/TopNavbar.vue'
+    import LoginPrompt from '../components/LoginPrompt.vue'
     import axios from 'axios'
     import { AuthService } from '@/utils/auth.js' // 路径根据你项目调整
 
@@ -109,7 +110,7 @@
     ]
 
     const selectedCampus = ref('全部')
-    const selectedType = ref('羽毛球')
+    const selectedType = ref('全部')
     const selectedStatus = ref('all') // 新增状态筛选
     const searchQuery = ref('')
     const venues = ref([])
@@ -148,7 +149,6 @@
                     search: searchQuery.value || undefined
                 }
             })
-
             console.log('场馆列表响应:', venueListRes.data) // 调试日志
 
             if (venueListRes.data.code === 200) {
@@ -188,7 +188,7 @@
                 console.error('场馆列表接口返回错误:', venueListRes.data)
             }
         } catch (err) {
-            console.error('加载场馆失败', err)
+            console.error('加载场馆失败', err.message)
         }
     }
 

@@ -1,51 +1,51 @@
 <template>
-  <div class="page-layout">
+  <div class="violation-page-layout">
     <AdminHeaderNavbar />
-    <div class="page-content">
+    <div class="violation-page-content">
       <div class="post-management-container">
         <!-- 违约统计卡片 -->
-        <div class="statistics-cards">
-          <div class="stat-card">
-            <div class="stat-icon warning">
+        <div class="violation-statistics-cards">
+          <div class="violation-stat-card">
+            <div class="violation-stat-icon warning">
               <el-icon><Warning /></el-icon>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ totalViolations }}</div>
-              <div class="stat-label">总违约次数</div>
+            <div class="violation-stat-content">
+              <div class="violation-stat-number">{{ totalViolations }}</div>
+              <div class="violation-stat-label">总违约次数</div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon danger">
+          <div class="violation-stat-card">
+            <div class="violation-stat-icon danger">
               <el-icon><User /></el-icon>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ uniqueUsers }}</div>
-              <div class="stat-label">违约用户数</div>
+            <div class="violation-stat-content">
+              <div class="violation-stat-number">{{ uniqueUsers }}</div>
+              <div class="violation-stat-label">违约用户数</div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon info">
+          <div class="violation-stat-card">
+            <div class="violation-stat-icon info">
               <el-icon><Calendar /></el-icon>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ todayViolations }}</div>
-              <div class="stat-label">今日违约</div>
+            <div class="violation-stat-content">
+              <div class="violation-stat-number">{{ todayViolations }}</div>
+              <div class="violation-stat-label">今日违约</div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon success">
+          <div class="violation-stat-card">
+            <div class="violation-stat-icon success">
               <el-icon><TrendCharts /></el-icon>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ violationRate }}%</div>
-              <div class="stat-label">违约率</div>
+            <div class="violation-stat-content">
+              <div class="violation-stat-number">{{ violationRate }}%</div>
+              <div class="violation-stat-label">违约率</div>
             </div>
           </div>
         </div>
 
         <!-- 筛选和搜索区域 -->
-        <div class="filter-section">
-          <div class="filter-left">
+        <div class="violation-filter-section">
+          <div class="violation-filter-left">
             <el-select v-model="filterStatus" placeholder="处理状态" clearable style="width: 120px; margin-right: 10px;">
               <el-option label="全部" value="" />
               <el-option label="已确认违约" value="confirmed" />
@@ -73,7 +73,7 @@
               style="width: 240px; margin-right: 10px;"
             />
           </div>
-          <div class="filter-right">
+          <div class="violation-filter-right">
             <el-input
               v-model="searchKeyword"
               placeholder="搜索用户名或用户ID"
@@ -88,8 +88,8 @@
         </div>
 
         <!-- 违约记录表格 -->
-        <div class="table-section">
-          <div class="table-header">
+        <div class="violation-table-section">
+          <div class="violation-table-header">
             <h3>违约记录列表</h3>
             <el-tag type="info" size="small">{{ filteredViolations.length }} 条记录</el-tag>
           </div>
@@ -101,13 +101,6 @@
             <el-table-column prop="violationTime" label="违约时间" width="180" />
             <el-table-column prop="venue" label="预约场馆" width="120" />
             <el-table-column prop="timeSlot" label="预约时间段" width="150" />
-            <el-table-column prop="violationType" label="违约类型" width="120">
-              <template #default="scope">
-                <el-tag :type="getViolationTypeTag(scope.row.violationType)" size="small">
-                  {{ getViolationTypeText(scope.row.violationType) }}
-                </el-tag>
-              </template>
-            </el-table-column>
             <el-table-column prop="status" label="处理状态" width="120">
               <template #default="scope">
                 <el-tag :type="getCombinedStatusType(scope.row)" size="small">
@@ -134,7 +127,7 @@
         </div>
 
         <!-- 分页 -->
-        <div class="pagination-section">
+        <div class="violation-pagination-section">
           <el-pagination
             v-model:current-page="currentPage"
             v-model:page-size="pageSize"
@@ -149,6 +142,8 @@
     </div>
 
     <!-- 违约详情对话框 -->
+
+    <!-- 历史违约记录弹窗 -->
     <el-dialog
       v-model="detailDialogVisible"
       title="违约记录详情"
@@ -178,14 +173,6 @@
             <div class="detail-item">
               <span class="label">预约时间段：</span>
               <span class="value">{{ selectedViolation.timeSlot }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">违约类型：</span>
-              <span class="value">
-                <el-tag :type="getViolationTypeTag(selectedViolation.violationType)" size="small">
-                  {{ getViolationTypeText(selectedViolation.violationType) }}
-                </el-tag>
-              </span>
             </div>
           </div>
         </div>
@@ -233,8 +220,9 @@
 
 <script>
 import AdminHeaderNavbar from '../components/AdminHeaderNavbar.vue'
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { Warning, User, Calendar, TrendCharts, Search } from '@element-plus/icons-vue'
+import { getViolationRecords, getViolationDetail, confirmViolation, cancelViolation } from '../utils/api';
 
 export default {
   name: "ViolationManagement",
@@ -262,105 +250,11 @@ export default {
       detailDialogVisible: false,
       selectedViolation: null,
       
-      // 模拟数据 - 违约记录
-      violations: [
-        {
-          id: 1,
-          userName: "夏浩博",
-          userId: "123456",
-          violationTime: "2024-01-15 08:00",
-          venue: "乒乓球馆",
-          timeSlot: "8:00-9:00",
-          violationType: "no_checkin",
-          status: "confirmed",
-          appealStatus: "pending",
-          appealTime: "2024-01-15 09:30",
-          appealReason: "下雨，路滑，无法前往",
-          rejectReason: "",
-          userViolationCount: 2,
-          lastViolationTime: "2024-01-10 14:00"
-        },
-        {
-          id: 2,
-          userName: "李明",
-          userId: "654321",
-          violationTime: "2024-01-16 14:00",
-          venue: "羽毛球馆",
-          timeSlot: "14:00-15:00",
-          violationType: "late_checkin",
-          status: "confirmed",
-          appealStatus: "none",
-          appealTime: "",
-          appealReason: "",
-          rejectReason: "",
-          userViolationCount: 1,
-          lastViolationTime: ""
-        },
-        {
-          id: 3,
-          userName: "王芳",
-          userId: "789012",
-          violationTime: "2024-01-17 16:00",
-          venue: "篮球馆",
-          timeSlot: "16:00-17:00",
-          violationType: "no_checkin",
-          status: "confirmed",
-          appealStatus: "approved",
-          appealTime: "2024-01-17 17:00",
-          appealReason: "身体不适，有医院证明",
-          rejectReason: "",
-          userViolationCount: 3,
-          lastViolationTime: "2024-01-12 10:00"
-        },
-        {
-          id: 4,
-          userName: "张伟",
-          userId: "345678",
-          violationTime: "2024-01-18 10:00",
-          venue: "乒乓球馆",
-          timeSlot: "10:00-11:00",
-          violationType: "no_checkin",
-          status: "confirmed",
-          appealStatus: "rejected",
-          appealTime: "2024-01-18 11:00",
-          appealReason: "忘记预约时间",
-          rejectReason: "理由不充分，无法证明特殊情况",
-          userViolationCount: 1,
-          lastViolationTime: ""
-        },
-        {
-          id: 5,
-          userName: "陈华",
-          userId: "987654",
-          violationTime: "2024-01-19 09:00",
-          venue: "网球场",
-          timeSlot: "9:00-10:00",
-          violationType: "late_checkin",
-          status: "confirmed",
-          appealStatus: "none",
-          appealTime: "",
-          appealReason: "",
-          rejectReason: "",
-          userViolationCount: 2,
-          lastViolationTime: "2024-01-15 14:00"
-        },
-        {
-          id: 6,
-          userName: "刘强",
-          userId: "567890",
-          violationTime: "2024-01-20 15:00",
-          venue: "攀岩馆",
-          timeSlot: "15:00-16:00",
-          violationType: "no_checkin",
-          status: "confirmed",
-          appealStatus: "pending",
-          appealTime: "2024-01-20 16:00",
-          appealReason: "设备故障，无法正常使用",
-          rejectReason: "",
-          userViolationCount: 1,
-          lastViolationTime: ""
-        }
-      ]
+      // 加载状态
+      loading: false,
+      
+      // 违约记录数据
+      violations: []
     };
   },
   computed: {
@@ -423,24 +317,148 @@ export default {
       return filtered;
     }
   },
+  async mounted() {
+    await this.fetchViolationData();
+  },
   methods: {
-    // 违约类型相关方法
-    getViolationTypeText(type) {
-      const typeMap = {
-        'no_checkin': '未签到',
-        'late_checkin': '迟到签到',
-        'early_leave': '提前离场'
-      };
-      return typeMap[type] || '未知';
+    // 获取违约数据
+    async fetchViolationData() {
+      this.loading = true;
+      try {
+        const response = await getViolationRecords({
+          page: this.currentPage,
+          pageSize: this.pageSize,
+          status: this.filterStatus,
+          venue: this.filterVenue,
+          dateRange: this.dateRange,
+          keyword: this.searchKeyword
+        });
+        
+        if (response && response.data && response.data.success) {
+          // 后端返回的数据结构: { success: true, data: [...] }
+          this.violations = response.data.data || [];
+          
+          // 转换数据格式以匹配前端组件
+          this.violations = this.violations.map(violation => ({
+            id: violation.id,
+            userName: violation.userName,
+            userId: violation.userId.toString(),
+            violationTime: violation.violationDate + ' ' + violation.timeSlot.split('-')[0] + ':00',
+            venue: violation.venue,
+            timeSlot: violation.timeSlot,
+            status: 'confirmed',
+            appealStatus: violation.appealStatus || 'none', // 使用后端申诉状态
+            appealTime: violation.appealTime || '',
+            appealReason: violation.appealReason || '',
+            rejectReason: violation.rejectReason || '',
+            userViolationCount: 1, // 后端暂时没有统计，使用默认值
+            lastViolationTime: ''
+          }));
+        } else {
+          // 如果API未实现，使用模拟数据
+          this.violations = [
+            {
+              id: 1,
+              userName: "夏浩博",
+              userId: "123456",
+              violationTime: "2024-01-15 08:00",
+              venue: "乒乓球馆",
+              timeSlot: "8:00-9:00",
+              status: "confirmed",
+              appealStatus: "pending",
+              appealTime: "2024-01-15 09:30",
+              appealReason: "下雨，路滑，无法前往",
+              rejectReason: "",
+              userViolationCount: 2,
+              lastViolationTime: "2024-01-10 14:00"
+            },
+            {
+              id: 2,
+              userName: "李明",
+              userId: "654321",
+              violationTime: "2024-01-16 14:00",
+              venue: "羽毛球馆",
+              timeSlot: "14:00-15:00",
+              status: "confirmed",
+              appealStatus: "none",
+              appealTime: "",
+              appealReason: "",
+              rejectReason: "",
+              userViolationCount: 1,
+              lastViolationTime: ""
+            },
+            {
+              id: 3,
+              userName: "王芳",
+              userId: "789012",
+              violationTime: "2024-01-17 16:00",
+              venue: "篮球馆",
+              timeSlot: "16:00-17:00",
+              status: "confirmed",
+              appealStatus: "approved",
+              appealTime: "2024-01-17 17:00",
+              appealReason: "身体不适，有医院证明",
+              rejectReason: "",
+              userViolationCount: 3,
+              lastViolationTime: "2024-01-12 10:00"
+            },
+            {
+              id: 4,
+              userName: "张伟",
+              userId: "345678",
+              violationTime: "2024-01-18 10:00",
+              venue: "乒乓球馆",
+              timeSlot: "10:00-11:00",
+              status: "confirmed",
+              appealStatus: "rejected",
+              appealTime: "2024-01-18 11:00",
+              appealReason: "忘记预约时间",
+              rejectReason: "理由不充分，无法证明特殊情况",
+              userViolationCount: 1,
+              lastViolationTime: ""
+            },
+            {
+              id: 5,
+              userName: "陈华",
+              userId: "987654",
+              violationTime: "2024-01-19 09:00",
+              venue: "网球场",
+              timeSlot: "9:00-10:00",
+              status: "confirmed",
+              appealStatus: "none",
+              appealTime: "",
+              appealReason: "",
+              rejectReason: "",
+              userViolationCount: 2,
+              lastViolationTime: "2024-01-15 14:00"
+            },
+            {
+              id: 6,
+              userName: "刘强",
+              userId: "567890",
+              violationTime: "2024-01-20 15:00",
+              venue: "攀岩馆",
+              timeSlot: "15:00-16:00",
+              status: "confirmed",
+              appealStatus: "pending",
+              appealTime: "2024-01-20 16:00",
+              appealReason: "设备故障，无法正常使用",
+              rejectReason: "",
+              userViolationCount: 1,
+              lastViolationTime: ""
+            }
+          ];
+        }
+      } catch (error) {
+        console.error('获取违约数据失败:', error);
+        ElMessage.error('获取违约数据失败');
+        // 使用模拟数据作为后备
+        this.violations = [];
+      } finally {
+        this.loading = false;
+      }
     },
-    getViolationTypeTag(type) {
-      const tagMap = {
-        'no_checkin': 'danger',
-        'late_checkin': 'warning',
-        'early_leave': 'info'
-      };
-      return tagMap[type] || 'info';
-    },
+
     
     // 综合状态相关方法
     getCombinedStatusText(violation) {
@@ -469,8 +487,18 @@ export default {
     },
     
     // 查看详情
-    viewViolationDetail(violation) {
-      this.selectedViolation = violation;
+    async viewViolationDetail(violation) {
+      try {
+        const response = await getViolationDetail(violation.id);
+        if (response && response.data && response.data.code === 200) {
+          this.selectedViolation = response.data.data;
+        } else {
+          this.selectedViolation = violation;
+        }
+      } catch (error) {
+        console.error('获取违约详情失败:', error);
+        this.selectedViolation = violation;
+      }
       this.detailDialogVisible = true;
     },
     
@@ -478,222 +506,15 @@ export default {
     handleSizeChange(val) {
       this.pageSize = val;
       this.currentPage = 1;
+      this.fetchViolationData();
     },
     handleCurrentChange(val) {
       this.currentPage = val;
+      this.fetchViolationData();
     }
   }
 };
 </script>
 
-<style src="../styles/admin-sidebar.css"></style>
-<style src="../styles/post-management.css"></style>
 
-<style scoped>
-.page-layout {
-  min-height: 100vh;
-  background: #f5f5f5;
-}
-
-.page-content {
-  padding: 20px;
-  background: #fff;
-  margin-top: 80px;
-  min-height: calc(100vh - 80px);
-}
-
-/* 统计卡片样式 */
-.statistics-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.stat-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  transition: transform 0.2s;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-}
-
-.stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 15px;
-  font-size: 24px;
-  color: #fff;
-}
-
-.stat-icon.warning {
-  background: linear-gradient(135deg, #ff9a56, #ff6b6b);
-}
-
-.stat-icon.danger {
-  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-}
-
-.stat-icon.info {
-  background: linear-gradient(135deg, #4ecdc4, #44a08d);
-}
-
-.stat-icon.success {
-  background: linear-gradient(135deg, #a8edea, #fed6e3);
-  color: #333;
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-number {
-  font-size: 28px;
-  font-weight: bold;
-  color: #303133;
-  margin-bottom: 5px;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #909399;
-}
-
-/* 筛选区域样式 */
-.filter-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.filter-left {
-  display: flex;
-  align-items: center;
-}
-
-.filter-right {
-  display: flex;
-  align-items: center;
-}
-
-/* 表格区域样式 */
-.table-section {
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.table-section .el-table {
-  width: 100%;
-  max-width: 1200px;
-}
-
-.table-header {
-  width: 100%;
-  max-width: 1200px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.table-header h3 {
-  margin: 0;
-  color: #303133;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.no-data {
-  text-align: center;
-  padding: 40px;
-  color: #999;
-  font-size: 16px;
-  width: 100%;
-  max-width: 1200px;
-}
-
-/* 分页样式 */
-.pagination-section {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-  width: 100%;
-  max-width: 1200px;
-}
-
-/* 详情对话框样式 */
-.violation-detail {
-  max-height: 500px;
-  overflow-y: auto;
-}
-
-.detail-section {
-  margin-bottom: 25px;
-}
-
-.detail-section h4 {
-  margin: 0 0 15px 0;
-  color: #303133;
-  font-size: 16px;
-  font-weight: 600;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #409eff;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 15px;
-}
-
-.detail-item {
-  display: flex;
-  align-items: center;
-}
-
-.detail-item .label {
-  font-weight: 600;
-  color: #606266;
-  min-width: 100px;
-  margin-right: 10px;
-}
-
-.detail-item .value {
-  color: #303133;
-  flex: 1;
-}
-
-.history-summary {
-  background: #f8f9fa;
-  padding: 15px;
-  border-radius: 6px;
-  border-left: 4px solid #409eff;
-}
-
-.history-summary p {
-  margin: 5px 0;
-  color: #606266;
-}
-
-.history-summary strong {
-  color: #409eff;
-}
-</style>
+<style src="../styles/violation-management.css"></style>
