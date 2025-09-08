@@ -181,6 +181,8 @@ import FooterNavbar from '../components/FooterNavbar.vue'
 import BackToTop from '../components/BackToTop.vue'
 import axios from 'axios';
 import { pa } from 'element-plus/es/locales.mjs'
+// 导入默认图片
+import defaultImage from '@/assets/Backgrounds/Back1.jpg'
 
 export default {
   name: 'Home',
@@ -289,7 +291,10 @@ export default {
     // 处理图片加载错误
     handleImageError(event) {
       console.log('图片加载失败，使用默认图片')
-      event.target.src = '@/assets/Backgrounds/Back1.jpg'
+      // 使用导入的默认图片
+      event.target.src = defaultImage
+      // 防止无限循环：移除 error 事件监听器
+      event.target.onerror = null
     },
 
     // 加载最新新闻
