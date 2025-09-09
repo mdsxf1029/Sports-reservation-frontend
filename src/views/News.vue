@@ -93,7 +93,7 @@ const announcements = ref([])
 const activeCategory = ref('all')
 import defaultImage from '@/assets/Backgrounds/Flower1.jpg';
 
-// 弹窗状态
+// 弹窗状态相关
 const dialogVisible = ref(false)
 const selectedNews = ref(null)
 
