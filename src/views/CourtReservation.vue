@@ -420,7 +420,7 @@ async function handleClick(courtId, timeId) {
 
   // 如果已经选过一个，再点新的，直接提示
   if (selectedCells.value.size >= 1 && !selectedCells.value.has(key)) {
-    alert('一次只能选择一个场地')
+    alert('每次预约仅限一个场地的一个时段')
     return
   }
   // 先在前端切换选中状态（立即变蓝）
