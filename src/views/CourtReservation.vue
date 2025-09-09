@@ -502,8 +502,6 @@ async function loadLockedCells(date, forceReload = false) {
       return
     }
 
-    //const yourToken =localStorage.getItem("authToken") ||"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o"
-
     const res = await axios.get('/api/courtreservation/get-locked-cells', {
       params: { date },
       headers: {
@@ -556,8 +554,6 @@ async function confirmBooking() {
   })
 
   try {
-    //const token = localStorage.getItem('access_token') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMDEiLCJ1bmlxdWVfbmFtZSI6IuWYv-WYvyIsImVtYWlsIjoiMjE0Nzg5NjU0MUBxcS5jb20iLCJyb2xlIjoibm9ybWFsIiwibmJmIjoxNzU2ODcwNjgzLCJleHAiOjE3NTY4NzQyODMsImlhdCI6MTc1Njg3MDY4MywiaXNzIjoiWW91cklzc3VlciIsImF1ZCI6IllvdXJBdWRpZW5jZSJ9.oL2dJcupcT-IYu5X8MutDkfTeQPzlLX5CVi8HyMnE8o'
-
     const authResult = AuthService.checkLoginStatus()
     if (!authResult.isValid) {
       AuthService.handleAuthFailure(authResult.reason, router)
