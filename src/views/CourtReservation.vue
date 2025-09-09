@@ -22,7 +22,6 @@
           </div>
         </div>
         <!-- 表格区域 -->
-        <!-- 表格区域 -->
         <div class="court-grid" :style="{ gridTemplateColumns: `120px repeat(${courts.length || 3}, 1fr)` }">
           <!-- 加载中骨架屏 -->
           <template v-if="isLoading">
@@ -66,8 +65,9 @@
         <!-- 底部栏 -->
         <footer class="footer">
           <div class="summary">
-            合计：¥{{ totalPrice }}元 ｜ 本周剩余 {{ remainingHours }} 小时 ｜ 今日剩余 {{ dailyLimit }} 次
+            合计：¥{{ totalPrice }}元 ｜ 每日限额 {{ dailyLimit }} 小时 ｜ {{ formattedSelectedDate }} 剩余 {{ remainingHours }} 小时
           </div>
+
           <el-button class="confirm-btn" type="primary" @click="confirmBooking">确认预约</el-button>
         </footer>
         <!-- 弹窗 -->
@@ -94,9 +94,6 @@
 
 const lockedCache = new Map()
 window.lockedCache = lockedCache
-
-//console.log('route.query.date =', route.query.date)
-
 import { ref } from 'vue'
 import { computed } from 'vue'
 import { watch } from 'vue'
@@ -115,9 +112,6 @@ const venueName = route.query.venueName || '未知球类场馆'
 // 球场和时间段数据
 const courts = ref([])
 const timeSlots = ref([])
-// 测试：场地列表
-//const courts = ref(['场地1', '场地2', '场地3', '场地4', '场地5', '场地6', '小场地1', '小场地2'])
-//const timeSlots = ['09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00', '19:00-20:00', '20:00-21:00']
 const weekLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 // 获取今天的日期
 const today = new Date()
@@ -127,7 +121,6 @@ const filteredTimeSlots = computed(() => {
   return timeSlots.value
     .filter(slot => {
       const slotDate = slot.begin_time.split(' ')[0].replace(/\//g, '-') // 例如 "2025-08-27"
-      // 这里用 weekDates[selectedDate.value].fullDate 来比对
       return slotDate === weekDates[selectedDate.value].fullDate
     })
     .map(slot => {
@@ -148,8 +141,8 @@ const weekDates = Array.from({ length: 7 }, (_, i) => {
   const dd = String(date.getDate()).padStart(2, '0')
   return {
     week: weekLabels[date.getDay()],
-    dateLabel: `${mm}-${dd}`,         // 用于显示
-    fullDate: `${yyyy}-${mm}-${dd}`   // 用于传后端
+    dateLabel: `${mm}-${dd}`,
+    fullDate: `${yyyy}-${mm}-${dd}`
   }
 })
 const fullDate = computed(() => weekDates[selectedDate.value].fullDate)
@@ -158,7 +151,7 @@ const lockedCells = ref(new Set())
 const selectedCells = ref(new Set())
 const dailyLimit = ref(2)
 const remainingHours = ref(2)
-const pricePerSlot = 20  // 测试每个时间段价格 ¥20
+const pricePerSlot = ref(0)
 const totalPrice = ref(0)
 const showPopup = ref(false)
 const countdown = ref(3)
@@ -170,83 +163,81 @@ window.lockedCells = lockedCells
 window.fullDate = fullDate
 window.loadLockedCells = loadLockedCells
 
+//将选中的日期格式化
+const formattedSelectedDate = computed(() => {
+  if (!weekDates[selectedDate.value]) return ''
+  const dateStr = weekDates[selectedDate.value].fullDate
+  const dateObj = new Date(dateStr)
+  const month = dateObj.getMonth() + 1
+  const day = dateObj.getDate()
+  return `${month}月${day}日`
+})
+
+//获取场地价格
+async function loadVenuePrice(venueId) {
+  try {
+    const token = localStorage.getItem('token')
+    const res = await axios.get('/api/venues/get', {
+      params: {
+        page: 1,
+        pageSize: 10,
+        keyword: venueName,   // 用场馆名称搜索
+        status: '',           // 不限制开/关状态
+        type: ''              // 不限制类型
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    // 精确找到对应场地
+    const venue = res.data?.data?.list?.find(v => v.id === venueId)
+    if (venue) {
+      pricePerSlot.value = venue.price
+      console.log("获取价格成功:", venue.price)
+    } else {
+      console.warn("未找到目标场地:", venueId)
+    }
+  } catch (err) {
+    console.error("获取场地价格失败:", err)
+  }
+}
+
+//记录用户选择的日期,清空之前选择的场地时间段
 async function selectDate(index) {
   selectedDate.value = index
   selectedCells.value.clear()
   totalPrice.value = 0
   //await loadLockedCells()
 }
-/*
-// 模拟接口拦截
-const MOCK_MODE = true
-if (MOCK_MODE) {
-  const mockData = {}  // 模拟数据库
-  window.fetch = async (url, options) => {
-    // GET /api/get-locked-cells?date=XXXX
-    if (url.startsWith('/api/get-locked-cells')) {
-      const date = new URLSearchParams(url.split('?')[1]).get('date')
-      return new Response(JSON.stringify({
-        success: true,
-        locked: mockData[date] || []
-      }))
-    }
-    // POST /api/check-and-lock
-    if (url === '/api/check-and-lock') {
-      const body = JSON.parse(options.body)
-      const { court_id, date, time_slot } = body
-      mockData[date] = mockData[date] || []
-      const exists = mockData[date].some(
-        item => item.court_id === court_id && item.time_slot === time_slot
-      )
-      if (exists) {
-        return new Response(JSON.stringify({
-          success: false,
-          message: '已被锁定'
-        }))
-      } else {
-        mockData[date].push({ court_id, time_slot })
-        return new Response(JSON.stringify({ success: true }))
-      }
-    }
-    // POST /api/confirm-booking
-    if (url === '/api/confirm-booking') {
-      const body = JSON.parse(options.body)
-      const { reservations } = body
-      for (const r of reservations) {
-        mockData[r.date] = mockData[r.date] || []
-        mockData[r.date].push({ court_id: r.court_id, time_slot: r.time_slot })
-      }
-      return new Response(JSON.stringify({ success: true }))
-    }
-    // 默认返回
-    return new Response(JSON.stringify({ success: false, message: 'Unknown API' }))
-  }
-}
-  */
+
 //用户限制
-// 用户限制
-async function loadUserLimitStatus(useMock = true) {
+async function loadUserLimitStatus(useMock = true, date) {
   if (useMock) {
-    // 写死测试数据
     dailyLimit.value = 2
     remainingHours.value = 2
     return
   }
 
-  // 调接口
   try {
-    const res = await axios.get('/api/user-limit-status', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+    const res = await axios.post(
+      '/api/courtreservation/user-limit-status',
+      { date },   // 使用传入的所选日期
+      {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
       }
-    })
+    )
 
     const data = res.data
     if (data.success) {
-      dailyLimit.value = data.daily_limit
-      remainingHours.value = data.remaining_hours
+      dailyLimit.value = data.dailyLimit
+      remainingHours.value = data.remainingHours
     }
-  } catch(err) {
+  } catch (err) {
+    console.error(err)
     alert('加载预约额度失败')
   }
 }
@@ -293,6 +284,7 @@ async function loadCourtsFromBackend() {
   }
 }
 
+// 时间段列表
 async function loadTimeSlotsFromBackend() {
   const cacheKey = "timeSlots_cache"
   const cacheTTL = 1000 * 60 * 60 // 缓存 1 小时
@@ -359,7 +351,6 @@ function showSuccessPopup() {
 }
 
 // 跳转到“订单”页面
-
 function goToOrders() {
   clearInterval(timer)
   showPopup.value = false
@@ -387,12 +378,25 @@ function getStatusClass(courtId, timeId) {
 // 点击一个格子时，切换选中/取消状态（不做异步锁定）
 function toggleSelect(courtId, timeId) {
   const key = `${courtId}-${timeId}`
+  const selectedList = Array.from(selectedCells.value).map(key => {
+    const [courtId, timeSlotId] = key.split('-')
+    const courtObj = courts.value.find(c => c.id == courtId)
+    return {
+      venueId: parseInt(courtId),
+      venueSubname: courtObj ? courtObj.name : '',
+      date: fullDate.value,
+      timeSlotId: parseInt(timeSlotId),
+      status: "upcoming"
+    }
+  })
   if (selectedCells.value.has(key)) {
     selectedCells.value.delete(key)
-    totalPrice.value -= pricePerSlot
+    totalPrice.value -= pricePerSlot.value
+    remainingHours.value = Math.max(0, remainingHours.value + 1)  // 每次取消增加 1
   } else {
     selectedCells.value.add(key)
-    totalPrice.value += pricePerSlot
+    totalPrice.value += pricePerSlot.value
+    remainingHours.value = Math.max(0, remainingHours.value - 1)  // 每次选中减少 1
   }
 }
 
@@ -405,14 +409,11 @@ async function handleClick(courtId, timeId) {
     return
   }
 
-  // ✅ 判断剩余次数
+  // 判断剩余次数
   if (!selectedCells.value.has(key)) {
-    if (dailyLimit.value <= 0) {
-      alert('今天的预约次数已用完')
-      return
-    }
     if (remainingHours.value <= 0) {
-      alert('本周的预约时长已用完')
+      const date = weekDates[selectedDate.value].fullDate
+      alert(`${date} 的预约时长已用完`)
       return
     }
   }
@@ -441,7 +442,7 @@ async function handleClick(courtId, timeId) {
       AuthService.handleAuthFailure(authResult.reason, router)
       return
     }
-    
+
     const res = await axios.post('/api/courtreservation/check', body, {
       headers: {
         'Content-Type': 'application/json',
@@ -466,9 +467,7 @@ async function handleClick(courtId, timeId) {
   }
 }
 
-//调用后端接口检查并锁定选中的场地和时间
-// 拉取某天所有已锁定的格子
-// 定义缓存
+//调用后端接口检查并锁定选中的场地和时间,拉取某天所有已锁定的格子,定义缓存
 async function loadLockedCells(date, forceReload = false) {
   try {
     const cacheKey = `locked_${date}`
@@ -538,8 +537,6 @@ async function loadLockedCells(date, forceReload = false) {
 }
 
 //点击预约按钮时，提交预约信息
-//需要后端接口：确认预约
-//调用后端接口获取指定日期的预约数据
 async function confirmBooking() {
   if (selectedCells.value.size === 0) {
     alert('请先选择时间段')
@@ -597,9 +594,6 @@ async function confirmBooking() {
 
       // 2. 再清空选中格子和更新 UI
       selectedCells.value.clear()
-      totalPrice.value = 0
-      dailyLimit.value = Math.max(0, dailyLimit.value - 1)
-      remainingHours.value = Math.max(0, remainingHours.value - selectedList.length)
 
       // 3. 弹窗提示
       showSuccessPopup()
@@ -612,6 +606,7 @@ async function confirmBooking() {
   }
 }
 
+// 页面加载时初始化数据
 onMounted(async () => {
   isLoading.value = true
   await Promise.allSettled([
@@ -630,11 +625,14 @@ onMounted(async () => {
 
   // 初始化锁定格子
   await loadLockedCells(fullDate.value, true)
-  loadUserLimitStatus(true)  // true = 写死数据，false = 调接口
+
+  // 初始化时查额度，传 fullDate.value
+  await loadUserLimitStatus(false, fullDate.value)
+  if (courts.value.length > 0) {
+    await loadVenuePrice(courts.value[0].id)
+  }
 
 })
-
-
 
 // watch：切换日期时，自动走缓存
 watch(selectedDate, async newVal => {
@@ -642,6 +640,7 @@ watch(selectedDate, async newVal => {
   selectedCells.value.clear()
   totalPrice.value = 0
   await loadLockedCells(date)
+  await loadUserLimitStatus(false, date)
 })
 </script>
 
