@@ -222,7 +222,7 @@
 import AdminHeaderNavbar from '../components/AdminHeaderNavbar.vue'
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Warning, User, Calendar, TrendCharts, Search } from '@element-plus/icons-vue'
-import { getViolationRecords, getViolationDetail, confirmViolation, cancelViolation } from '../utils/api';
+import { getViolationRecords } from '../utils/api';
 
 export default {
   name: "ViolationManagement",
@@ -487,18 +487,8 @@ export default {
     },
     
     // 查看详情
-    async viewViolationDetail(violation) {
-      try {
-        const response = await getViolationDetail(violation.id);
-        if (response && response.data && response.data.code === 200) {
-          this.selectedViolation = response.data.data;
-        } else {
-          this.selectedViolation = violation;
-        }
-      } catch (error) {
-        console.error('获取违约详情失败:', error);
-        this.selectedViolation = violation;
-      }
+    viewViolationDetail(violation) {
+      this.selectedViolation = violation;
       this.detailDialogVisible = true;
     },
     
