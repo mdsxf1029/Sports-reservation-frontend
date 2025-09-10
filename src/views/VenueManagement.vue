@@ -85,7 +85,7 @@
             
             <el-select v-model="venueTypeFilter" placeholder="场地类型" clearable style="width: 140px; margin-right: 10px;">
               <el-option label="全部" value="" />
-              <el-option v-for="type in venueTypes" :key="type" :label="type" :value="type" />
+              <el-option v-for="type in venueTypeOptions" :key="type" :label="type" :value="type" />
             </el-select>
             
             <el-button type="primary" @click="applyFilters">
