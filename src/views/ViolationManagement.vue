@@ -265,6 +265,9 @@ export default {
   },
   async mounted() {
     await this.fetchViolationData();
+    
+    // 监听申诉状态变化，自动刷新数据
+    this.setupDataRefreshListener();
   },
   setup() {
     return {
@@ -454,7 +457,38 @@ export default {
     handleCurrentChange(val) {
       this.currentPage = val;
       this.fetchViolationData();
+    },
+    
+    // 设置数据刷新监听器
+    setupDataRefreshListener() {
+      // 监听localStorage变化
+      window.addEventListener('storage', this.handleStorageChange);
+      
+      // 定期检查刷新标志
+      this.refreshCheckInterval = setInterval(() => {
+        const refreshFlag = localStorage.getItem('violationDataNeedsRefresh');
+        if (refreshFlag) {
+          // 清除标志并刷新数据
+          localStorage.removeItem('violationDataNeedsRefresh');
+          this.fetchViolationData();
+        }
+      }, 1000); // 每秒检查一次
+    },
+    
+    // 处理localStorage变化
+    handleStorageChange(event) {
+      if (event.key === 'violationDataNeedsRefresh') {
+        this.fetchViolationData();
+      }
     }
+  },
+  
+  // 组件销毁时清理监听器
+  beforeUnmount() {
+    if (this.refreshCheckInterval) {
+      clearInterval(this.refreshCheckInterval);
+    }
+    window.removeEventListener('storage', this.handleStorageChange);
   }
 };
 </script>
