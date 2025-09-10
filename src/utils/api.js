@@ -377,20 +377,21 @@ export const addUserToBlacklist = (userData) => {
 };
 
 // 从黑名单移除用户
-export const removeUserFromBlacklist = (userId) => {
+export const removeUserFromBlacklist = (userId, beginTime) => {
   const token = localStorage.getItem('token');
   return instance.post('/api/blacklist/remove', {
-    userId
+    userId,
+    beginTime
   }, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
 };
 
 // 批量移除黑名单用户
-export const batchRemoveFromBlacklist = (userIds) => {
+export const batchRemoveFromBlacklist = (blacklistItems) => {
   const token = localStorage.getItem('token');
   return instance.post('/api/blacklist/batch-remove', {
-    userIds
+    blacklistItems
   }, {
     headers: { 'Authorization': `Bearer ${token}` }
   });

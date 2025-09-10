@@ -812,6 +812,9 @@ export default {
           
           // 重新获取数据
           await this.fetchAppealData();
+          
+          // 通知违约管理页面刷新数据
+          localStorage.setItem('violationDataNeedsRefresh', Date.now().toString());
         } else {
           ElMessage.error(response?.data?.message || '处理申诉失败');
         }
@@ -842,7 +845,7 @@ export default {
     
     async removeFromBlacklist(user) {
       try {
-        const response = await removeUserFromBlacklist(user.userId);
+        const response = await removeUserFromBlacklist(user.userId, user.blacklistTime);
         
         if (response && response.data && response.data.code === 0) {
           const index = this.blacklistUsers.findIndex(item => item.id === user.id);
@@ -948,9 +951,9 @@ export default {
         type: 'info',
       }).then(async () => {
         try {
-          // 这里需要获取选中的用户ID列表
-          const selectedIds = []; // 从表格选择中获取
-          const response = await batchRemoveFromBlacklist(selectedIds);
+          // 这里需要获取选中的黑名单项目列表
+          const selectedItems = []; // 从表格选择中获取，格式: [{userId, beginTime}, ...]
+          const response = await batchRemoveFromBlacklist(selectedItems);
           
           if (response && response.data && response.data.code === 0) {
             ElMessage.success('批量移除成功');
