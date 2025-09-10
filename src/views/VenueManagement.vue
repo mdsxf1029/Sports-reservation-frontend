@@ -203,7 +203,6 @@
         </div>
       </div>
       <template #footer>
-        <el-button @click="detailDialogVisible = false">关 闭</el-button>
         <el-button type="primary" @click="handleEdit(selectedVenue)">编 辑</el-button>
       </template>
     </el-dialog>
