@@ -125,7 +125,11 @@
                     </template>
                   </el-table-column>
                   <el-table-column prop="userId" label="用户ID" width="120" />
-                  <el-table-column prop="violationTime" label="违约时间" width="180" />
+                  <el-table-column prop="violationTime" label="违约时间" width="180">
+                    <template #default="scope">
+                      {{ formatAppealTime(scope.row.violationTime) }}
+                    </template>
+                  </el-table-column>
                   <el-table-column prop="venue" label="预约场馆" width="120">
                     <template #default="scope">
                       <div class="appeal-venue-info">
@@ -143,7 +147,11 @@
                       </div>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="appealTime" label="申诉时间" width="180" />
+                  <el-table-column prop="appealTime" label="申诉时间" width="180">
+                    <template #default="scope">
+                      {{ formatAppealTime(scope.row.appealTime) }}
+                    </template>
+                  </el-table-column>
                   <el-table-column prop="processor" label="处理人" width="120">
                     <template #default="scope">
                       <span v-if="scope.row.processor">{{ scope.row.processor }}</span>
@@ -152,7 +160,7 @@
                   </el-table-column>
                   <el-table-column prop="processTime" label="处理时间" width="180">
                     <template #default="scope">
-                      <span v-if="scope.row.processTime">{{ scope.row.processTime }}</span>
+                      <span v-if="scope.row.processTime">{{ formatAppealTime(scope.row.processTime) }}</span>
                       <span v-else style="color: #999;">未处理</span>
                     </template>
                   </el-table-column>
@@ -253,7 +261,11 @@
                       <el-tag type="danger" size="small">{{ scope.row.violationCount }} 次</el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="blacklistTime" label="加入黑名单时间" width="180" />
+                  <el-table-column prop="blacklistTime" label="加入黑名单时间" width="180">
+                    <template #default="scope">
+                      {{ formatBlacklistTime(scope.row.blacklistTime) }}
+                    </template>
+                  </el-table-column>
                   <el-table-column prop="blacklistReason" label="加入原因" min-width="200">
                     <template #default="scope">
                       <div class="appeal-blacklist-reason">
@@ -318,7 +330,7 @@
             </div>
             <div class="appeal-detail-item">
               <span class="label">违约时间：</span>
-              <span class="value">{{ selectedAppeal.violationTime }}</span>
+              <span class="value">{{ formatAppealTime(selectedAppeal.violationTime) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">预约场馆：</span>
@@ -330,7 +342,7 @@
             </div>
             <div class="appeal-detail-item">
               <span class="label">申诉时间：</span>
-              <span class="value">{{ selectedAppeal.appealTime }}</span>
+              <span class="value">{{ formatAppealTime(selectedAppeal.appealTime) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">申诉理由：</span>
@@ -342,7 +354,7 @@
             </div>
             <div class="appeal-detail-item" v-if="selectedAppeal.processTime">
               <span class="label">处理时间：</span>
-              <span class="value">{{ selectedAppeal.processTime }}</span>
+              <span class="value">{{ formatAppealTime(selectedAppeal.processTime) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">申诉状态：</span>
@@ -413,7 +425,7 @@
             </div>
             <div class="appeal-detail-item">
               <span class="label">违约时间：</span>
-              <span class="value">{{ selectedAppeal?.violationTime }}</span>
+              <span class="value">{{ formatAppealTime(selectedAppeal?.violationTime) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">预约场馆：</span>
@@ -425,7 +437,7 @@
             </div>
             <div class="appeal-detail-item">
               <span class="label">申诉时间：</span>
-              <span class="value">{{ selectedAppeal?.appealTime }}</span>
+              <span class="value">{{ formatAppealTime(selectedAppeal?.appealTime) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">申诉理由：</span>
@@ -437,7 +449,7 @@
             </div>
             <div class="appeal-detail-item" v-if="selectedAppeal?.processTime">
               <span class="label">处理时间：</span>
-              <span class="value">{{ selectedAppeal?.processTime }}</span>
+              <span class="value">{{ formatAppealTime(selectedAppeal?.processTime) }}</span>
             </div>
           </div>
         </div>
@@ -497,6 +509,7 @@ import {
   removeUserFromBlacklist,
   batchRemoveFromBlacklist
 } from '../utils/api';
+import { formatAppealTime, formatBlacklistTime } from '../utils/formatters';
 
 export default {
   name: "AppealManagement",
@@ -831,14 +844,14 @@ export default {
       try {
         const response = await removeUserFromBlacklist(user.userId);
         
-        if (response && response.data && response.data.code === 200) {
+        if (response && response.data && response.data.code === 0) {
           const index = this.blacklistUsers.findIndex(item => item.id === user.id);
           if (index > -1) {
             this.blacklistUsers.splice(index, 1);
           }
           ElMessage.success('已从黑名单移除');
         } else {
-          ElMessage.error(response?.data?.message || '移除黑名单失败');
+          ElMessage.error(response?.data?.msg || '移除黑名单失败');
         }
       } catch (error) {
         console.error('移除黑名单失败:', error);
@@ -939,11 +952,11 @@ export default {
           const selectedIds = []; // 从表格选择中获取
           const response = await batchRemoveFromBlacklist(selectedIds);
           
-          if (response && response.data && response.data.code === 200) {
+          if (response && response.data && response.data.code === 0) {
             ElMessage.success('批量移除成功');
             await this.fetchBlacklistData();
           } else {
-            ElMessage.error('批量移除失败');
+            ElMessage.error(response?.data?.msg || '批量移除失败');
           }
         } catch (error) {
           console.error('批量移除失败:', error);
