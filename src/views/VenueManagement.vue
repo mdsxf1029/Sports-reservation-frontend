@@ -197,7 +197,6 @@
             <div class="detail-item"><span class="label">价格：</span><span class="value">¥ {{ selectedVenue.price }} / {{ selectedVenue.price_unit }}</span></div>
             <div class="detail-item"><span class="label">位置：</span><span class="value">{{ selectedVenue.location }}</span></div>
             <div class="detail-item"><span class="label">开放时间：</span><span class="value">{{ selectedVenue.openingHours }}</span></div>
-            <div class="detail-item"><span class="label">预约时间段：</span><span class="value">{{ selectedVenue.bookingHours }}</span></div>
             <div class="detail-item"><span class="label">最大容量：</span><span class="value">{{ selectedVenue.maxOccupancy }} 人</span></div>
             <div class="detail-item"><span class="label">状态：</span><span class="value"><el-tag :type="selectedVenue.status === '开放' ? 'success' : 'danger'">{{ selectedVenue.status }}</el-tag></span></div>
           </div>
@@ -240,8 +239,7 @@
             </el-input>
         </el-form-item>
         <el-form-item label="位置"><el-input v-model="form.location" /></el-form-item>
-        <el-form-item label="开放时间"><el-input v-model="form.openingHours" placeholder="例如: 08:00-22:00" /></el-form-item>
-        <el-form-item label="预约时间段"><el-input v-model="form.bookingHours" placeholder="例如: 08:00-22:00" /></el-form-item>
+        <el-form-item label="开放时间"><el-input v-model="form.openingHours" placeholder="例如: 08:00-20:00" /></el-form-item>
         <el-form-item label="最大容量"><el-input v-model.number="form.maxOccupancy" type="number" /></el-form-item>
         <el-form-item label="状态">
           <el-select v-model="form.status" placeholder="请选择场地状态">
@@ -318,7 +316,7 @@ const form = ref({
   price: 0,
   location: '',
   openingHours: '',
-  bookingHours: '',
+  bookingHours: '8:00-22:00',
   maxOccupancy: 0,
   status: '开放',
   price_unit: '小时' // 默认单位
@@ -338,7 +336,7 @@ const resetForm = () => {
     price: 0,
     location: '',
     openingHours: '',
-    bookingHours: '',
+    bookingHours: '8:00-22:00',
     maxOccupancy: 0,
     status: '开放',
     price_unit: '小时'
