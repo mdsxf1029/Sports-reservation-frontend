@@ -327,20 +327,6 @@ export const addViolation = (violationData) => {
   });
 };
 
-// 获取违约详情
-export const getViolationDetail = (violationId) => {
-  return instance.get(`/api/violations/${violationId}`);
-};
-
-// 确认违约
-export const confirmViolation = (violationId) => {
-  return instance.put(`/api/violations/${violationId}/confirm`);
-};
-
-// 取消违约
-export const cancelViolation = (violationId) => {
-  return instance.put(`/api/violations/${violationId}/cancel`);
-};
 
 /* 申诉管理相关API */
 
