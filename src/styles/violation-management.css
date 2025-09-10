@@ -98,6 +98,12 @@
 .violation-filter-right {
   display: flex;
   align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.violation-filter-right>* {
+  margin: 0 !important;
 }
 
 /* 表格区域样式 */
@@ -212,17 +218,17 @@
   .violation-statistics-cards {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .violation-filter-section {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .violation-filter-left {
     margin-bottom: 10px;
   }
-  
+
   .violation-detail-grid {
     grid-template-columns: 1fr;
   }
-} 
+}

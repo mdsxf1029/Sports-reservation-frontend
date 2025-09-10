@@ -10,7 +10,7 @@
               <el-icon><Warning /></el-icon>
             </div>
             <div class="violation-stat-content">
-              <div class="violation-stat-number">{{ totalViolations }}</div>
+              <div class="violation-stat-number">{{ allViolationCount }}</div>
               <div class="violation-stat-label">总违约次数</div>
             </div>
           </div>
@@ -19,7 +19,7 @@
               <el-icon><User /></el-icon>
             </div>
             <div class="violation-stat-content">
-              <div class="violation-stat-number">{{ uniqueUsers }}</div>
+              <div class="violation-stat-number">{{ userCount }}</div>
               <div class="violation-stat-label">违约用户数</div>
             </div>
           </div>
@@ -28,7 +28,7 @@
               <el-icon><Calendar /></el-icon>
             </div>
             <div class="violation-stat-content">
-              <div class="violation-stat-number">{{ todayViolations }}</div>
+              <div class="violation-stat-number">{{ todayCount }}</div>
               <div class="violation-stat-label">今日违约</div>
             </div>
           </div>
@@ -68,6 +68,14 @@
                 <el-icon><Search /></el-icon>
               </template>
             </el-input>
+            <el-button type="primary" @click="applyFilters">
+              <el-icon><Filter /></el-icon>
+              应用筛选
+            </el-button>
+            <el-button @click="resetFilters">
+              <el-icon><Refresh /></el-icon>
+              重置
+            </el-button>
           </div>
         </div>
 
@@ -78,7 +86,7 @@
             <el-tag type="info" size="small">{{ totalCount }} 条记录</el-tag>
           </div>
           
-          <el-table :data="filteredViolations" style="width: 100%" stripe>
+          <el-table :data="violations" style="width: 100%" stripe>
             <el-table-column type="index" label="序号" width="80" />
             <el-table-column prop="userName" label="用户名" width="120" />
             <el-table-column prop="userId" label="用户ID" width="120" />
@@ -102,7 +110,7 @@
             </el-table-column>
           </el-table>
           
-          <div v-if="filteredViolations.length === 0" class="no-data">
+          <div v-if="totalCount === 0" class="no-data">
             暂无违约记录
           </div>
         </div>
@@ -170,7 +178,7 @@
 <script>
 import AdminHeaderNavbar from '../components/AdminHeaderNavbar.vue'
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Warning, User, Calendar, TrendCharts, Search } from '@element-plus/icons-vue'
+import { Warning, User, Calendar, TrendCharts, Search, Filter, Refresh } from '@element-plus/icons-vue'
 import { getViolationRecords } from '../utils/api';
 import { formatViolationTime } from '../utils/formatters';
 
@@ -182,12 +190,13 @@ export default {
     User,
     Calendar,
     TrendCharts,
-    Search
+    Search,
+    Filter,
+    Refresh
   },
   data() {
     return {
       // 筛选条件
-      filterStatus: '',
       dateRange: [],
       searchKeyword: '',
       
@@ -195,6 +204,12 @@ export default {
       currentPage: 1,
       pageSize: 20,
       totalCount: 0,
+
+      // 统计信息
+      allViolationCount: 0,
+      userCount: 0,
+      todayCount: 0,
+      allAppointmentCount: 0,
       
       // 对话框
       detailDialogVisible: false,
@@ -209,59 +224,10 @@ export default {
   },
   computed: {
     // 统计计算
-    totalViolations() {
-      return this.violations.length;
-    },
-    uniqueUsers() {
-      const userIds = new Set(this.violations.map(v => v.userId));
-      return userIds.size;
-    },
-    todayViolations() {
-      const today = new Date().toISOString().split('T')[0];
-      return this.violations.filter(v => v.violationTime && v.violationTime.startsWith(today)).length;
-    },
     violationRate() {
       // 模拟计算违约率（实际应该基于总预约数）
-      return ((this.violations.length / 100) * 100).toFixed(1);
+      return ((this.allViolationCount / this.allAppointmentCount) * 100).toFixed(1);
     },
-    
-    // 筛选后的数据
-    filteredViolations() {
-      let filtered = [...this.violations];
-      
-      // 状态筛选
-      if (this.filterStatus) {
-        if (this.filterStatus === 'confirmed') {
-          filtered = filtered.filter(v => v.appealStatus === 'none');
-        } else if (this.filterStatus === 'appeal_pending') {
-          filtered = filtered.filter(v => v.appealStatus === 'pending');
-        } else if (this.filterStatus === 'appeal_approved') {
-          filtered = filtered.filter(v => v.appealStatus === 'approved');
-        } else if (this.filterStatus === 'appeal_rejected') {
-          filtered = filtered.filter(v => v.appealStatus === 'rejected');
-        }
-      }
-      
-      
-      // 日期筛选
-      if (this.dateRange && this.dateRange.length === 2) {
-        filtered = filtered.filter(v => {
-          const violationDate = v.violationTime.split(' ')[0];
-          return violationDate >= this.dateRange[0] && violationDate <= this.dateRange[1];
-        });
-      }
-      
-      // 关键词搜索
-      if (this.searchKeyword) {
-        const keyword = this.searchKeyword.toLowerCase();
-        filtered = filtered.filter(v => 
-          v.userName.toLowerCase().includes(keyword) || 
-          v.userId.includes(keyword)
-        );
-      }
-      
-      return filtered;
-    }
   },
   async mounted() {
     await this.fetchViolationData();
@@ -282,13 +248,16 @@ export default {
         const response = await getViolationRecords({
           page: this.currentPage,
           pageSize: this.pageSize,
-          status: this.filterStatus,
           dateRange: this.dateRange,
           keyword: this.searchKeyword
         });
         
         if (response && response.data && response.data.success) {
           this.totalCount = response.data.totalCount || 0;
+          this.allViolationCount = response.data.allViolationCount || 0;
+          this.userCount = response.data.userCount || 0;
+          this.todayCount = response.data.todayCount || 0;
+          this.allAppointmentCount = response.data.allAppointmentCount || 0;
           
           // 转换数据格式以匹配前端组件
           this.violations = (response.data.data || []).map(violation => {
@@ -414,33 +383,6 @@ export default {
         this.loading = false;
       }
     },
-
-    
-    // 综合状态相关方法
-    getCombinedStatusText(violation) {
-      if (violation.appealStatus === 'none') {
-        return '已确认违约';
-      } else if (violation.appealStatus === 'pending') {
-        return '申诉中';
-      } else if (violation.appealStatus === 'approved') {
-        return '申诉通过';
-      } else if (violation.appealStatus === 'rejected') {
-        return '申诉被拒';
-      }
-      return '未知';
-    },
-    getCombinedStatusType(violation) {
-      if (violation.appealStatus === 'none') {
-        return 'danger';
-      } else if (violation.appealStatus === 'pending') {
-        return 'warning';
-      } else if (violation.appealStatus === 'approved') {
-        return 'success';
-      } else if (violation.appealStatus === 'rejected') {
-        return 'danger';
-      }
-      return 'info';
-    },
     
     // 查看详情
     viewViolationDetail(violation) {
@@ -457,6 +399,20 @@ export default {
     handleCurrentChange(val) {
       this.currentPage = val;
       this.fetchViolationData();
+    },
+
+    // 筛选逻辑
+    applyFilters() {
+      this.currentPage = 1;
+      this.fetchViolationData();
+      ElMessage.success('筛选已应用');
+    },
+    resetFilters() {
+      this.searchKeyword = '';
+      this.dateRange = [];
+      this.currentPage = 1;
+      this.fetchViolationData();
+      ElMessage.success('筛选已重置');
     },
     
     // 设置数据刷新监听器

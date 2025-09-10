@@ -313,11 +313,22 @@ export const markNotificationAsRead = (userId, notificationId) => {
 // 获取违约记录列表
 export const getViolationRecords = (params = {}) => {
   const token = localStorage.getItem('token');
+  const query = {
+    page: params.page || 1,
+    pageSize: params.pageSize || 10,
+  };
+
+  if (params.status) query.status = params.status;
+  if (params.keyword) query.keyword = params.keyword;
+  if (params.dateRange && params.dateRange.length) query.dateRange = params.dateRange;
+
+
   return instance.get('/api/violations/violation-list', {
-    params: {
-      ...params // 支持传入page、pageSize、venue、dateRange等参数
+    params: query,
+    headers: {
+      'Authorization': `Bearer ${token}`
     },
-    headers: { 'Authorization': `Bearer ${token}` }
+    paramsSerializer: params => qs.stringify(params, { arrayFormat: 'repeat' })
   });
 };
 
