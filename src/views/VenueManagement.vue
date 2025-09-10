@@ -165,17 +165,17 @@
             </el-table-column>
           </el-table>
 
-          <el-pagination
-            v-if="totalVenues > 0"
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :page-sizes="[5, 10, 20, 50]"
-            :total="totalVenues"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-            class="pagination-container"
-          />
+          <div v-if="totalVenues > 0" class="pagination-container">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[5, 10, 20, 50]"
+              :total="totalVenues"
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
+          </div>
           
           <div v-if="tableData.length === 0 && !loading" class="no-data">
             <el-empty description="暂无匹配的场地数据" :image-size="200">
@@ -546,10 +546,48 @@ const handleCurrentChange = (newPage) => {
   display: flex;
   gap: 6px;
 }
+/* 分页容器样式 */
 .pagination-container {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+  padding: 20px 0;
   margin-top: 20px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.pagination-container .el-pagination {
+  --el-pagination-font-size: 14px;
+  --el-pagination-bg-color: #fff;
+  --el-pagination-text-color: #606266;
+  --el-pagination-border-radius: 4px;
+  --el-pagination-button-disabled-color: #c0c4cc;
+  --el-pagination-button-disabled-bg-color: #fff;
+  --el-pagination-hover-color: #2062ea;
+}
+
+/* 修复分页按钮样式 */
+.pagination-container .el-pagination .el-pager li {
+  min-width: 30px;
+  height: 32px;
+  line-height: 30px;
+  margin: 0 2px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #606266;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.pagination-container .el-pagination .el-pager li:hover {
+  color: #2062ea;
+  border-color: #2062ea;
+}
+
+.pagination-container .el-pagination .el-pager li.is-active {
+  background-color: #2062ea;
+  border-color: #2062ea;
+  color: #fff;
 }
 .page-layout {
   min-height: 100vh;

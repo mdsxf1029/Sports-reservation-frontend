@@ -216,7 +216,7 @@
                 </div>
                 
                 <!-- 分页 -->
-                <div class="appeal-pagination-section" v-if="filteredAppeals.length > 0">
+                <div class="pagination-container" v-if="filteredAppeals.length > 0">
                   <el-pagination
                     v-model:current-page="appealCurrentPage"
                     v-model:page-size="appealPageSize"
@@ -295,7 +295,7 @@
                 </div>
                 
                 <!-- 分页 -->
-                <div class="appeal-pagination-section" v-if="blacklistUsers.length > 0">
+                <div class="pagination-container" v-if="blacklistUsers.length > 0">
                   <el-pagination
                     v-model:current-page="blacklistCurrentPage"
                     v-model:page-size="blacklistPageSize"

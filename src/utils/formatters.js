@@ -31,12 +31,12 @@ export const getRoleText = (role) => {
 // 格式化相对时间显示
 export const formatRelativeTime = (timeString) => {
   if (!timeString) return '刚刚'
-  
+
   try {
     const time = new Date(timeString)
     const now = new Date()
     const diffInSeconds = Math.floor((now - time) / 1000)
-    
+
     if (diffInSeconds < 60) {
       return '刚刚'
     } else if (diffInSeconds < 3600) {
@@ -59,15 +59,15 @@ export const formatRelativeTime = (timeString) => {
 // 格式化时间范围显示
 export const formatTimeRange = (beginTime, endTime) => {
   if (!beginTime) return '时间待定'
-  
+
   try {
     const beginDate = new Date(beginTime)
     const endDate = endTime ? new Date(endTime) : null
-    
+
     const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
-    
+
     let dateStr = ''
     if (beginDate.toDateString() === today.toDateString()) {
       dateStr = '今天'
@@ -76,9 +76,9 @@ export const formatTimeRange = (beginTime, endTime) => {
     } else {
       dateStr = beginDate.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })
     }
-    
+
     const beginTimeStr = beginDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-    
+
     if (endDate) {
       const endTimeStr = endDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
       return `${dateStr} ${beginTimeStr}-${endTimeStr}`
@@ -94,22 +94,22 @@ export const formatTimeRange = (beginTime, endTime) => {
 // 格式化违约时间显示
 export const formatViolationTime = (timeString) => {
   if (!timeString) return '未知时间'
-  
+
   try {
     const date = new Date(timeString)
-    
-    // 检查日期是否有效
+
     if (isNaN(date.getTime())) {
       return timeString
     }
-    
-    // 格式化为中文日期时间格式：MM月DD日 HH:mm
+
+    const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
     const hours = String(date.getHours()).padStart(2, '0')
     const minutes = String(date.getMinutes()).padStart(2, '0')
-    
-    return `${month}月${day}日 ${hours}:${minutes}`
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   } catch (error) {
     console.error('违约时间格式化错误:', error)
     return timeString
@@ -119,22 +119,22 @@ export const formatViolationTime = (timeString) => {
 // 格式化新闻时间显示
 export const formatNewsTime = (timeString) => {
   if (!timeString) return '未知时间'
-  
+
   try {
     const date = new Date(timeString)
-    
-    // 检查日期是否有效
+
     if (isNaN(date.getTime())) {
       return timeString
     }
-    
-    // 格式化为中文日期时间格式：MM月DD日 HH:mm
+
+    const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
     const hours = String(date.getHours()).padStart(2, '0')
     const minutes = String(date.getMinutes()).padStart(2, '0')
-    
-    return `${month}月${day}日 ${hours}:${minutes}`
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   } catch (error) {
     console.error('新闻时间格式化错误:', error)
     return timeString

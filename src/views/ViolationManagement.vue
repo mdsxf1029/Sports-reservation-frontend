@@ -46,13 +46,6 @@
         <!-- 筛选和搜索区域 -->
         <div class="violation-filter-section">
           <div class="violation-filter-left">
-            <el-select v-model="filterStatus" placeholder="处理状态" clearable style="width: 120px; margin-right: 10px;">
-              <el-option label="全部" value="" />
-              <el-option label="已确认违约" value="confirmed" />
-              <el-option label="申诉中" value="appeal_pending" />
-              <el-option label="申诉通过" value="appeal_approved" />
-              <el-option label="申诉被拒" value="appeal_rejected" />
-            </el-select>
             <el-date-picker
               v-model="dateRange"
               type="daterange"
@@ -82,27 +75,20 @@
         <div class="violation-table-section">
           <div class="violation-table-header">
             <h3>违约记录列表</h3>
-            <el-tag type="info" size="small">{{ filteredViolations.length }} 条记录</el-tag>
+            <el-tag type="info" size="small">{{ totalCount }} 条记录</el-tag>
           </div>
           
           <el-table :data="filteredViolations" style="width: 100%" stripe>
             <el-table-column type="index" label="序号" width="80" />
             <el-table-column prop="userName" label="用户名" width="120" />
             <el-table-column prop="userId" label="用户ID" width="120" />
-            <el-table-column prop="violationTime" label="违约时间" width="180">
+            <el-table-column prop="violationTime" label="违约时间" width="250">
               <template #default="scope">
                 {{ formatViolationTime(scope.row.violationTime) }}
               </template>
             </el-table-column>
-            <el-table-column prop="venue" label="预约场馆" width="120" />
-            <el-table-column prop="timeSlot" label="预约时间段" width="150" />
-            <el-table-column prop="status" label="处理状态" width="120">
-              <template #default="scope">
-                <el-tag :type="getCombinedStatusType(scope.row)" size="small">
-                  {{ getCombinedStatusText(scope.row) }}
-                </el-tag>
-              </template>
-            </el-table-column>
+            <el-table-column prop="venue" label="预约场馆" width="250" />
+            <el-table-column prop="timeSlot" label="预约时间段" width="220" />
             <el-table-column label="操作" width="150" fixed="right">
               <template #default="scope">
                 <el-button 
@@ -122,12 +108,12 @@
         </div>
 
         <!-- 分页 -->
-        <div class="violation-pagination-section">
+        <div v-if="totalCount > 0" class="pagination-container">
           <el-pagination
             v-model:current-page="currentPage"
             v-model:page-size="pageSize"
             :page-sizes="[10, 20, 50, 100]"
-            :total="filteredViolations.length"
+            :total="totalCount"
             layout="total, sizes, prev, pager, next, jumper"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
@@ -173,40 +159,6 @@
             </div>
           </div>
         </div>
-
-        <div class="detail-section" v-if="selectedViolation.appealStatus !== 'none'">
-          <h4>申诉信息</h4>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <span class="label">申诉时间：</span>
-              <span class="value">{{ formatViolationTime(selectedViolation.appealTime) }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">申诉理由：</span>
-              <span class="value">{{ selectedViolation.appealReason }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">申诉状态：</span>
-              <span class="value">
-                <el-tag :type="getCombinedStatusType(selectedViolation)" size="small">
-                  {{ getCombinedStatusText(selectedViolation) }}
-                </el-tag>
-              </span>
-            </div>
-            <div class="detail-item" v-if="selectedViolation.appealStatus === 'rejected'">
-              <span class="label">拒绝理由：</span>
-              <span class="value">{{ selectedViolation.rejectReason || '无' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="detail-section">
-          <h4>用户违约历史</h4>
-          <div class="history-summary">
-            <p>该用户累计违约 <strong>{{ selectedViolation.userViolationCount }}</strong> 次</p>
-            <p>最近一次违约：{{ selectedViolation.lastViolationTime ? formatViolationTime(selectedViolation.lastViolationTime) : '无' }}</p>
-          </div>
-        </div>
       </div>
       <template #footer>
         <el-button @click="detailDialogVisible = false">关 闭</el-button>
@@ -242,6 +194,7 @@ export default {
       // 分页
       currentPage: 1,
       pageSize: 20,
+      totalCount: 0,
       
       // 对话框
       detailDialogVisible: false,
@@ -265,7 +218,7 @@ export default {
     },
     todayViolations() {
       const today = new Date().toISOString().split('T')[0];
-      return this.violations.filter(v => v.violationTime.startsWith(today)).length;
+      return this.violations.filter(v => v.violationTime && v.violationTime.startsWith(today)).length;
     },
     violationRate() {
       // 模拟计算违约率（实际应该基于总预约数）
@@ -303,7 +256,7 @@ export default {
         const keyword = this.searchKeyword.toLowerCase();
         filtered = filtered.filter(v => 
           v.userName.toLowerCase().includes(keyword) || 
-          v.userId.toLowerCase().includes(keyword)
+          v.userId.includes(keyword)
         );
       }
       
@@ -312,6 +265,11 @@ export default {
   },
   async mounted() {
     await this.fetchViolationData();
+  },
+  setup() {
+    return {
+      formatViolationTime
+    }
   },
   methods: {
     // 获取违约数据
@@ -327,25 +285,28 @@ export default {
         });
         
         if (response && response.data && response.data.success) {
-          // 后端返回的数据结构: { success: true, data: [...] }
-          this.violations = response.data.data || [];
+          this.totalCount = response.data.totalCount || 0;
           
           // 转换数据格式以匹配前端组件
-          this.violations = this.violations.map(violation => ({
-            id: violation.id,
-            userName: violation.userName,
-            userId: violation.userId.toString(),
-            violationTime: violation.violationDate + ' ' + violation.timeSlot.split('-')[0] + ':00',
-            venue: violation.venue,
-            timeSlot: violation.timeSlot,
-            status: 'confirmed',
-            appealStatus: violation.appealStatus || 'none', // 使用后端申诉状态
-            appealTime: violation.appealTime || '',
-            appealReason: violation.appealReason || '',
-            rejectReason: violation.rejectReason || '',
-            userViolationCount: 1, // 后端暂时没有统计，使用默认值
-            lastViolationTime: ''
-          }));
+          this.violations = (response.data.data || []).map(violation => {
+            const date = violation.violationDate;            
+            const startTime = violation.timeSlot.split('-')[0];
+
+            return{
+              id: violation.id,
+              userName: violation.userName,
+              userId: violation.userId.toString(),
+              violationTime: `${date} ${startTime}:00`,
+              venue: violation.venue,
+              timeSlot: violation.timeSlot,
+              status: 'confirmed',
+              appealStatus: violation.appealStatus || 'none', // 使用后端申诉状态
+              appealTime: violation.appealTime || '',
+              appealReason: violation.appealReason || '',
+              rejectReason: violation.rejectReason || '',
+            };
+            
+          });
         } else {
           // 如果API未实现，使用模拟数据
           this.violations = [
@@ -497,6 +458,5 @@ export default {
   }
 };
 </script>
-
 
 <style src="../styles/violation-management.css"></style>

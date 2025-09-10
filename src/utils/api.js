@@ -34,12 +34,6 @@ instance.interceptors.response.use(
   }
 );
 
-
-// 获取用户违约记录
-export function getViolations() {
-  return instance.get('/api/violations');
-}
-
 /* 新闻管理相关API */
 
 // 获取新闻列表
@@ -99,7 +93,7 @@ export const uploadNewsCover = (file) => {
   const formData = new FormData();
   formData.append('file', file);
   return instance.post('/api/news/upload-cover', formData, {
-    headers: { 
+    headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'multipart/form-data'
     }
@@ -229,7 +223,7 @@ export const cancelMyOrder = (userId, appointmentId) => {
   }
 
   return instance.put(`/api/appointments/${appointmentId}/cancel`, {
-    AppointmentId: appointmentId,  
+    AppointmentId: appointmentId,
     UserId: userId
   }, {
     headers
@@ -311,7 +305,7 @@ export const markNotificationAsRead = (userId, notificationId) => {
 // 获取违约记录列表
 export const getViolationRecords = (params = {}) => {
   const token = localStorage.getItem('token');
-  return instance.get('/api/violations', {
+  return instance.get('/api/violations/violation-list', {
     params: {
       ...params // 支持传入page、pageSize、status、venue、dateRange等参数
     },
