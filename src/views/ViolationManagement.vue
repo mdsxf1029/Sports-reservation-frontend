@@ -138,6 +138,7 @@
 
     <!-- 违约详情对话框 -->
 
+    
     <!-- 历史违约记录弹窗 -->
     <el-dialog
       v-model="detailDialogVisible"
