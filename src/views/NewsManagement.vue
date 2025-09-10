@@ -71,6 +71,7 @@
               <el-option label="全部" value="" />
               <el-option label="已发布" value="published" />
               <el-option label="草稿" value="draft" />
+              <el-option label="已删除" value="deleted" />
             </el-select>
 
             <el-date-picker
@@ -143,7 +144,7 @@
                   <el-icon><Upload /></el-icon>
                   发布
                 </el-button>
-                <el-button size="small" type="danger" @click="handleDelete(scope.row)">
+                <el-button size="small" type="danger" @click="handleDelete(scope.row)" :disabled="scope.row.status === 'deleted'">
                   <el-icon><Delete /></el-icon>
                   删除
                 </el-button>
@@ -274,9 +275,9 @@ const form = ref({
 });
 
 // 统计
-const totalNews = computed(() => allNews.value.length);
-const publishedNews = computed(() => allNews.value.filter(n => n.status === 'published').length);
-const draftNews = computed(() => allNews.value.filter(n => n.status === 'draft').length);
+const totalNews = ref(0);
+const publishedNews = ref(0);
+const draftNews = ref(0);
 
 // 分页相关
 const currentPage = ref(1);
@@ -307,6 +308,9 @@ const fetchNewsData = async () => {
     if (response && response.data) {
       // 后端返回的数据结构: { page, pageSize, totalCount, totalPages, list }
       totalCount.value = response.data.totalCount || 0;
+      totalNews.value = response.data.allNewsCount || 0;
+      publishedNews.value = response.data.publishedNewsCount || 0;
+      draftNews.value = response.data.draftNewsCount || 0;
       
       // 转换数据格式以匹配前端组件
       allNews.value = (response.data.list || []).map(news => ({
@@ -453,45 +457,71 @@ const onSelectionChange = (rows) => {
   selectedNews.value = rows || [];
 };
 
+// 批量发布
 const handleBatchPublish = async () => {
   if (!selectedNews.value.length) {
     ElMessage.warning('请先选择要发布的新闻');
     return;
   }
+
   try {
-    await ElMessageBox.confirm(`确定发布选中的 ${selectedNews.value.length} 篇新闻吗？`, '确认操作', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'info',
-    });
-    const ids = new Set(selectedNews.value.map(n => n.id));
-    allNews.value = allNews.value.map(n => ids.has(n.id) ? { ...n, status: 'published' } : n);
-    ElMessage.success('批量发布成功（模拟）');
+    await ElMessageBox.confirm(
+      `确定发布选中的 ${selectedNews.value.length} 篇新闻吗？`,
+      '确认操作',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'info' }
+    );
+
+    // 如果后端没有批量接口，可以循环调用单条 updateNews
+    for (const news of selectedNews.value) {
+      const newsData = {
+        newsTitle: news.title,
+        newsContent: news.content,
+        newsStatus: 'published',
+        coverUrl: news.coverUrl || '',
+      };
+      await updateNews(news.id, newsData);
+    }
+
+    ElMessage.success('批量发布成功');
     tableRef.value && tableRef.value.clearSelection();
     selectedNews.value = [];
+    await fetchNewsData(); // 刷新表格
   } catch (e) {
-    if (e !== 'cancel') ElMessage.error('批量发布失败');
+    if (e !== 'cancel') {
+      console.error('批量发布失败:', e);
+      ElMessage.error('批量发布失败');
+    }
   }
 };
 
+// 批量删除
 const handleBatchDelete = async () => {
   if (!selectedNews.value.length) {
     ElMessage.warning('请先选择要删除的新闻');
     return;
   }
+
   try {
-    await ElMessageBox.confirm(`确定删除选中的 ${selectedNews.value.length} 篇新闻吗？此操作不可恢复`, '警告', {
-      confirmButtonText: '确定删除',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
-    const ids = new Set(selectedNews.value.map(n => n.id));
-    allNews.value = allNews.value.filter(n => !ids.has(n.id));
-    ElMessage.success('批量删除成功（模拟）');
+    await ElMessageBox.confirm(
+      `确定删除选中的 ${selectedNews.value.length} 篇新闻吗？此操作不可恢复`,
+      '警告',
+      { confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'warning' }
+    );
+
+    // 循环调用 deleteNews 接口
+    for (const news of selectedNews.value) {
+      await deleteNews(news.id);
+    }
+
+    ElMessage.success('批量删除成功');
     tableRef.value && tableRef.value.clearSelection();
     selectedNews.value = [];
+    await fetchNewsData(); // 刷新表格
   } catch (e) {
-    if (e !== 'cancel') ElMessage.error('批量删除失败');
+    if (e !== 'cancel') {
+      console.error('批量删除失败:', e);
+      ElMessage.error('批量删除失败');
+    }
   }
 };
 
