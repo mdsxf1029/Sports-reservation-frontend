@@ -1,5 +1,6 @@
 // src/utils/api.js
 import axios from 'axios';
+import qs from 'qs';
 import { ElMessage } from 'element-plus';
 import { AuthService } from './auth';
 
@@ -39,14 +40,21 @@ instance.interceptors.response.use(
 // 获取新闻列表
 export const getNewsList = (params = {}) => {
   const token = localStorage.getItem('token');
+  const query = {
+    page: params.page || 1,
+    pageSize: params.pageSize || 10,
+  };
+
+  if (params.status) query.status = params.status;
+  if (params.keyword) query.keyword = params.keyword;
+  if (params.dateRange && params.dateRange.length) query.dateRange = params.dateRange;
+
   return instance.get('/api/news', {
-    params: {
-      page: params.page || 1,
-      pageSize: params.pageSize || 10,
-      status: params.status || '',
-      category: params.category || ''
+    params: query,
+    headers: {
+      'Authorization': `Bearer ${token}`
     },
-    headers: { 'Authorization': `Bearer ${token}` }
+    paramsSerializer: params => qs.stringify(params, { arrayFormat: 'repeat' })
   });
 };
 
@@ -307,7 +315,7 @@ export const getViolationRecords = (params = {}) => {
   const token = localStorage.getItem('token');
   return instance.get('/api/violations/violation-list', {
     params: {
-      ...params // 支持传入page、pageSize、status、venue、dateRange等参数
+      ...params // 支持传入page、pageSize、venue、dateRange等参数
     },
     headers: { 'Authorization': `Bearer ${token}` }
   });
