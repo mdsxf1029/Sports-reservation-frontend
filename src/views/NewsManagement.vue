@@ -128,7 +128,11 @@
             </el-table-column>
             <el-table-column prop="source" label="来源" width="160" />
             <el-table-column prop="publishedBy" label="发布管理员" width="140" />
-            <el-table-column prop="publishTime" label="发布时间" width="180" />
+            <el-table-column prop="publishTime" label="发布时间" width="180">
+              <template #default="scope">
+                {{ formatNewsTime(scope.row.publishTime) }}
+              </template>
+            </el-table-column>
             <el-table-column prop="status" label="状态" width="110">
               <template #default="scope">
                 <el-tag :type="scope.row.status === 'published' ? 'success' : (scope.row.status === 'scheduled' ? 'warning' : 'info')" size="small">
@@ -237,6 +241,7 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 import { getNewsList, getNewsByStatus, createNews, updateNews, deleteNews, uploadNewsCover } from '../utils/api';
+import { formatNewsTime } from '../utils/formatters';
 
 const loading = ref(true);
 const tableRef = ref(null);
