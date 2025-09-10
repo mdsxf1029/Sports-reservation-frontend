@@ -32,15 +32,6 @@
               <div class="stat-label">草稿</div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon scheduled">
-              <el-icon><Timer /></el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ scheduledNews }}</div>
-              <div class="stat-label">定时发布</div>
-            </div>
-          </div>
         </div>
 
         <!-- 快速操作区域 -->
@@ -57,10 +48,6 @@
             <el-icon><Delete /></el-icon>
             批量删除
           </el-button>
-          <el-button type="info" size="large" @click="exportNewsData">
-            <el-icon><Download /></el-icon>
-            导出数据
-          </el-button>
         </div>
 
         <!-- 搜索和筛选区域 -->
@@ -68,7 +55,7 @@
           <div class="search-area">
             <el-input
               v-model="searchKeyword"
-              placeholder="请输入标题或来源"
+              placeholder="请输入标题"
               class="search-input"
               clearable
               @clear="searchKeyword = ''"
@@ -80,11 +67,10 @@
           </div>
 
           <div class="filter-area">
-            <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 120px; margin-right: 10px;">
+            <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 180px; margin-right: 10px;">
               <el-option label="全部" value="" />
               <el-option label="已发布" value="published" />
               <el-option label="草稿" value="draft" />
-              <el-option label="定时" value="scheduled" />
             </el-select>
 
             <el-date-picker
@@ -113,10 +99,10 @@
         <div class="table-section">
           <div class="table-header">
             <h3>新闻列表</h3>
-            <el-tag type="info" size="small">{{ filteredNews.length }} 篇</el-tag>
+            <el-tag type="info" size="small">{{ totalCount }} 篇</el-tag>
           </div>
 
-          <el-table ref="tableRef" v-loading="loading" :data="filteredNews" stripe style="width: 100%" @selection-change="onSelectionChange">
+          <el-table ref="tableRef" v-loading="loading" :data="allNews" stripe style="width: 100%" @selection-change="onSelectionChange">
             <el-table-column type="selection" width="55" />
             <el-table-column prop="title" label="标题" min-width="220">
               <template #default="scope">
@@ -126,16 +112,23 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="source" label="来源" width="160" />
-            <el-table-column prop="publishedBy" label="发布管理员" width="140" />
-            <el-table-column prop="publishTime" label="发布时间" width="180">
+            <el-table-column prop="source" label="来源" width="180" />
+            <el-table-column prop="publishTime" label="发布时间" width="220">
               <template #default="scope">
                 {{ formatNewsTime(scope.row.publishTime) }}
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="状态" width="110">
+            <el-table-column prop="status" label="状态" width="150">
               <template #default="scope">
-                <el-tag :type="scope.row.status === 'published' ? 'success' : (scope.row.status === 'scheduled' ? 'warning' : 'info')" size="small">
+                <el-tag 
+                  :type="scope.row.status === 'published' 
+                    ? 'success' 
+                    : (scope.row.status === 'updated' 
+                      ? 'warning' 
+                      : (scope.row.status === 'deleted' 
+                        ? 'danger' 
+                        : 'info'))" 
+                  size="small">
                   {{ getStatusText(scope.row.status) }}
                 </el-tag>
               </template>
@@ -158,7 +151,22 @@
             </el-table-column>
           </el-table>
 
-          <div v-if="filteredNews.length === 0" class="no-data">
+          <div v-if="totalCount > 0" class="pagination-container">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :small="false"
+              :disabled="loading"
+              :background="true"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="totalCount"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
+          </div>
+
+          <div v-if="allNews.length === 0" class="no-data">
             <el-empty description="暂无新闻" :image-size="200">
               <el-button type="primary" @click="handleCreate">新建新闻</el-button>
             </el-empty>
@@ -176,9 +184,6 @@
         
         <el-form-item label="来源">
           <el-input v-model="form.source" />
-        </el-form-item>
-        <el-form-item label="发布管理员">
-          <el-input v-model="form.publishedBy" :disabled="true" placeholder="将自动填充当前管理员" />
         </el-form-item>
         <el-form-item label="封面图">
           <div style="display:flex; align-items:center; gap:12px; flex-wrap: wrap;">
@@ -206,7 +211,6 @@
         <el-form-item label="状态">
           <el-select v-model="form.status">
             <el-option label="草稿" value="draft" />
-            <el-option label="定时" value="scheduled" />
             <el-option label="已发布" value="published" />
           </el-select>
         </el-form-item>
@@ -273,55 +277,39 @@ const form = ref({
 const totalNews = computed(() => allNews.value.length);
 const publishedNews = computed(() => allNews.value.filter(n => n.status === 'published').length);
 const draftNews = computed(() => allNews.value.filter(n => n.status === 'draft').length);
-const scheduledNews = computed(() => allNews.value.filter(n => n.status === 'scheduled').length);
+
+// 分页相关
+const currentPage = ref(1);
+const pageSize = ref(20);
+const totalCount = ref(0);
 
 const getStatusText = (status) => {
-  const map = { published: '已发布', draft: '草稿', scheduled: '定时' };
-  return map[status] || '未知';
+  const map = {
+    published: '已发布',
+    draft: '草稿',
+    updated: '已更新',
+    deleted: '已删除'
+  }
+  return map[status] || '未知'
 };
-
-const filteredNews = computed(() => {
-  let filtered = [...allNews.value];
-
-  if (searchKeyword.value) {
-    const kw = searchKeyword.value.toLowerCase();
-    filtered = filtered.filter(n => 
-      n.title.toLowerCase().includes(kw) ||
-      (n.source || '').toLowerCase().includes(kw)
-    );
-  }
-
-  if (statusFilter.value) {
-    filtered = filtered.filter(n => n.status === statusFilter.value);
-  }
-
-  // 已移除类别过滤
-
-  if (dateRange.value && dateRange.value.length === 2) {
-    const [start, end] = dateRange.value;
-    filtered = filtered.filter(n => {
-      const date = (n.publishTime || '').slice(0, 10);
-      return (!start || date >= start) && (!end || date <= end);
-    });
-  }
-
-  return filtered;
-});
 
 const fetchNewsData = async () => {
   loading.value = true;
   try {
     const response = await getNewsList({
-      page: 1,
-      pageSize: 100 // 获取更多数据用于前端筛选
+      page: currentPage.value,
+      pageSize: pageSize.value,
+      status: statusFilter.value || null,
+      keyword: searchKeyword.value,
+      dateRange: dateRange.value
     });
     
     if (response && response.data) {
       // 后端返回的数据结构: { page, pageSize, totalCount, totalPages, list }
-      allNews.value = response.data.list || [];
+      totalCount.value = response.data.totalCount || 0;
       
       // 转换数据格式以匹配前端组件
-      allNews.value = allNews.value.map(news => ({
+      allNews.value = (response.data.list || []).map(news => ({
         id: news.newsId,
         title: news.newsTitle,
         source: news.newsSource || '系统管理员', // 使用后端来源字段
@@ -329,15 +317,16 @@ const fetchNewsData = async () => {
         coverUrl: news.coverUrl || '',
         publishTime: news.newsTime,
         status: news.newsStatus,
-        publishedBy: news.publishedBy || localStorage.getItem('userName') || '当前管理员'
       }));
     } else {
       allNews.value = [];
+      totalCount.value = 0;
     }
   } catch (e) {
     console.error('获取新闻失败:', e);
     ElMessage.error('获取新闻失败');
     allNews.value = [];
+    totalCount.value = 0;
   } finally {
     loading.value = false;
   }
@@ -353,7 +342,6 @@ const resetForm = () => {
 const handleCreate = () => {
   resetForm();
   dialogMode.value = 'create';
-  form.value.publishedBy = localStorage.getItem('userName') || '当前管理员';
   dialogVisible.value = true;
 };
 
@@ -362,9 +350,6 @@ const handleEdit = (row) => {
   dialogMode.value = 'edit';
   form.value = JSON.parse(JSON.stringify(row));
   currentNewsId.value = row.id;
-  if (!form.value.publishedBy) {
-    form.value.publishedBy = localStorage.getItem('userName') || '当前管理员';
-  }
   dialogVisible.value = true;
 };
 
@@ -377,7 +362,6 @@ const handleSubmit = async () => {
         newsStatus: form.value.status,
         coverUrl: form.value.coverUrl || '',
         newsSource: form.value.source || '系统管理员',
-        publishedBy: form.value.publishedBy || localStorage.getItem('userName') || '当前管理员'
       };
       
       await createNews(newsData);
@@ -389,7 +373,7 @@ const handleSubmit = async () => {
         newsStatus: form.value.status,
         coverUrl: form.value.coverUrl || '',
         newsSource: form.value.source || '系统管理员',
-        publishedBy: form.value.publishedBy || localStorage.getItem('userName') || '当前管理员'
+        newsTime: form.value.publishTime || null,
       };
       
       await updateNews(currentNewsId.value, newsData);
@@ -511,11 +495,9 @@ const handleBatchDelete = async () => {
   }
 };
 
-const exportNewsData = () => {
-  ElMessage.success('导出功能待实现');
-};
-
 const applyFilters = () => {
+  currentPage.value = 1;
+  fetchNewsData();
   ElMessage.success('筛选已应用');
 };
 
@@ -523,10 +505,66 @@ const resetFilters = () => {
   searchKeyword.value = '';
   statusFilter.value = '';
   dateRange.value = [];
+  currentPage.value = 1;
+  fetchNewsData();
   ElMessage.success('筛选已重置');
+};
+
+const handleSizeChange = (val) => {
+  pageSize.value = val;
+  currentPage.value = 1;
+  fetchNewsData();
+};
+const handleCurrentChange = (val) => {
+  currentPage.value = val;
+  fetchNewsData();
 };
 </script>
 
 <style src="../styles/news-management.css" scoped></style>
 
+<style>
+/* 分页容器样式 */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  margin-top: 20px;
+  border-top: 1px solid #e8e8e8;
+}
 
+.pagination-container .el-pagination {
+  --el-pagination-font-size: 14px;
+  --el-pagination-bg-color: #fff;
+  --el-pagination-text-color: #606266;
+  --el-pagination-border-radius: 4px;
+  --el-pagination-button-disabled-color: #c0c4cc;
+  --el-pagination-button-disabled-bg-color: #fff;
+  --el-pagination-hover-color: #2062ea;
+}
+
+/* 修复分页按钮样式 */
+.pagination-container .el-pagination .el-pager li {
+  min-width: 30px;
+  height: 32px;
+  line-height: 30px;
+  margin: 0 2px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #606266;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.pagination-container .el-pagination .el-pager li:hover {
+  color: #2062ea;
+  border-color: #2062ea;
+}
+
+.pagination-container .el-pagination .el-pager li.is-active {
+  background-color: #2062ea;
+  border-color: #2062ea;
+  color: #fff;
+}
+</style>

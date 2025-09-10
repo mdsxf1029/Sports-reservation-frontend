@@ -135,7 +135,7 @@
               <el-empty description="暂无匹配的举报记录" />
             </div>
 
-            <div class="pagination-section" v-if="reportTotal > 0">
+            <div class="pagination-container" v-if="reportTotal > 0">
               <el-pagination
                 v-model:current-page="reportCurrentPage"
                 v-model:page-size="reportPageSize"
@@ -513,10 +513,48 @@ const getStatusType = (status) => {
   margin: 0;
 }
 
-.pagination-section {
+/* 分页容器样式 */
+.pagination-container {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 24px;
+  justify-content: center;
+  padding: 20px 0;
+  margin-top: 20px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.pagination-container .el-pagination {
+  --el-pagination-font-size: 14px;
+  --el-pagination-bg-color: #fff;
+  --el-pagination-text-color: #606266;
+  --el-pagination-border-radius: 4px;
+  --el-pagination-button-disabled-color: #c0c4cc;
+  --el-pagination-button-disabled-bg-color: #fff;
+  --el-pagination-hover-color: #2062ea;
+}
+
+/* 修复分页按钮样式 */
+.pagination-container .el-pagination .el-pager li {
+  min-width: 30px;
+  height: 32px;
+  line-height: 30px;
+  margin: 0 2px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #606266;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.pagination-container .el-pagination .el-pager li:hover {
+  color: #2062ea;
+  border-color: #2062ea;
+}
+
+.pagination-container .el-pagination .el-pager li.is-active {
+  background-color: #2062ea;
+  border-color: #2062ea;
+  color: #fff;
 }
 
 .no-data {
