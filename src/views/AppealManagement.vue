@@ -86,15 +86,6 @@
                     <el-option label="已拒绝" value="rejected" />
                   </el-select>
                   
-                  <el-select v-model="venueFilter" placeholder="场馆筛选" clearable style="width: 120px; margin-right: 10px;">
-                    <el-option label="全部" value="" />
-                    <el-option label="乒乓球馆" value="乒乓球馆" />
-                    <el-option label="羽毛球馆" value="羽毛球馆" />
-                    <el-option label="篮球馆" value="篮球馆" />
-                    <el-option label="健身房" value="健身房" />
-                    <el-option label="网球场" value="网球场" />
-                    <el-option label="攀岩馆" value="攀岩馆" />
-                  </el-select>
                   
                   <el-select v-model="processorFilter" placeholder="处理人" clearable style="width: 120px; margin-right: 10px;">
                     <el-option label="全部" value="" />
@@ -558,7 +549,6 @@ export default {
       
       // 筛选条件
       appealStatusFilter: '',
-      venueFilter: '',
       processorFilter: '',
       searchKeyword: '',
       
@@ -594,10 +584,6 @@ export default {
         allAppeals = allAppeals.filter(a => a.appealStatus === this.appealStatusFilter);
       }
       
-      // 场馆筛选
-      if (this.venueFilter) {
-        allAppeals = allAppeals.filter(a => a.venue === this.venueFilter);
-      }
       
       // 处理人筛选
       if (this.processorFilter) {
@@ -643,7 +629,6 @@ export default {
           page: this.appealCurrentPage,
           pageSize: this.appealPageSize,
           status: this.appealStatusFilter,
-          venue: this.venueFilter,
           processor: this.processorFilter,
           keyword: this.searchKeyword
         });
@@ -984,7 +969,6 @@ export default {
     
     resetFilters() {
       this.appealStatusFilter = '';
-      this.venueFilter = '';
       this.processorFilter = '';
       this.searchKeyword = '';
       this.fetchAppealData();

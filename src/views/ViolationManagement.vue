@@ -53,15 +53,6 @@
               <el-option label="申诉通过" value="appeal_approved" />
               <el-option label="申诉被拒" value="appeal_rejected" />
             </el-select>
-            <el-select v-model="filterVenue" placeholder="场馆" clearable style="width: 120px; margin-right: 10px;">
-              <el-option label="全部" value="" />
-              <el-option label="乒乓球馆" value="乒乓球馆" />
-              <el-option label="羽毛球馆" value="羽毛球馆" />
-              <el-option label="篮球馆" value="篮球馆" />
-              <el-option label="健身房" value="健身房" />
-              <el-option label="网球场" value="网球场" />
-              <el-option label="攀岩馆" value="攀岩馆" />
-            </el-select>
             <el-date-picker
               v-model="dateRange"
               type="daterange"
@@ -243,7 +234,6 @@ export default {
     return {
       // 筛选条件
       filterStatus: '',
-      filterVenue: '',
       dateRange: [],
       searchKeyword: '',
       
@@ -297,10 +287,6 @@ export default {
         }
       }
       
-      // 场馆筛选
-      if (this.filterVenue) {
-        filtered = filtered.filter(v => v.venue === this.filterVenue);
-      }
       
       // 日期筛选
       if (this.dateRange && this.dateRange.length === 2) {
@@ -334,7 +320,6 @@ export default {
           page: this.currentPage,
           pageSize: this.pageSize,
           status: this.filterStatus,
-          venue: this.filterVenue,
           dateRange: this.dateRange,
           keyword: this.searchKeyword
         });
