@@ -57,10 +57,6 @@
             <el-icon><User /></el-icon>
             批量移除黑名单
           </el-button>
-          <el-button type="info" size="large" @click="exportAppealData">
-            <el-icon><Download /></el-icon>
-            导出数据
-          </el-button>
         </div>
 
         <!-- 主要内容区域 -->
@@ -482,7 +478,6 @@ import {
   Check,
   Close,
   User,
-  Download,
   Search,
   Filter,
   Refresh,
@@ -514,7 +509,6 @@ export default {
     Check,
     Close,
     User,
-    Download,
     Search,
     Filter,
     Refresh,
@@ -958,9 +952,6 @@ export default {
       });
     },
     
-    exportAppealData() {
-      ElMessage.success('导出功能待实现');
-    },
     
     applyFilters() {
       this.fetchAppealData();

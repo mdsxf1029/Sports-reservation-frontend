@@ -144,6 +144,7 @@
       title="违约记录详情"
       width="700px"
       :close-on-click-modal="false"
+      :show-close="false"
     >
       <div v-if="selectedViolation" class="violation-detail">
         <div class="detail-section">
