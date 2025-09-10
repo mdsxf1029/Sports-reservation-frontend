@@ -140,3 +140,53 @@ export const formatNewsTime = (timeString) => {
     return timeString
   }
 }
+
+// 格式化申诉时间显示
+export const formatAppealTime = (timeString) => {
+  if (!timeString) return '未知时间'
+  
+  try {
+    const date = new Date(timeString)
+    
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) {
+      return timeString
+    }
+    
+    // 格式化为中文日期时间格式：MM月DD日 HH:mm
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    
+    return `${month}月${day}日 ${hours}:${minutes}`
+  } catch (error) {
+    console.error('申诉时间格式化错误:', error)
+    return timeString
+  }
+}
+
+// 格式化黑名单时间显示
+export const formatBlacklistTime = (timeString) => {
+  if (!timeString) return '未知时间'
+  
+  try {
+    const date = new Date(timeString)
+    
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) {
+      return timeString
+    }
+    
+    // 格式化为中文日期时间格式：MM月DD日 HH:mm
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    
+    return `${month}月${day}日 ${hours}:${minutes}`
+  } catch (error) {
+    console.error('黑名单时间格式化错误:', error)
+    return timeString
+  }
+}
