@@ -237,7 +237,7 @@ export const cancelMyOrder = (userId, appointmentId) => {
 };
 
 //申诉订单
-export const createOrderAppeal = (userId, appointmentId, appealData) => {
+export const createOrderAppeal = (userId, appointmentId, appealReason) => {
   const token = localStorage.getItem('token');
   const headers = {};
 
@@ -245,7 +245,7 @@ export const createOrderAppeal = (userId, appointmentId, appealData) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  return instance.post(`/api/appointments/${appointmentId}/appeal`, { userId, ...appealData }, { headers });
+  return instance.post(`/api/appointments/${appointmentId}/appeal`, { userId, ...appealReason }, { headers });
 };
 
 

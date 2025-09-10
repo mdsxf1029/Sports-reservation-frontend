@@ -780,14 +780,14 @@ export default {
 
         console.log('开始获取订单详情，appointmentId:', appointmentId)
 
-        // 🔥 关键：通过appointmentId调用Detail API获取完整信息
+        // 关键：通过appointmentId调用Detail API获取完整信息
         let detailResponse
         detailResponse = await fetchOrderDetail(appointmentId)
         
         console.log('Detail API响应:', detailResponse)
 
         if (detailResponse && detailResponse.data) {
-          // 🔥 将API返回的嵌套结构转换为OrderQRCodeDialog期望的扁平结构
+          // 将API返回的嵌套结构转换为OrderQRCodeDialog期望的扁平结构
           const apiData = detailResponse.data
           
           // 转换数据格式以适配OrderQRCodeDialog组件
@@ -795,7 +795,7 @@ export default {
             // 保留Summary的一些字段（如果需要）
             summaryData: order,
             
-            // 🔥 转换API数据为组件期望的格式
+            // 转换API数据为组件期望的格式
             // 场馆信息
             venue_name: apiData.venue?.venue_name || '未知场馆',
             venue_subname: apiData.venue?.venue_subname || '',
@@ -969,7 +969,7 @@ export default {
       }
     },
 
-    // 新增方法
+    // 检查是否有未读通知
     async checkUnreadNotifications() {
       const userId = localStorage.getItem('userId')
       if (!userId) return
@@ -1046,15 +1046,15 @@ export default {
         this.appealSubmitting = true
 
         // 准备申诉数据
-        const appealData = {
+        const appealReason = {
           title: this.appealForm.title,
           content: this.appealForm.content
         }
 
-        console.log('提交申诉数据:', appealData)
+        console.log('提交申诉数据:', appealReason)
 
         // 这里调用申诉API
-        const res = await createOrderAppeal(this.userProfile.userId, this.selectedOrderForAppeal.appointmentId, appealData)
+        const res = await createOrderAppeal(this.userProfile.userId, this.selectedOrderForAppeal.appointmentId, appealReason)
         const resdata = res.data
         if(resdata.success === false) {
           throw new Error(resdata.message || '提交申诉失败')
@@ -1078,8 +1078,6 @@ export default {
       console.log('申诉已提交:', data)
       ElMessage.success('申诉提交成功，我们将在3个工作日内处理')
       
-      // 可以更新订单状态或重新加载数据
-      // this.loadReservationData()
     }
   }
 }
