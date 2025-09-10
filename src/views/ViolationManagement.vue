@@ -98,7 +98,11 @@
             <el-table-column type="index" label="序号" width="80" />
             <el-table-column prop="userName" label="用户名" width="120" />
             <el-table-column prop="userId" label="用户ID" width="120" />
-            <el-table-column prop="violationTime" label="违约时间" width="180" />
+            <el-table-column prop="violationTime" label="违约时间" width="180">
+              <template #default="scope">
+                {{ formatViolationTime(scope.row.violationTime) }}
+              </template>
+            </el-table-column>
             <el-table-column prop="venue" label="预约场馆" width="120" />
             <el-table-column prop="timeSlot" label="预约时间段" width="150" />
             <el-table-column prop="status" label="处理状态" width="120">
@@ -164,7 +168,7 @@
             </div>
             <div class="detail-item">
               <span class="label">违约时间：</span>
-              <span class="value">{{ selectedViolation.violationTime }}</span>
+              <span class="value">{{ formatViolationTime(selectedViolation.violationTime) }}</span>
             </div>
             <div class="detail-item">
               <span class="label">预约场馆：</span>
@@ -182,7 +186,7 @@
           <div class="detail-grid">
             <div class="detail-item">
               <span class="label">申诉时间：</span>
-              <span class="value">{{ selectedViolation.appealTime }}</span>
+              <span class="value">{{ formatViolationTime(selectedViolation.appealTime) }}</span>
             </div>
             <div class="detail-item">
               <span class="label">申诉理由：</span>
@@ -207,7 +211,7 @@
           <h4>用户违约历史</h4>
           <div class="history-summary">
             <p>该用户累计违约 <strong>{{ selectedViolation.userViolationCount }}</strong> 次</p>
-            <p>最近一次违约：{{ selectedViolation.lastViolationTime || '无' }}</p>
+            <p>最近一次违约：{{ selectedViolation.lastViolationTime ? formatViolationTime(selectedViolation.lastViolationTime) : '无' }}</p>
           </div>
         </div>
       </div>
@@ -223,6 +227,7 @@ import AdminHeaderNavbar from '../components/AdminHeaderNavbar.vue'
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Warning, User, Calendar, TrendCharts, Search } from '@element-plus/icons-vue'
 import { getViolationRecords } from '../utils/api';
+import { formatViolationTime } from '../utils/formatters';
 
 export default {
   name: "ViolationManagement",
@@ -361,22 +366,22 @@ export default {
               id: 1,
               userName: "夏浩博",
               userId: "123456",
-              violationTime: "2024-01-15 08:00",
+              violationTime: "2024-01-15T08:00:00",
               venue: "乒乓球馆",
               timeSlot: "8:00-9:00",
               status: "confirmed",
               appealStatus: "pending",
-              appealTime: "2024-01-15 09:30",
+              appealTime: "2024-01-15T09:30:00",
               appealReason: "下雨，路滑，无法前往",
               rejectReason: "",
               userViolationCount: 2,
-              lastViolationTime: "2024-01-10 14:00"
+              lastViolationTime: "2024-01-10T14:00:00"
             },
             {
               id: 2,
               userName: "李明",
               userId: "654321",
-              violationTime: "2024-01-16 14:00",
+              violationTime: "2024-01-16T14:00:00",
               venue: "羽毛球馆",
               timeSlot: "14:00-15:00",
               status: "confirmed",
@@ -391,27 +396,27 @@ export default {
               id: 3,
               userName: "王芳",
               userId: "789012",
-              violationTime: "2024-01-17 16:00",
+              violationTime: "2024-01-17T16:00:00",
               venue: "篮球馆",
               timeSlot: "16:00-17:00",
               status: "confirmed",
               appealStatus: "approved",
-              appealTime: "2024-01-17 17:00",
+              appealTime: "2024-01-17T17:00:00",
               appealReason: "身体不适，有医院证明",
               rejectReason: "",
               userViolationCount: 3,
-              lastViolationTime: "2024-01-12 10:00"
+              lastViolationTime: "2024-01-12T10:00:00"
             },
             {
               id: 4,
               userName: "张伟",
               userId: "345678",
-              violationTime: "2024-01-18 10:00",
+              violationTime: "2024-01-18T10:00:00",
               venue: "乒乓球馆",
               timeSlot: "10:00-11:00",
               status: "confirmed",
               appealStatus: "rejected",
-              appealTime: "2024-01-18 11:00",
+              appealTime: "2024-01-18T11:00:00",
               appealReason: "忘记预约时间",
               rejectReason: "理由不充分，无法证明特殊情况",
               userViolationCount: 1,
@@ -421,7 +426,7 @@ export default {
               id: 5,
               userName: "陈华",
               userId: "987654",
-              violationTime: "2024-01-19 09:00",
+              violationTime: "2024-01-19T09:00:00",
               venue: "网球场",
               timeSlot: "9:00-10:00",
               status: "confirmed",
@@ -430,18 +435,18 @@ export default {
               appealReason: "",
               rejectReason: "",
               userViolationCount: 2,
-              lastViolationTime: "2024-01-15 14:00"
+              lastViolationTime: "2024-01-15T14:00:00"
             },
             {
               id: 6,
               userName: "刘强",
               userId: "567890",
-              violationTime: "2024-01-20 15:00",
+              violationTime: "2024-01-20T15:00:00",
               venue: "攀岩馆",
               timeSlot: "15:00-16:00",
               status: "confirmed",
               appealStatus: "pending",
-              appealTime: "2024-01-20 16:00",
+              appealTime: "2024-01-20T16:00:00",
               appealReason: "设备故障，无法正常使用",
               rejectReason: "",
               userViolationCount: 1,
