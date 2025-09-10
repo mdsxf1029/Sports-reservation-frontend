@@ -14,12 +14,12 @@
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon approved">
-              <el-icon><CircleCheck /></el-icon>
+            <div class="stat-icon reported-users"> 
+              <el-icon><User /></el-icon>
             </div>
             <div class="stat-content">
-              <div class="stat-number">{{ acceptedReportsCount }}</div>
-              <div class="stat-label">已接受举报</div>
+              <div class="stat-number">{{ reportedUsersCount }}</div> 
+              <div class="stat-label">被举报人数量</div>
             </div>
           </div>
           <div class="stat-card">
@@ -201,7 +201,8 @@ import {
   Document,
   Search,
   Filter,
-  Refresh
+  Refresh,
+  User
 } from '@element-plus/icons-vue';
 import AdminHeaderNavbar from '../components/AdminHeaderNavbar.vue';
 import { 
@@ -217,7 +218,7 @@ import {
 const reportsLoading = ref(true);
 const reportFilters = ref({ type: '', status: '', keyword: '' });
 const reportCurrentPage = ref(1);
-const reportPageSize = ref(5);
+const reportPageSize = ref(10);
 const dialogVisible = ref(false);
 const currentContent = ref(null);
 const allReports = ref([]);
@@ -275,9 +276,16 @@ const tableReports = computed(() => {
 });
 
 const pendingReportsCount = computed(() => allReports.value.filter(r => r.reportStatus === 'checking').length);
-const acceptedReportsCount = computed(() => allReports.value.filter(r => r.reportStatus === 'accepted').length);
 const rejectedReportsCount = computed(() => allReports.value.filter(r => r.reportStatus === 'rejected').length);
 const totalReportsCount = computed(() => allReports.value.length);
+const reportedUsersCount = computed(() => {
+  if (!allReports.value || allReports.value.length === 0) {
+    return 0;
+  }
+  const userIds = allReports.value.map(report => report.reportedUser.userId);
+  const uniqueUserIds = new Set(userIds);
+  return uniqueUserIds.size;
+});
 
 // --- 事件处理 ---
 
@@ -529,4 +537,7 @@ const getStatusType = (status) => {
   font-style: italic;
   color: #606266;
 }
+.stat-icon.reported-users { background-color: #409EFF; } 
+.stat-icon.rejected { background-color: #f56c6c; }
+.stat-icon.reports { background-color: #909399; }
 </style>
