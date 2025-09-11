@@ -14,6 +14,14 @@
     <main class="content-wrapper">
       <!-- 中间主要内容 -->
       <section class="main-panel">
+        <!-- 黑名单提示 -->
+        <div v-if="isBlacklisted" class="blacklist-banner">
+          <el-icon style="margin-right: 6px; color: #d9534f;">
+            <WarningFilled />
+          </el-icon>
+          <span>您已被加入黑名单，无法预约</span>
+        </div>
+
         <!-- 日期选择栏 -->
         <div class="date-bar">
           <div v-for="(date, index) in weekDates" :key="index"
@@ -155,6 +163,8 @@ const pricePerSlot = ref(0)
 const totalPrice = ref(0)
 const showPopup = ref(false)
 const countdown = ref(3)
+const isBlacklisted = ref(false)
+
 let timer = null
 let orderId = null
 
@@ -251,7 +261,7 @@ async function loadCourtsFromBackend() {
   if (cached) {
     try {
       courts.value = JSON.parse(cached)
-      return   // ✅ 命中缓存直接返回，不再请求接口
+      return   // 命中缓存直接返回，不再请求接口
     } catch (err) {
       console.warn("缓存解析失败:", err)
     }
@@ -400,8 +410,40 @@ function toggleSelect(courtId, timeId) {
   }
 }
 
+//检查用户是否在黑名单中
+async function checkBlacklist() {
+  try {
+    const res = await axios.get('/api/blacklist?page=1&pageSize=100', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+
+    const list = res.data?.data || []
+    const userId = localStorage.getItem('userId') // 登录时存储的用户 ID
+
+    // 查找当前用户是否在黑名单，且状态有效
+    const record = list.find(item => item.userId == userId && item.bannedStatus === 'valid')
+
+    if (record) {
+      isBlacklisted.value = true
+      blacklistReason.value = record.bannedReason || '违规操作'
+      console.warn("用户在黑名单中:", record)
+    } else {
+      isBlacklisted.value = false
+    }
+  } catch (err) {
+    console.error("获取黑名单失败:", err)
+  }
+}
+
 //点击场地后显示
 async function handleClick(courtId, timeId) {
+
+  if (isBlacklisted.value) {
+    alert(`您已被加入黑名单，无法预约`)
+    return
+  }
   const key = `${courtId}-${timeId}`
 
   if (lockedCells.value.has(key)) {
@@ -631,7 +673,13 @@ onMounted(async () => {
   if (courts.value.length > 0) {
     await loadVenuePrice(courts.value[0].id)
   }
+  // 页面加载时检查黑名单
+  await checkBlacklist()
 
+  // 如果在黑名单，给个提示（可选）
+  if (isBlacklisted.value) {
+    alert(`您已被加入黑名单，无法预约\n原因：${blacklistReason.value}`)
+  }
 })
 
 // watch：切换日期时，自动走缓存
@@ -690,6 +738,20 @@ watch(selectedDate, async newVal => {
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
   padding: 1.5rem;
+}
+
+.blacklist-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff3f3;
+  color: #d9534f;
+  border: 1px solid #f5c2c7;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .date-bar {
