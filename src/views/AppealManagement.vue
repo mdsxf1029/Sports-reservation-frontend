@@ -262,6 +262,11 @@
                       {{ formatBlacklistTime(scope.row.blacklistTime) }}
                     </template>
                   </el-table-column>
+                  <el-table-column prop="endTime" label="黑名单结束时间" width="180">
+                    <template #default="scope">
+                      {{ formatBlacklistTime(scope.row.endTime) }}
+                    </template>
+                  </el-table-column>
                   <el-table-column prop="blacklistReason" label="加入原因" min-width="200">
                     <template #default="scope">
                       <div class="appeal-blacklist-reason">
@@ -709,6 +714,7 @@ export default {
           // 后端返回的数据结构: { success: true, data: [...] }
           this.blacklistUsers = response.data.data || [];
           this.blacklistCount = response.data.totalCount || 0;
+          this.userCount = response.data.userCount || 0;
           const violationCounts = response.data.violationCount || [];
           
           // 转换数据格式以匹配前端组件
@@ -723,6 +729,7 @@ export default {
               userAvatar: '',
               violationCount: violationCount, 
               blacklistTime: user.beginTime,
+              endTime: user.endTime,
               blacklistReason: user.bannedReason || '违约次数过多'
             };
           });
