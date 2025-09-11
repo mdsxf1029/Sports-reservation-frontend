@@ -328,15 +328,6 @@
 
       <!-- 申诉表单 -->
       <el-form ref="appealForm" :model="appealForm" :rules="appealRules" label-width="120px">
-        <el-form-item label="申诉标题" prop="title">
-          <el-input
-            v-model="appealForm.title"
-            placeholder="请输入申诉标题"
-            maxlength="10"
-            show-word-limit
-          />
-        </el-form-item>
-        
         <el-form-item label="申诉内容" prop="content">
           <el-input
             v-model="appealForm.content"
@@ -438,14 +429,9 @@ export default {
       selectedOrderForAppeal: {}, // 当前申诉的订单信息
       appealSubmitting: false,  // 申诉提交状态
       appealForm: {
-        title: '',
         content: ''
       },
       appealRules: {
-        title: [
-          { required: true, message: '请输入申诉标题', trigger: 'blur' },
-          { min: 2, max: 10, message: '标题长度在2到10个字符', trigger: 'blur' }
-        ],
         content: [
           { required: true, message: '请输入申诉内容', trigger: 'blur' },
           { min: 10, max: 500, message: '内容长度在10到500个字符', trigger: 'blur' }
@@ -1009,7 +995,6 @@ export default {
       this.showAppealDialog = true
       // 重置表单
       this.appealForm = {
-        title: '',
         content: ''
       }
     },
@@ -1045,11 +1030,8 @@ export default {
         
         this.appealSubmitting = true
 
-        // 准备申诉数据
-        const appealReason = {
-          title: this.appealForm.title,
-          content: this.appealForm.content
-        }
+        // 准备申诉数据 - 直接使用内容作为字符串
+        const appealReason = this.appealForm.content
 
         console.log('提交申诉数据:', appealReason)
 
