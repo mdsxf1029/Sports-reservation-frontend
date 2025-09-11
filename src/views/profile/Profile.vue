@@ -372,8 +372,7 @@ import { UserProfileService, ReservationService, PointsService, NotificationServ
 import { AuthService } from '@/utils/auth'
 import { formatDate, getGenderText, getRoleText } from '@/utils/formatters'
 // 导入API方法
-import { cancelMyOrder } from '@/utils/api'
-import { fetchOrderDetail } from '@/utils/api'
+import { cancelMyOrder ,fetchOrderDetail, createOrderAppeal} from '@/utils/api'
         
 export default {
   components: { 
