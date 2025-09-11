@@ -239,7 +239,11 @@
                   </div>
                 </div>
                 
-                <el-table :data="paginatedBlacklistUsers" style="width: 100%">
+                <el-table 
+                  :data="paginatedBlacklistUsers" 
+                  style="width: 100%"
+                  @selection-change="handleBlacklistSelectionChange"
+                >
                   <el-table-column type="selection" width="55" />
                   <el-table-column prop="userName" label="用户名" width="120">
                     <template #default="scope">
@@ -557,7 +561,10 @@ export default {
       // 申诉数据
       pendingAppeals: [],
       processedAppeals: [],
-      blacklistUsers: []
+      blacklistUsers: [],
+      
+      // 选中的黑名单用户
+      selectedBlacklistUsers: []
     };
   },
   computed: {
@@ -950,20 +957,35 @@ export default {
       });
     },
     
+    // 处理黑名单表格选择变化
+    handleBlacklistSelectionChange(selection) {
+      this.selectedBlacklistUsers = selection;
+    },
+    
     async handleBatchRemoveBlacklist() {
-      ElMessageBox.confirm('确定要批量移除选中的黑名单用户吗？', '确认操作', {
+      if (this.selectedBlacklistUsers.length === 0) {
+        ElMessage.warning('请先选择要移除的黑名单用户');
+        return;
+      }
+      
+      ElMessageBox.confirm(`确定要批量移除选中的 ${this.selectedBlacklistUsers.length} 个黑名单用户吗？`, '确认操作', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'info',
       }).then(async () => {
         try {
-          // 这里需要获取选中的黑名单项目列表
-          const selectedItems = []; // 从表格选择中获取，格式: [{userId, beginTime}, ...]
+          // 构建选中的黑名单项目列表，格式: [{userId, beginTime}, ...]
+          const selectedItems = this.selectedBlacklistUsers.map(user => ({
+            userId: user.userId,
+            beginTime: user.blacklistTime
+          }));
+          
           const response = await batchRemoveFromBlacklist(selectedItems);
           
           if (response && response.data && response.data.code === 0) {
             ElMessage.success('批量移除成功');
             await this.fetchBlacklistData();
+            this.selectedBlacklistUsers = []; // 清空选择
           } else {
             ElMessage.error(response?.data?.msg || '批量移除失败');
           }
