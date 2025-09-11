@@ -58,7 +58,6 @@
               <el-select v-model="reportFilters.status" placeholder="处理状态" clearable style="width: 140px; margin-right: 10px;">
                 <el-option label="全部状态" value="" />
                 <el-option label="待处理" value="checking" />
-                <el-option label="已接受" value="accepted" />
                 <el-option label="已驳回" value="rejected" />
               </el-select>
               
@@ -158,7 +157,7 @@
         </p>
         <p><strong>举报人：</strong> {{ currentContent.reporter.username }}</p>
         <p><strong>被举报人：</strong> {{ currentContent.reportedUser.username }}</p>
-        <p><strong>举报时间：</strong> {{ currentContent.reportTime }}</p>
+        <p><strong>举报时间：</strong> {{ currentContent.reportTime ? currentContent.reportTime.replace('T', ' ') : '无' }}</p>
         <p><strong>举报原因：</strong> {{ currentContent.reportReason || '未填写' }}</p>
         <el-divider />
         
