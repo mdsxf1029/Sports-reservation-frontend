@@ -384,9 +384,6 @@
         <el-form-item label="用户ID">
           <el-input v-model="addBlacklistForm.userId" placeholder="请输入用户ID" />
         </el-form-item>
-        <el-form-item label="违约次数">
-          <el-input-number v-model="addBlacklistForm.violationCount" :min="1" :max="99" />
-        </el-form-item>
         <el-form-item label="加入原因">
           <el-input 
             v-model="addBlacklistForm.blacklistReason" 
@@ -546,7 +543,6 @@ export default {
       addBlacklistForm: {
         userName: '',
         userId: '',
-        violationCount: 1,
         blacklistReason: ''
       },
       
@@ -1003,7 +999,6 @@ export default {
       this.addBlacklistForm = {
         userName: '',
         userId: '',
-        violationCount: 1,
         blacklistReason: ''
       };
       this.addBlacklistDialogVisible = true;
