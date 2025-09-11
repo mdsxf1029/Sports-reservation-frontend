@@ -144,24 +144,24 @@ export const formatNewsTime = (timeString) => {
 // 格式化申诉时间显示
 export const formatAppealTime = (timeString) => {
   if (!timeString) return '未知时间'
-  
+
   try {
     const date = new Date(timeString)
-    
-    // 检查日期是否有效
+
     if (isNaN(date.getTime())) {
       return timeString
     }
-    
-    // 格式化为中文日期时间格式：MM月DD日 HH:mm
+
+    const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
     const hours = String(date.getHours()).padStart(2, '0')
     const minutes = String(date.getMinutes()).padStart(2, '0')
-    
-    return `${month}月${day}日 ${hours}:${minutes}`
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   } catch (error) {
-    console.error('申诉时间格式化错误:', error)
+    console.error('新闻时间格式化错误:', error)
     return timeString
   }
 }
@@ -169,24 +169,75 @@ export const formatAppealTime = (timeString) => {
 // 格式化黑名单时间显示
 export const formatBlacklistTime = (timeString) => {
   if (!timeString) return '未知时间'
-  
+
   try {
     const date = new Date(timeString)
-    
-    // 检查日期是否有效
+
     if (isNaN(date.getTime())) {
       return timeString
     }
-    
-    // 格式化为中文日期时间格式：MM月DD日 HH:mm
+
+    const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
     const hours = String(date.getHours()).padStart(2, '0')
     const minutes = String(date.getMinutes()).padStart(2, '0')
-    
-    return `${month}月${day}日 ${hours}:${minutes}`
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   } catch (error) {
-    console.error('黑名单时间格式化错误:', error)
+    console.error('新闻时间格式化错误:', error)
     return timeString
   }
 }
+
+// 工具函数：补零
+const pad = (n) => n.toString().padStart(2, '0');
+
+// 手动解析 "MM/DD/YYYY HH:mm:ss"
+function parseDateStr(str) {
+  // 匹配 MM/DD/YYYY HH:mm:ss
+  const m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/);
+  if (m) {
+    const [_, MM, DD, YYYY, hh, mm, ss] = m;
+    return new Date(
+      Number(YYYY),
+      Number(MM) - 1,
+      Number(DD),
+      Number(hh),
+      Number(mm),
+      Number(ss)
+    );
+  }
+
+  // 否则交给内置 Date 解析（兼容 ISO 格式）
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+export const formatTimeSlot = (timeSlot, options = { showDate: true }) => {
+  try {
+    if (!timeSlot) return '';
+
+    const [startStr, endStr] = timeSlot.split('-').map(s => s.trim());
+    const startDate = parseDateStr(startStr);
+    const endDate = parseDateStr(endStr);
+
+    if (!startDate || !endDate) {
+      return timeSlot; // 解析失败，兜底
+    }
+
+    const startHHMM = `${pad(startDate.getHours())}:${pad(startDate.getMinutes())}`;
+    const endHHMM = `${pad(endDate.getHours())}:${pad(endDate.getMinutes())}`;
+
+    if (options.showDate) {
+      const dateStr = `${startDate.getFullYear()}-${pad(startDate.getMonth() + 1)}-${pad(startDate.getDate())}`;
+      return `${dateStr} ${startHHMM}-${endHHMM}`;
+    }
+
+    return `${startHHMM}-${endHHMM}`;
+  } catch (err) {
+    console.error('formatTimeSlot 错误:', err);
+    return timeSlot;
+  }
+};

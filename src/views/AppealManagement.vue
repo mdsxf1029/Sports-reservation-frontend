@@ -82,14 +82,6 @@
                     <el-option label="已拒绝" value="rejected" />
                   </el-select>
                   
-                  
-                  <el-select v-model="processorFilter" placeholder="处理人" clearable style="width: 120px; margin-right: 10px;">
-                    <el-option label="全部" value="" />
-                    <el-option label="管理员A" value="管理员A" />
-                    <el-option label="管理员B" value="管理员B" />
-                    <el-option label="管理员C" value="管理员C" />
-                  </el-select>
-                  
                   <el-input
                     v-model="searchKeyword"
                     placeholder="搜索用户名或用户ID"
@@ -138,7 +130,11 @@
                       </div>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="timeSlot" label="预约时间段" width="150" />
+                  <el-table-column prop="timeSlot" label="预约时间段" width="120" >
+                    <template #default="scope">
+                        {{ formatTimeSlot(scope.row.timeSlot) }}
+                      </template>
+                  </el-table-column>
                   <el-table-column prop="appealReason" label="申诉理由" min-width="200">
                     <template #default="scope">
                       <div class="appeal-appeal-reason">
@@ -338,7 +334,7 @@
             </div>
             <div class="appeal-detail-item">
               <span class="label">预约时间段：</span>
-              <span class="value">{{ selectedAppeal.timeSlot }}</span>
+              <span class="value">{{ formatTimeSlot(selectedAppeal.timeSlot) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">申诉时间：</span>
@@ -433,7 +429,7 @@
             </div>
             <div class="appeal-detail-item">
               <span class="label">预约时间段：</span>
-              <span class="value">{{ selectedAppeal?.timeSlot }}</span>
+              <span class="value">{{ formatTimeSlot(selectedAppeal?.timeSlot) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">申诉时间：</span>
@@ -509,7 +505,7 @@ import {
   removeUserFromBlacklist,
   batchRemoveFromBlacklist
 } from '../utils/api';
-import { formatAppealTime, formatBlacklistTime } from '../utils/formatters';
+import { formatAppealTime, formatBlacklistTime, formatTimeSlot } from '../utils/formatters';
 
 export default {
   name: "AppealManagement",
@@ -626,6 +622,13 @@ export default {
   async mounted() {
     await this.fetchAppealData();
     await this.fetchBlacklistData();
+  },
+  setup() {
+    return {
+      formatBlacklistTime,
+      formatAppealTime,
+      formatTimeSlot
+    }
   },
   methods: {
     // 获取申诉数据
