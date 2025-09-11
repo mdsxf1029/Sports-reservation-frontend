@@ -828,6 +828,7 @@ export default {
             this.blacklistUsers.splice(index, 1);
           }
           ElMessage.success('已从黑名单移除');
+          this.fetchBlacklistData();
         } else {
           ElMessage.error(response?.data?.msg || '移除黑名单失败');
         }
