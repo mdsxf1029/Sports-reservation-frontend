@@ -247,7 +247,7 @@ export const createOrderAppeal = (userId, appointmentId, appealReason) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  return instance.post(`/api/appointments/${appointmentId}/appeal`, { userId, ...appealReason }, { headers });
+  return instance.post(`/api/appointments/${appointmentId}/appeal`, { userId, appealReason }, { headers });
 };
 
 
