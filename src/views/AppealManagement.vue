@@ -718,12 +718,11 @@ export default {
 
             return{
               id: user.userId,
-              userName: user.userName, // 后端没有用户名，使用默认格式
+              userName: user.userName, 
               userId: user.userId.toString(),
               userAvatar: '',
               violationCount: violationCount, 
               blacklistTime: user.beginTime,
-              rawBeginTime: user.beginTime,
               blacklistReason: user.bannedReason || '违约次数过多'
             };
           });
