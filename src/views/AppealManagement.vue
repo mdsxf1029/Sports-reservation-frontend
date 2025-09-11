@@ -822,7 +822,7 @@ export default {
       try {
         const response = await removeUserFromBlacklist(user.userId, user.blacklistTime);
         
-        if (response && response.data && response.data.code === 0) {
+        if (response && response.data && response.data.code === 200) {
           const index = this.blacklistUsers.findIndex(item => item.id === user.id);
           if (index > -1) {
             this.blacklistUsers.splice(index, 1);
