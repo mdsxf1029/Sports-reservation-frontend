@@ -748,19 +748,26 @@ export default {
         });
         
         if (response && response.data && response.data.success) {
-          // 后端返回的数据结构: { success: true, data: [...] }
-          this.blacklistUsers = response.data.data || [];
+          // 后端返回的数据结构: { success: true, data: [...], violationCount: [...] }
+          const blacklistData = response.data.data || [];
+          const violationCounts = response.data.violationCount || [];
           
           // 转换数据格式以匹配前端组件
-          this.blacklistUsers = this.blacklistUsers.map(user => ({
-            id: user.userId,
-            userName: `用户${user.userId}`, // 后端没有用户名，使用默认格式
-            userId: user.userId.toString(),
-            userAvatar: '',
-            violationCount: 1, // 后端暂时没有违约次数统计，使用默认值
-            blacklistTime: user.beginTime,
-            blacklistReason: user.bannedReason || '违约次数过多'
-          }));
+          this.blacklistUsers = blacklistData.map(user => {
+            // 从违约次数列表中查找对应用户的违约次数
+            const violationInfo = violationCounts.find(v => v.userId === user.userId);
+            const violationCount = violationInfo ? violationInfo.count : 0;
+            
+            return {
+              id: user.userId,
+              userName: `用户${user.userId}`, // 后端没有用户名，使用默认格式
+              userId: user.userId.toString(),
+              userAvatar: '',
+              violationCount: violationCount, // 使用后端返回的违约次数
+              blacklistTime: user.beginTime,
+              blacklistReason: user.bannedReason || '违约次数过多'
+            };
+          });
         } else {
           // 如果API未实现，使用模拟数据
           this.blacklistUsers = [
