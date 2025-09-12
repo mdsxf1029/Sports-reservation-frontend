@@ -6,7 +6,7 @@
       <h2 class="page-title">运动新闻公告</h2>
 
       <!-- 轮播图 Banner -->
-      <el-carousel :interval="4000" height="220px" arrow="always" class="news-carousel">
+      <el-carousel :interval="4000" height="420px" arrow="always" class="news-carousel">
         <el-carousel-item v-for="(banner, idx) in banners.slice(0, 4)" :key="idx">
           <img :src="banner.coverUrl" :alt="banner.newsTitle" class="carousel-image" />
           <div class="carousel-caption">{{ banner.newsTitle }}</div>
@@ -221,7 +221,7 @@ onMounted(() => {
 
 .carousel-image {
   width: 100%;
-  height: 220px;
+  height: 620px;
   object-fit: cover;
 }
 
