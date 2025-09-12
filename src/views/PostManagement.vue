@@ -14,12 +14,12 @@
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon approved">
-              <el-icon><CircleCheck /></el-icon>
+            <div class="stat-icon reported-users"> 
+              <el-icon><User /></el-icon>
             </div>
             <div class="stat-content">
-              <div class="stat-number">{{ acceptedReportsCount }}</div>
-              <div class="stat-label">已接受举报</div>
+              <div class="stat-number">{{ reportedUsersCount }}</div> 
+              <div class="stat-label">被举报人数量</div>
             </div>
           </div>
           <div class="stat-card">
@@ -58,7 +58,6 @@
               <el-select v-model="reportFilters.status" placeholder="处理状态" clearable style="width: 140px; margin-right: 10px;">
                 <el-option label="全部状态" value="" />
                 <el-option label="待处理" value="checking" />
-                <el-option label="已接受" value="accepted" />
                 <el-option label="已驳回" value="rejected" />
               </el-select>
               
@@ -135,7 +134,7 @@
               <el-empty description="暂无匹配的举报记录" />
             </div>
 
-            <div class="pagination-section" v-if="reportTotal > 0">
+            <div class="pagination-container" v-if="reportTotal > 0">
               <el-pagination
                 v-model:current-page="reportCurrentPage"
                 v-model:page-size="reportPageSize"
@@ -158,7 +157,7 @@
         </p>
         <p><strong>举报人：</strong> {{ currentContent.reporter.username }}</p>
         <p><strong>被举报人：</strong> {{ currentContent.reportedUser.username }}</p>
-        <p><strong>举报时间：</strong> {{ currentContent.reportTime }}</p>
+        <p><strong>举报时间：</strong> {{ currentContent.reportTime ? currentContent.reportTime.replace('T', ' ') : '无' }}</p>
         <p><strong>举报原因：</strong> {{ currentContent.reportReason || '未填写' }}</p>
         <el-divider />
         
@@ -201,7 +200,8 @@ import {
   Document,
   Search,
   Filter,
-  Refresh
+  Refresh,
+  User
 } from '@element-plus/icons-vue';
 import AdminHeaderNavbar from '../components/AdminHeaderNavbar.vue';
 import { 
@@ -217,7 +217,7 @@ import {
 const reportsLoading = ref(true);
 const reportFilters = ref({ type: '', status: '', keyword: '' });
 const reportCurrentPage = ref(1);
-const reportPageSize = ref(5);
+const reportPageSize = ref(10);
 const dialogVisible = ref(false);
 const currentContent = ref(null);
 const allReports = ref([]);
@@ -275,9 +275,16 @@ const tableReports = computed(() => {
 });
 
 const pendingReportsCount = computed(() => allReports.value.filter(r => r.reportStatus === 'checking').length);
-const acceptedReportsCount = computed(() => allReports.value.filter(r => r.reportStatus === 'accepted').length);
 const rejectedReportsCount = computed(() => allReports.value.filter(r => r.reportStatus === 'rejected').length);
 const totalReportsCount = computed(() => allReports.value.length);
+const reportedUsersCount = computed(() => {
+  if (!allReports.value || allReports.value.length === 0) {
+    return 0;
+  }
+  const userIds = allReports.value.map(report => report.reportedUser.userId);
+  const uniqueUserIds = new Set(userIds);
+  return uniqueUserIds.size;
+});
 
 // --- 事件处理 ---
 
@@ -505,10 +512,48 @@ const getStatusType = (status) => {
   margin: 0;
 }
 
-.pagination-section {
+/* 分页容器样式 */
+.pagination-container {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 24px;
+  justify-content: center;
+  padding: 20px 0;
+  margin-top: 20px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.pagination-container .el-pagination {
+  --el-pagination-font-size: 14px;
+  --el-pagination-bg-color: #fff;
+  --el-pagination-text-color: #606266;
+  --el-pagination-border-radius: 4px;
+  --el-pagination-button-disabled-color: #c0c4cc;
+  --el-pagination-button-disabled-bg-color: #fff;
+  --el-pagination-hover-color: #2062ea;
+}
+
+/* 修复分页按钮样式 */
+.pagination-container .el-pagination .el-pager li {
+  min-width: 30px;
+  height: 32px;
+  line-height: 30px;
+  margin: 0 2px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #606266;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.pagination-container .el-pagination .el-pager li:hover {
+  color: #2062ea;
+  border-color: #2062ea;
+}
+
+.pagination-container .el-pagination .el-pager li.is-active {
+  background-color: #2062ea;
+  border-color: #2062ea;
+  color: #fff;
 }
 
 .no-data {
@@ -529,4 +574,7 @@ const getStatusType = (status) => {
   font-style: italic;
   color: #606266;
 }
+.stat-icon.reported-users { background-color: #409EFF; } 
+.stat-icon.rejected { background-color: #f56c6c; }
+.stat-icon.reports { background-color: #909399; }
 </style>

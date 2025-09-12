@@ -10,7 +10,7 @@
               <el-icon><Clock /></el-icon>
             </div>
             <div class="appeal-stat-content">
-              <div class="appeal-stat-number">{{ pendingAppeals.length }}</div>
+              <div class="appeal-stat-number">{{ pendingCount }}</div>
               <div class="appeal-stat-label">待处理申诉</div>
             </div>
           </div>
@@ -19,7 +19,7 @@
               <el-icon><CircleCheck /></el-icon>
             </div>
             <div class="appeal-stat-content">
-              <div class="appeal-stat-number">{{ approvedAppeals.length }}</div>
+              <div class="appeal-stat-number">{{ approvedCount }}</div>
               <div class="appeal-stat-label">申诉通过</div>
             </div>
           </div>
@@ -28,7 +28,7 @@
               <el-icon><CircleClose /></el-icon>
             </div>
             <div class="appeal-stat-content">
-              <div class="appeal-stat-number">{{ rejectedAppeals.length }}</div>
+              <div class="appeal-stat-number">{{ rejectedCount }}</div>
               <div class="appeal-stat-label">申诉被拒</div>
             </div>
           </div>
@@ -37,7 +37,7 @@
               <el-icon><UserFilled /></el-icon>
             </div>
             <div class="appeal-stat-content">
-              <div class="appeal-stat-number">{{ blacklistUsers.length }}</div>
+              <div class="appeal-stat-number">{{ userCount }}</div>
               <div class="appeal-stat-label">黑名单用户</div>
             </div>
           </div>
@@ -57,23 +57,19 @@
             <el-icon><User /></el-icon>
             批量移除黑名单
           </el-button>
-          <el-button type="info" size="large" @click="exportAppealData">
-            <el-icon><Download /></el-icon>
-            导出数据
-          </el-button>
         </div>
 
         <!-- 主要内容区域 -->
         <div class="appeal-main-content">
-          <el-tabs v-model="currentTab" class="demo-tabs">
+          <el-tabs v-model="currentTab" class="demo-tabs" @tab-click="handleTabClick">
             <el-tab-pane label="申诉审核" name="pending">
               <div class="appeal-tab-content">
                 <div class="appeal-tab-header">
                   <h3>申诉申请列表</h3>
                   <div class="appeal-header-stats">
-                    <el-tag type="warning" size="small">{{ pendingAppeals.length }} 条待处理</el-tag>
-                    <el-tag type="success" size="small">{{ approvedAppeals.length }} 条已通过</el-tag>
-                    <el-tag type="danger" size="small">{{ rejectedAppeals.length }} 条已拒绝</el-tag>
+                    <el-tag type="warning" size="small">{{ pendingCount }} 条待处理</el-tag>
+                    <el-tag type="success" size="small">{{ approvedCount }} 条已通过</el-tag>
+                    <el-tag type="danger" size="small">{{ rejectedCount }} 条已拒绝</el-tag>
                   </div>
                 </div>
                 
@@ -86,27 +82,10 @@
                     <el-option label="已拒绝" value="rejected" />
                   </el-select>
                   
-                  <el-select v-model="venueFilter" placeholder="场馆筛选" clearable style="width: 120px; margin-right: 10px;">
-                    <el-option label="全部" value="" />
-                    <el-option label="乒乓球馆" value="乒乓球馆" />
-                    <el-option label="羽毛球馆" value="羽毛球馆" />
-                    <el-option label="篮球馆" value="篮球馆" />
-                    <el-option label="健身房" value="健身房" />
-                    <el-option label="网球场" value="网球场" />
-                    <el-option label="攀岩馆" value="攀岩馆" />
-                  </el-select>
-                  
-                  <el-select v-model="processorFilter" placeholder="处理人" clearable style="width: 120px; margin-right: 10px;">
-                    <el-option label="全部" value="" />
-                    <el-option label="管理员A" value="管理员A" />
-                    <el-option label="管理员B" value="管理员B" />
-                    <el-option label="管理员C" value="管理员C" />
-                  </el-select>
-                  
                   <el-input
                     v-model="searchKeyword"
-                    placeholder="搜索用户名或用户ID"
-                    style="width: 200px; margin-right: 10px;"
+                    placeholder="搜索用户名 / 用户ID / 申诉理由"
+                    style="width: 300px; margin-right: 10px;"
                     clearable
                   >
                     <template #prefix>
@@ -125,7 +104,7 @@
                   </el-button>
                 </div>
                 
-                <el-table :data="paginatedAppeals" style="width: 100%">
+                <el-table ref="appealTable" :data="appeals" style="width: 100%" @selection-change="onSelectionChange">
                   <el-table-column type="selection" width="55" />
                   <el-table-column prop="userName" label="用户名" width="120">
                     <template #default="scope">
@@ -138,7 +117,11 @@
                     </template>
                   </el-table-column>
                   <el-table-column prop="userId" label="用户ID" width="120" />
-                  <el-table-column prop="violationTime" label="违约时间" width="180" />
+                  <el-table-column prop="violationTime" label="违约时间" width="180">
+                    <template #default="scope">
+                      {{ formatAppealTime(scope.row.violationTime) }}
+                    </template>
+                  </el-table-column>
                   <el-table-column prop="venue" label="预约场馆" width="120">
                     <template #default="scope">
                       <div class="appeal-venue-info">
@@ -147,7 +130,11 @@
                       </div>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="timeSlot" label="预约时间段" width="150" />
+                  <el-table-column prop="timeSlot" label="预约时间段" width="120" >
+                    <template #default="scope">
+                        {{ formatTimeSlot(scope.row.timeSlot) }}
+                      </template>
+                  </el-table-column>
                   <el-table-column prop="appealReason" label="申诉理由" min-width="200">
                     <template #default="scope">
                       <div class="appeal-appeal-reason">
@@ -156,16 +143,20 @@
                       </div>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="appealTime" label="申诉时间" width="180" />
+                  <el-table-column prop="appealTime" label="申诉时间" width="180">
+                    <template #default="scope">
+                      {{ formatAppealTime(scope.row.appealTime) }}
+                    </template>
+                  </el-table-column>
                   <el-table-column prop="processor" label="处理人" width="120">
                     <template #default="scope">
-                      <span v-if="scope.row.processor">{{ scope.row.processor }}</span>
+                      <span v-if="scope.row.processor">{{ scope.row.processorName }}</span>
                       <span v-else style="color: #999;">未处理</span>
                     </template>
                   </el-table-column>
                   <el-table-column prop="processTime" label="处理时间" width="180">
                     <template #default="scope">
-                      <span v-if="scope.row.processTime">{{ scope.row.processTime }}</span>
+                      <span v-if="scope.row.processTime">{{ formatAppealTime(scope.row.processTime) }}</span>
                       <span v-else style="color: #999;">未处理</span>
                     </template>
                   </el-table-column>
@@ -208,25 +199,25 @@
                           <el-icon><View /></el-icon>
                           查看详情
                         </el-button>
-                        <el-tag type="info" size="small">已处理</el-tag>
+                        <el-tag type="info" size="small" style="margin-left:12px">已处理</el-tag>
                       </div>
                     </template>
                   </el-table-column>
+
+                  <template #empty>
+                    <el-empty description="暂无申诉记录" :image-size="200">
+                      <el-button type="primary" @click="refreshData">刷新数据</el-button>
+                    </el-empty>
+                  </template>
                 </el-table>
                 
-                <div v-if="filteredAppeals.length === 0" class="appeal-no-data">
-                  <el-empty description="暂无申诉记录" :image-size="200">
-                    <el-button type="primary" @click="refreshData">刷新数据</el-button>
-                  </el-empty>
-                </div>
-                
                 <!-- 分页 -->
-                <div class="appeal-pagination-section" v-if="filteredAppeals.length > 0">
+                <div class="pagination-container" v-if="appealCount > 0">
                   <el-pagination
                     v-model:current-page="appealCurrentPage"
                     v-model:page-size="appealPageSize"
                     :page-sizes="[10, 20, 50, 100]"
-                    :total="filteredAppeals.length"
+                    :total="appealCount"
                     layout="total, sizes, prev, pager, next, jumper"
                     @size-change="handleAppealSizeChange"
                     @current-change="handleAppealCurrentChange"
@@ -240,7 +231,7 @@
                 <div class="appeal-tab-header">
                   <h3>黑名单用户管理</h3>
                   <div class="appeal-header-actions">
-                    <el-tag type="danger" size="small">{{ blacklistUsers.length }} 人在黑名单</el-tag>
+                    <el-tag type="danger" size="small">{{ userCount }} 人在黑名单</el-tag>
                     <el-button type="danger" size="small" @click="showAddBlacklistDialog">
                       <el-icon><User /></el-icon>
                       加入黑名单
@@ -248,7 +239,7 @@
                   </div>
                 </div>
                 
-                <el-table :data="paginatedBlacklistUsers" style="width: 100%">
+                <el-table ref="blacklistTable" :data="blacklistUsers" style="width: 100%" @selection-change="onSelectionUserChange">
                   <el-table-column type="selection" width="55" />
                   <el-table-column prop="userName" label="用户名" width="120">
                     <template #default="scope">
@@ -266,7 +257,16 @@
                       <el-tag type="danger" size="small">{{ scope.row.violationCount }} 次</el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="blacklistTime" label="加入黑名单时间" width="180" />
+                  <el-table-column prop="blacklistTime" label="加入黑名单时间" width="180">
+                    <template #default="scope">
+                      {{ formatBlacklistTime(scope.row.blacklistTime) }}
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="endTime" label="黑名单结束时间" width="180">
+                    <template #default="scope">
+                      {{ formatBlacklistTime(scope.row.endTime) }}
+                    </template>
+                  </el-table-column>
                   <el-table-column prop="blacklistReason" label="加入原因" min-width="200">
                     <template #default="scope">
                       <div class="appeal-blacklist-reason">
@@ -287,21 +287,21 @@
                       </el-button>
                     </template>
                   </el-table-column>
+
+                  <template #empty>
+                    <el-empty description="暂无黑名单用户" :image-size="200">
+                      <el-button type="primary" @click="refreshData">刷新数据</el-button>
+                    </el-empty>
+                  </template>
                 </el-table>
                 
-                <div v-if="blacklistUsers.length === 0" class="appeal-no-data">
-                  <el-empty description="暂无黑名单用户" :image-size="200">
-                    <el-button type="primary" @click="refreshData">刷新数据</el-button>
-                  </el-empty>
-                </div>
-                
                 <!-- 分页 -->
-                <div class="appeal-pagination-section" v-if="blacklistUsers.length > 0">
+                <div class="pagination-container" v-if="blacklistCount > 0">
                   <el-pagination
                     v-model:current-page="blacklistCurrentPage"
                     v-model:page-size="blacklistPageSize"
                     :page-sizes="[10, 20, 50, 100]"
-                    :total="blacklistUsers.length"
+                    :total="blacklistCount"
                     layout="total, sizes, prev, pager, next, jumper"
                     @size-change="handleBlacklistSizeChange"
                     @current-change="handleBlacklistCurrentChange"
@@ -331,7 +331,7 @@
             </div>
             <div class="appeal-detail-item">
               <span class="label">违约时间：</span>
-              <span class="value">{{ selectedAppeal.violationTime }}</span>
+              <span class="value">{{ formatAppealTime(selectedAppeal.violationTime) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">预约场馆：</span>
@@ -339,11 +339,11 @@
             </div>
             <div class="appeal-detail-item">
               <span class="label">预约时间段：</span>
-              <span class="value">{{ selectedAppeal.timeSlot }}</span>
+              <span class="value">{{ formatTimeSlot(selectedAppeal.timeSlot) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">申诉时间：</span>
-              <span class="value">{{ selectedAppeal.appealTime }}</span>
+              <span class="value">{{ formatAppealTime(selectedAppeal.appealTime) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">申诉理由：</span>
@@ -355,7 +355,7 @@
             </div>
             <div class="appeal-detail-item" v-if="selectedAppeal.processTime">
               <span class="label">处理时间：</span>
-              <span class="value">{{ selectedAppeal.processTime }}</span>
+              <span class="value">{{ formatAppealTime(selectedAppeal.processTime) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">申诉状态：</span>
@@ -388,9 +388,6 @@
         </el-form-item>
         <el-form-item label="用户ID">
           <el-input v-model="addBlacklistForm.userId" placeholder="请输入用户ID" />
-        </el-form-item>
-        <el-form-item label="违约次数">
-          <el-input-number v-model="addBlacklistForm.violationCount" :min="1" :max="99" />
         </el-form-item>
         <el-form-item label="加入原因">
           <el-input 
@@ -426,7 +423,7 @@
             </div>
             <div class="appeal-detail-item">
               <span class="label">违约时间：</span>
-              <span class="value">{{ selectedAppeal?.violationTime }}</span>
+              <span class="value">{{ formatAppealTime(selectedAppeal?.violationTime) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">预约场馆：</span>
@@ -434,11 +431,11 @@
             </div>
             <div class="appeal-detail-item">
               <span class="label">预约时间段：</span>
-              <span class="value">{{ selectedAppeal?.timeSlot }}</span>
+              <span class="value">{{ formatTimeSlot(selectedAppeal?.timeSlot) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">申诉时间：</span>
-              <span class="value">{{ selectedAppeal?.appealTime }}</span>
+              <span class="value">{{ formatAppealTime(selectedAppeal?.appealTime) }}</span>
             </div>
             <div class="appeal-detail-item">
               <span class="label">申诉理由：</span>
@@ -450,7 +447,7 @@
             </div>
             <div class="appeal-detail-item" v-if="selectedAppeal?.processTime">
               <span class="label">处理时间：</span>
-              <span class="value">{{ selectedAppeal?.processTime }}</span>
+              <span class="value">{{ formatAppealTime(selectedAppeal?.processTime) }}</span>
             </div>
           </div>
         </div>
@@ -491,7 +488,6 @@ import {
   Check,
   Close,
   User,
-  Download,
   Search,
   Filter,
   Refresh,
@@ -511,6 +507,7 @@ import {
   removeUserFromBlacklist,
   batchRemoveFromBlacklist
 } from '../utils/api';
+import { formatAppealTime, formatBlacklistTime, formatTimeSlot } from '../utils/formatters';
 
 export default {
   name: "AppealManagement",
@@ -523,7 +520,6 @@ export default {
     Check,
     Close,
     User,
-    Download,
     Search,
     Filter,
     Refresh,
@@ -545,20 +541,20 @@ export default {
       // 分页
       appealCurrentPage: 1,
       appealPageSize: 20,
+      appealCount: 0,
       blacklistCurrentPage: 1,
       blacklistPageSize: 20,
+      blacklistCount: 0,
       
       // 加入黑名单表单
       addBlacklistForm: {
         userName: '',
         userId: '',
-        violationCount: 1,
         blacklistReason: ''
       },
       
       // 筛选条件
       appealStatusFilter: '',
-      venueFilter: '',
       processorFilter: '',
       searchKeyword: '',
       
@@ -566,73 +562,35 @@ export default {
       loading: false,
       
       // 申诉数据
-      pendingAppeals: [],
-      processedAppeals: [],
-      blacklistUsers: []
+      appeals: [],
+      blacklistUsers: [],
+
+      // 统计数据
+      pendingCount: 0,
+      approvedCount: 0,
+      rejectedCount: 0,
+      userCount: 0,
+
+      // 选中项目
+      selected: [],
+      selectedUsers: [],
     };
   },
   computed: {
     appealDialogTitle() {
       return this.appealAction === 'approve' ? '确认通过申诉' : '确认拒绝申诉';
     },
-    
-    // 统计计算
-    approvedAppeals() {
-      return this.processedAppeals.filter(a => a.appealStatus === 'approved');
-    },
-    
-    rejectedAppeals() {
-      return this.processedAppeals.filter(a => a.appealStatus === 'rejected');
-    },
-    
-    // 筛选后的申诉数据
-    filteredAppeals() {
-      let allAppeals = [...this.pendingAppeals, ...this.processedAppeals];
-      
-      // 状态筛选
-      if (this.appealStatusFilter) {
-        allAppeals = allAppeals.filter(a => a.appealStatus === this.appealStatusFilter);
-      }
-      
-      // 场馆筛选
-      if (this.venueFilter) {
-        allAppeals = allAppeals.filter(a => a.venue === this.venueFilter);
-      }
-      
-      // 处理人筛选
-      if (this.processorFilter) {
-        allAppeals = allAppeals.filter(a => a.processor === this.processorFilter);
-      }
-      
-      // 关键词搜索
-      if (this.searchKeyword) {
-        const keyword = this.searchKeyword.toLowerCase();
-        allAppeals = allAppeals.filter(a => 
-          a.userName.toLowerCase().includes(keyword) || 
-          a.userId.toLowerCase().includes(keyword)
-        );
-      }
-      
-      return allAppeals;
-    },
-    
-    // 分页后的申诉数据
-    paginatedAppeals() {
-      const start = (this.appealCurrentPage - 1) * this.appealPageSize;
-      const end = start + this.appealPageSize;
-      return this.filteredAppeals.slice(start, end);
-    },
-    
-    // 分页后的黑名单数据
-    paginatedBlacklistUsers() {
-      const start = (this.blacklistCurrentPage - 1) * this.blacklistPageSize;
-      const end = start + this.blacklistPageSize;
-      return this.blacklistUsers.slice(start, end);
-    }
   },
   async mounted() {
     await this.fetchAppealData();
     await this.fetchBlacklistData();
+  },
+  setup() {
+    return {
+      formatBlacklistTime,
+      formatAppealTime,
+      formatTimeSlot
+    }
   },
   methods: {
     // 获取申诉数据
@@ -643,15 +601,15 @@ export default {
           page: this.appealCurrentPage,
           pageSize: this.appealPageSize,
           status: this.appealStatusFilter,
-          venue: this.venueFilter,
-          processor: this.processorFilter,
           keyword: this.searchKeyword
         });
         
-        if (response && response.data && response.data.code === 200) {
-          const data = response.data.data || [];
-          this.pendingAppeals = data.filter(a => a.appealStatus === 'pending');
-          this.processedAppeals = data.filter(a => a.appealStatus !== 'pending');
+        if (response?.data?.code === 200) {
+          this.appeals = response.data.data || [];
+          this.appealCount = response.data.total || 0;
+          this.pendingCount = response.data.pendingCount || 0;
+          this.approvedCount = response.data.approvedCount || 0;
+          this.rejectedCount = response.data.rejectedCount || 0;
         } else {
           // 如果API未实现，使用模拟数据
           this.pendingAppeals = [
@@ -749,23 +707,32 @@ export default {
       try {
         const response = await getBlacklistUsers({
           page: this.blacklistCurrentPage,
-          pageSize: this.blacklistPageSize
+          pageSize: this.blacklistPageSize,
         });
         
         if (response && response.data && response.data.success) {
           // 后端返回的数据结构: { success: true, data: [...] }
           this.blacklistUsers = response.data.data || [];
+          this.blacklistCount = response.data.totalCount || 0;
+          this.userCount = response.data.userCount || 0;
+          const violationCounts = response.data.violationCount || [];
           
           // 转换数据格式以匹配前端组件
-          this.blacklistUsers = this.blacklistUsers.map(user => ({
-            id: user.userId,
-            userName: `用户${user.userId}`, // 后端没有用户名，使用默认格式
-            userId: user.userId.toString(),
-            userAvatar: '',
-            violationCount: 1, // 后端暂时没有违约次数统计，使用默认值
-            blacklistTime: user.beginTime,
-            blacklistReason: user.bannedReason || '违约次数过多'
-          }));
+          this.blacklistUsers = this.blacklistUsers.map(user => {
+            const violationInfo = violationCounts.find(v => v.userId === user.userId);
+            const violationCount = violationInfo ? violationInfo.count : 0;
+
+            return{
+              id: user.userId,
+              userName: user.userName, 
+              userId: user.userId.toString(),
+              userAvatar: '',
+              violationCount: violationCount, 
+              blacklistTime: user.beginTime,
+              endTime: user.endTime,
+              blacklistReason: user.bannedReason || '违约次数过多'
+            };
+          });
         } else {
           // 如果API未实现，使用模拟数据
           this.blacklistUsers = [
@@ -820,6 +787,9 @@ export default {
           
           // 重新获取数据
           await this.fetchAppealData();
+          
+          // 通知违约管理页面刷新数据
+          localStorage.setItem('violationDataNeedsRefresh', Date.now().toString());
         } else {
           ElMessage.error(response?.data?.message || '处理申诉失败');
         }
@@ -850,7 +820,7 @@ export default {
     
     async removeFromBlacklist(user) {
       try {
-        const response = await removeUserFromBlacklist(user.userId);
+        const response = await removeUserFromBlacklist(user.userId, user.blacklistTime);
         
         if (response && response.data && response.data.code === 200) {
           const index = this.blacklistUsers.findIndex(item => item.id === user.id);
@@ -858,8 +828,9 @@ export default {
             this.blacklistUsers.splice(index, 1);
           }
           ElMessage.success('已从黑名单移除');
+          this.fetchBlacklistData();
         } else {
-          ElMessage.error(response?.data?.message || '移除黑名单失败');
+          ElMessage.error(response?.data?.msg || '移除黑名单失败');
         }
       } catch (error) {
         console.error('移除黑名单失败:', error);
@@ -900,81 +871,172 @@ export default {
       }
       this.detailDialogVisible = true;
     },
+
+    onSelectionChange(rows) {
+      this.selected = rows || [];
+    },
+
+    onSelectionUserChange(rows) {
+      this.selectedUsers = rows || [];
+    },
     
     async handleBatchApprove() {
-      ElMessageBox.confirm('确定要批量通过选中的申诉吗？', '确认操作', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'info',
-      }).then(async () => {
-        try {
-          // 这里需要获取选中的申诉ID列表
-          const selectedIds = []; // 从表格选择中获取
-          const response = await batchProcessAppeals(selectedIds, 'approve');
-          
-          if (response && response.data && response.data.code === 200) {
-            ElMessage.success('批量通过成功');
-            await this.fetchAppealData();
-          } else {
-            ElMessage.error('批量通过失败');
-          }
-        } catch (error) {
-          console.error('批量通过失败:', error);
-          ElMessage.error('批量通过失败');
+      if (!this.selected.length) {
+        ElMessage.warning('请先选择要通过的申诉');
+        return;
+      }
+
+      try {
+        await ElMessageBox.confirm('确定要批量通过选中的申诉吗？', '确认操作', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'info',
+        });
+
+        // 提取 id 数组
+        const appealIds = this.selected
+          .map(r => Number(r.id))
+          .filter(id => !Number.isNaN(id));
+
+        if (!appealIds.length) {
+          ElMessage.error('未能识别选中申诉的 ID');
+          return;
         }
-      });
+
+        const response = await batchProcessAppeals(appealIds, 'approve');
+
+        if (response && response.data && response.data.code === 200) {
+          const processedCount = response.data.processedCount;
+          const totalCount = appealIds.length;
+
+          if (processedCount === 0) {
+            ElMessage.info('没有可处理的待审核申诉');
+          } else if (processedCount < totalCount) {
+            ElMessage.success(`已成功处理 ${updatedCount} 条待审核申诉，${totalCount - processedCount} 条未处理（非待审核状态）`);
+          } else {
+            ElMessage.success(`已成功处理 ${processedCount} 条待审核申诉`);
+          }
+            
+          if (this.$refs.appealTable && this.$refs.appealTable.clearSelection) {
+            this.$refs.appealTable.clearSelection();
+          }
+          this.selected = [];
+          await this.fetchAppealData();
+        } else {
+          ElMessage.error(response?.data?.message || '批量通过失败');
+        }
+      } catch (err) {
+        // 用户取消或出错
+        if (err === 'cancel' || err === 'close') return;
+        console.error('批量通过失败:', err);
+        ElMessage.error('批量通过失败');
+      }
     },
     
     async handleBatchReject() {
-      ElMessageBox.confirm('确定要批量拒绝选中的申诉吗？', '确认操作', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }).then(async () => {
-        try {
-          // 这里需要获取选中的申诉ID列表
-          const selectedIds = []; // 从表格选择中获取
-          const response = await batchProcessAppeals(selectedIds, 'reject');
-          
+      if (!this.selected.length) {
+        ElMessage.warning('请先选择要拒绝的申诉');
+        return;
+      }
+
+      try {
+        await ElMessageBox.confirm('确定要批量拒绝选中的申诉吗？', '确认操作', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        });
+
+        // 弹框要求输入拒绝理由
+        ElMessageBox.prompt('请输入拒绝理由（必填）', '批量拒绝', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          inputType: 'textarea',
+          inputPlaceholder: '填写拒绝理由',
+        }).then(async ({ value }) => {
+          const reason = (value || '').trim();
+          if (!reason) {
+            ElMessage.warning('请填写拒绝理由');
+            return;
+          }
+
+          const appealIds = this.selected
+            .map(r => Number(r.id))
+            .filter(id => !Number.isNaN(id));
+
+          if (!appealIds.length) {
+            ElMessage.error('未能识别选中申诉的 ID');
+            return;
+          }
+
+          const response = await batchProcessAppeals(appealIds, 'reject', reason);
+
           if (response && response.data && response.data.code === 200) {
-            ElMessage.success('批量拒绝成功');
+            const processedCount = response.data.processedCount;
+            const totalCount = appealIds.length;
+
+            if (processedCount === 0) {
+              ElMessage.info('没有可处理的待审核申诉');
+            } else if (processedCount < totalCount) {
+              ElMessage.success(`已成功处理 ${updatedCount} 条待审核申诉，${totalCount - processedCount} 条未处理（非待审核状态）`);
+            } else {
+              ElMessage.success(`已成功处理 ${processedCount} 条待审核申诉`);
+            }
+
+            if (this.$refs.appealTable && this.$refs.appealTable.clearSelection) {
+              this.$refs.appealTable.clearSelection();
+            }
+            this.selected = [];
             await this.fetchAppealData();
           } else {
-            ElMessage.error('批量拒绝失败');
+            ElMessage.error(response?.data?.message || '批量拒绝失败');
           }
-        } catch (error) {
-          console.error('批量拒绝失败:', error);
-          ElMessage.error('批量拒绝失败');
-        }
-      });
+        }).catch(() => {
+        });
+
+      } catch (err) {
+        if (err === 'cancel' || err === 'close') return;
+        console.error('批量拒绝失败:', err);
+        ElMessage.error('批量拒绝失败');
+      }
     },
     
     async handleBatchRemoveBlacklist() {
-      ElMessageBox.confirm('确定要批量移除选中的黑名单用户吗？', '确认操作', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'info',
-      }).then(async () => {
-        try {
-          // 这里需要获取选中的用户ID列表
-          const selectedIds = []; // 从表格选择中获取
-          const response = await batchRemoveFromBlacklist(selectedIds);
-          
-          if (response && response.data && response.data.code === 200) {
-            ElMessage.success('批量移除成功');
-            await this.fetchBlacklistData();
-          } else {
-            ElMessage.error('批量移除失败');
+      if (!this.selectedUsers.length) {
+        ElMessage.warning('请先选择要通过的申诉');
+        return;
+      }
+
+      try {
+        await ElMessageBox.confirm(`确定要批量移除选中的 ${this.selectedUsers.length} 个黑名单用户吗？`, '确认操作', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'info',
+        });
+
+        // 构造请求体
+        const selectedItems = this.selectedUsers.map(user => ({
+            userId: user.userId,
+            beginTime: user.blacklistTime
+          }));
+
+        const response = await batchRemoveFromBlacklist(selectedItems);
+
+        if (response && response.data && response.data.code === 200) {
+           ElMessage.success('批量移除成功');
+            
+          if (this.$refs.blacklistTable && this.$refs.blacklistTable.clearSelection) {
+            this.$refs.blacklistTable.clearSelection();
           }
-        } catch (error) {
-          console.error('批量移除失败:', error);
-          ElMessage.error('批量移除失败');
+          this.selectedUsers = [];
+          await this.fetchBlacklistData();
+        } else {
+          ElMessage.error(response?.data?.message || '批量移除失败');
         }
-      });
-    },
-    
-    exportAppealData() {
-      ElMessage.success('导出功能待实现');
+      } catch (err) {
+        if (err === 'cancel' || err === 'close') return;
+        console.error('批量移除失败:', err);
+        ElMessage.error('批量移除失败');
+      }
     },
     
     applyFilters() {
@@ -984,7 +1046,6 @@ export default {
     
     resetFilters() {
       this.appealStatusFilter = '';
-      this.venueFilter = '';
       this.processorFilter = '';
       this.searchKeyword = '';
       this.fetchAppealData();
@@ -996,13 +1057,21 @@ export default {
       await this.fetchBlacklistData();
       ElMessage.success('数据已刷新');
     },
+
+    handleTabClick(tab) {
+      if (tab.props.name === 'pending') {
+        this.appealStatusFilter = '';
+        this.processorFilter = '';
+        this.searchKeyword = '';
+        this.fetchAppealData();
+      }
+    },
     
     // 加入黑名单相关方法
     showAddBlacklistDialog() {
       this.addBlacklistForm = {
         userName: '',
         userId: '',
-        violationCount: 1,
         blacklistReason: ''
       };
       this.addBlacklistDialogVisible = true;

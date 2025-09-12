@@ -10,7 +10,7 @@
               <el-icon><Warning /></el-icon>
             </div>
             <div class="violation-stat-content">
-              <div class="violation-stat-number">{{ totalViolations }}</div>
+              <div class="violation-stat-number">{{ allViolationCount }}</div>
               <div class="violation-stat-label">总违约次数</div>
             </div>
           </div>
@@ -19,7 +19,7 @@
               <el-icon><User /></el-icon>
             </div>
             <div class="violation-stat-content">
-              <div class="violation-stat-number">{{ uniqueUsers }}</div>
+              <div class="violation-stat-number">{{ userCount }}</div>
               <div class="violation-stat-label">违约用户数</div>
             </div>
           </div>
@@ -28,7 +28,7 @@
               <el-icon><Calendar /></el-icon>
             </div>
             <div class="violation-stat-content">
-              <div class="violation-stat-number">{{ todayViolations }}</div>
+              <div class="violation-stat-number">{{ todayCount }}</div>
               <div class="violation-stat-label">今日违约</div>
             </div>
           </div>
@@ -46,22 +46,6 @@
         <!-- 筛选和搜索区域 -->
         <div class="violation-filter-section">
           <div class="violation-filter-left">
-            <el-select v-model="filterStatus" placeholder="处理状态" clearable style="width: 120px; margin-right: 10px;">
-              <el-option label="全部" value="" />
-              <el-option label="已确认违约" value="confirmed" />
-              <el-option label="申诉中" value="appeal_pending" />
-              <el-option label="申诉通过" value="appeal_approved" />
-              <el-option label="申诉被拒" value="appeal_rejected" />
-            </el-select>
-            <el-select v-model="filterVenue" placeholder="场馆" clearable style="width: 120px; margin-right: 10px;">
-              <el-option label="全部" value="" />
-              <el-option label="乒乓球馆" value="乒乓球馆" />
-              <el-option label="羽毛球馆" value="羽毛球馆" />
-              <el-option label="篮球馆" value="篮球馆" />
-              <el-option label="健身房" value="健身房" />
-              <el-option label="网球场" value="网球场" />
-              <el-option label="攀岩馆" value="攀岩馆" />
-            </el-select>
             <el-date-picker
               v-model="dateRange"
               type="daterange"
@@ -84,6 +68,14 @@
                 <el-icon><Search /></el-icon>
               </template>
             </el-input>
+            <el-button type="primary" @click="applyFilters">
+              <el-icon><Filter /></el-icon>
+              应用筛选
+            </el-button>
+            <el-button @click="resetFilters">
+              <el-icon><Refresh /></el-icon>
+              重置
+            </el-button>
           </div>
         </div>
 
@@ -91,23 +83,20 @@
         <div class="violation-table-section">
           <div class="violation-table-header">
             <h3>违约记录列表</h3>
-            <el-tag type="info" size="small">{{ filteredViolations.length }} 条记录</el-tag>
+            <el-tag type="info" size="small">{{ totalCount }} 条记录</el-tag>
           </div>
           
-          <el-table :data="filteredViolations" style="width: 100%" stripe>
+          <el-table :data="violations" style="width: 100%" stripe>
             <el-table-column type="index" label="序号" width="80" />
             <el-table-column prop="userName" label="用户名" width="120" />
             <el-table-column prop="userId" label="用户ID" width="120" />
-            <el-table-column prop="violationTime" label="违约时间" width="180" />
-            <el-table-column prop="venue" label="预约场馆" width="120" />
-            <el-table-column prop="timeSlot" label="预约时间段" width="150" />
-            <el-table-column prop="status" label="处理状态" width="120">
+            <el-table-column prop="violationTime" label="违约时间" width="250">
               <template #default="scope">
-                <el-tag :type="getCombinedStatusType(scope.row)" size="small">
-                  {{ getCombinedStatusText(scope.row) }}
-                </el-tag>
+                {{ formatViolationTime(scope.row.violationTime) }}
               </template>
             </el-table-column>
+            <el-table-column prop="venue" label="预约场馆" width="250" />
+            <el-table-column prop="timeSlot" label="预约时间段" width="220" />
             <el-table-column label="操作" width="150" fixed="right">
               <template #default="scope">
                 <el-button 
@@ -121,18 +110,18 @@
             </el-table-column>
           </el-table>
           
-          <div v-if="filteredViolations.length === 0" class="no-data">
+          <div v-if="totalCount === 0" class="no-data">
             暂无违约记录
           </div>
         </div>
 
         <!-- 分页 -->
-        <div class="violation-pagination-section">
+        <div v-if="totalCount > 0" class="pagination-container">
           <el-pagination
             v-model:current-page="currentPage"
             v-model:page-size="pageSize"
             :page-sizes="[10, 20, 50, 100]"
-            :total="filteredViolations.length"
+            :total="totalCount"
             layout="total, sizes, prev, pager, next, jumper"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
@@ -143,12 +132,14 @@
 
     <!-- 违约详情对话框 -->
 
+    
     <!-- 历史违约记录弹窗 -->
     <el-dialog
       v-model="detailDialogVisible"
       title="违约记录详情"
       width="700px"
       :close-on-click-modal="false"
+      :show-close="false"
     >
       <div v-if="selectedViolation" class="violation-detail">
         <div class="detail-section">
@@ -164,7 +155,7 @@
             </div>
             <div class="detail-item">
               <span class="label">违约时间：</span>
-              <span class="value">{{ selectedViolation.violationTime }}</span>
+              <span class="value">{{ formatViolationTime(selectedViolation.violationTime) }}</span>
             </div>
             <div class="detail-item">
               <span class="label">预约场馆：</span>
@@ -174,40 +165,6 @@
               <span class="label">预约时间段：</span>
               <span class="value">{{ selectedViolation.timeSlot }}</span>
             </div>
-          </div>
-        </div>
-
-        <div class="detail-section" v-if="selectedViolation.appealStatus !== 'none'">
-          <h4>申诉信息</h4>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <span class="label">申诉时间：</span>
-              <span class="value">{{ selectedViolation.appealTime }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">申诉理由：</span>
-              <span class="value">{{ selectedViolation.appealReason }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">申诉状态：</span>
-              <span class="value">
-                <el-tag :type="getCombinedStatusType(selectedViolation)" size="small">
-                  {{ getCombinedStatusText(selectedViolation) }}
-                </el-tag>
-              </span>
-            </div>
-            <div class="detail-item" v-if="selectedViolation.appealStatus === 'rejected'">
-              <span class="label">拒绝理由：</span>
-              <span class="value">{{ selectedViolation.rejectReason || '无' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="detail-section">
-          <h4>用户违约历史</h4>
-          <div class="history-summary">
-            <p>该用户累计违约 <strong>{{ selectedViolation.userViolationCount }}</strong> 次</p>
-            <p>最近一次违约：{{ selectedViolation.lastViolationTime || '无' }}</p>
           </div>
         </div>
       </div>
@@ -221,8 +178,9 @@
 <script>
 import AdminHeaderNavbar from '../components/AdminHeaderNavbar.vue'
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Warning, User, Calendar, TrendCharts, Search } from '@element-plus/icons-vue'
-import { getViolationRecords, getViolationDetail, confirmViolation, cancelViolation } from '../utils/api';
+import { Warning, User, Calendar, TrendCharts, Search, Filter, Refresh } from '@element-plus/icons-vue'
+import { getViolationRecords } from '../utils/api';
+import { formatViolationTime } from '../utils/formatters';
 
 export default {
   name: "ViolationManagement",
@@ -232,19 +190,26 @@ export default {
     User,
     Calendar,
     TrendCharts,
-    Search
+    Search,
+    Filter,
+    Refresh
   },
   data() {
     return {
       // 筛选条件
-      filterStatus: '',
-      filterVenue: '',
       dateRange: [],
       searchKeyword: '',
       
       // 分页
       currentPage: 1,
       pageSize: 20,
+      totalCount: 0,
+
+      // 统计信息
+      allViolationCount: 0,
+      userCount: 0,
+      todayCount: 0,
+      allAppointmentCount: 0,
       
       // 对话框
       detailDialogVisible: false,
@@ -259,66 +224,21 @@ export default {
   },
   computed: {
     // 统计计算
-    totalViolations() {
-      return this.violations.length;
-    },
-    uniqueUsers() {
-      const userIds = new Set(this.violations.map(v => v.userId));
-      return userIds.size;
-    },
-    todayViolations() {
-      const today = new Date().toISOString().split('T')[0];
-      return this.violations.filter(v => v.violationTime.startsWith(today)).length;
-    },
     violationRate() {
       // 模拟计算违约率（实际应该基于总预约数）
-      return ((this.violations.length / 100) * 100).toFixed(1);
+      return ((this.allViolationCount / this.allAppointmentCount) * 100).toFixed(1);
     },
-    
-    // 筛选后的数据
-    filteredViolations() {
-      let filtered = [...this.violations];
-      
-      // 状态筛选
-      if (this.filterStatus) {
-        if (this.filterStatus === 'confirmed') {
-          filtered = filtered.filter(v => v.appealStatus === 'none');
-        } else if (this.filterStatus === 'appeal_pending') {
-          filtered = filtered.filter(v => v.appealStatus === 'pending');
-        } else if (this.filterStatus === 'appeal_approved') {
-          filtered = filtered.filter(v => v.appealStatus === 'approved');
-        } else if (this.filterStatus === 'appeal_rejected') {
-          filtered = filtered.filter(v => v.appealStatus === 'rejected');
-        }
-      }
-      
-      // 场馆筛选
-      if (this.filterVenue) {
-        filtered = filtered.filter(v => v.venue === this.filterVenue);
-      }
-      
-      // 日期筛选
-      if (this.dateRange && this.dateRange.length === 2) {
-        filtered = filtered.filter(v => {
-          const violationDate = v.violationTime.split(' ')[0];
-          return violationDate >= this.dateRange[0] && violationDate <= this.dateRange[1];
-        });
-      }
-      
-      // 关键词搜索
-      if (this.searchKeyword) {
-        const keyword = this.searchKeyword.toLowerCase();
-        filtered = filtered.filter(v => 
-          v.userName.toLowerCase().includes(keyword) || 
-          v.userId.toLowerCase().includes(keyword)
-        );
-      }
-      
-      return filtered;
-    }
   },
   async mounted() {
     await this.fetchViolationData();
+    
+    // 监听申诉状态变化，自动刷新数据
+    this.setupDataRefreshListener();
+  },
+  setup() {
+    return {
+      formatViolationTime
+    }
   },
   methods: {
     // 获取违约数据
@@ -328,32 +248,37 @@ export default {
         const response = await getViolationRecords({
           page: this.currentPage,
           pageSize: this.pageSize,
-          status: this.filterStatus,
-          venue: this.filterVenue,
           dateRange: this.dateRange,
           keyword: this.searchKeyword
         });
         
         if (response && response.data && response.data.success) {
-          // 后端返回的数据结构: { success: true, data: [...] }
-          this.violations = response.data.data || [];
+          this.totalCount = response.data.totalCount || 0;
+          this.allViolationCount = response.data.allViolationCount || 0;
+          this.userCount = response.data.userCount || 0;
+          this.todayCount = response.data.todayCount || 0;
+          this.allAppointmentCount = response.data.allAppointmentCount || 0;
           
           // 转换数据格式以匹配前端组件
-          this.violations = this.violations.map(violation => ({
-            id: violation.id,
-            userName: violation.userName,
-            userId: violation.userId.toString(),
-            violationTime: violation.violationDate + ' ' + violation.timeSlot.split('-')[0] + ':00',
-            venue: violation.venue,
-            timeSlot: violation.timeSlot,
-            status: 'confirmed',
-            appealStatus: violation.appealStatus || 'none', // 使用后端申诉状态
-            appealTime: violation.appealTime || '',
-            appealReason: violation.appealReason || '',
-            rejectReason: violation.rejectReason || '',
-            userViolationCount: 1, // 后端暂时没有统计，使用默认值
-            lastViolationTime: ''
-          }));
+          this.violations = (response.data.data || []).map(violation => {
+            const date = violation.violationDate;            
+            const startTime = violation.timeSlot.split('-')[0];
+
+            return{
+              id: violation.id,
+              userName: violation.userName,
+              userId: violation.userId.toString(),
+              violationTime: `${date} ${startTime}:00`,
+              venue: violation.venue,
+              timeSlot: violation.timeSlot,
+              status: 'confirmed',
+              appealStatus: violation.appealStatus || 'none', // 使用后端申诉状态
+              appealTime: violation.appealTime || '',
+              appealReason: violation.appealReason || '',
+              rejectReason: violation.rejectReason || '',
+            };
+            
+          });
         } else {
           // 如果API未实现，使用模拟数据
           this.violations = [
@@ -361,22 +286,22 @@ export default {
               id: 1,
               userName: "夏浩博",
               userId: "123456",
-              violationTime: "2024-01-15 08:00",
+              violationTime: "2024-01-15T08:00:00",
               venue: "乒乓球馆",
               timeSlot: "8:00-9:00",
               status: "confirmed",
               appealStatus: "pending",
-              appealTime: "2024-01-15 09:30",
+              appealTime: "2024-01-15T09:30:00",
               appealReason: "下雨，路滑，无法前往",
               rejectReason: "",
               userViolationCount: 2,
-              lastViolationTime: "2024-01-10 14:00"
+              lastViolationTime: "2024-01-10T14:00:00"
             },
             {
               id: 2,
               userName: "李明",
               userId: "654321",
-              violationTime: "2024-01-16 14:00",
+              violationTime: "2024-01-16T14:00:00",
               venue: "羽毛球馆",
               timeSlot: "14:00-15:00",
               status: "confirmed",
@@ -391,27 +316,27 @@ export default {
               id: 3,
               userName: "王芳",
               userId: "789012",
-              violationTime: "2024-01-17 16:00",
+              violationTime: "2024-01-17T16:00:00",
               venue: "篮球馆",
               timeSlot: "16:00-17:00",
               status: "confirmed",
               appealStatus: "approved",
-              appealTime: "2024-01-17 17:00",
+              appealTime: "2024-01-17T17:00:00",
               appealReason: "身体不适，有医院证明",
               rejectReason: "",
               userViolationCount: 3,
-              lastViolationTime: "2024-01-12 10:00"
+              lastViolationTime: "2024-01-12T10:00:00"
             },
             {
               id: 4,
               userName: "张伟",
               userId: "345678",
-              violationTime: "2024-01-18 10:00",
+              violationTime: "2024-01-18T10:00:00",
               venue: "乒乓球馆",
               timeSlot: "10:00-11:00",
               status: "confirmed",
               appealStatus: "rejected",
-              appealTime: "2024-01-18 11:00",
+              appealTime: "2024-01-18T11:00:00",
               appealReason: "忘记预约时间",
               rejectReason: "理由不充分，无法证明特殊情况",
               userViolationCount: 1,
@@ -421,7 +346,7 @@ export default {
               id: 5,
               userName: "陈华",
               userId: "987654",
-              violationTime: "2024-01-19 09:00",
+              violationTime: "2024-01-19T09:00:00",
               venue: "网球场",
               timeSlot: "9:00-10:00",
               status: "confirmed",
@@ -430,18 +355,18 @@ export default {
               appealReason: "",
               rejectReason: "",
               userViolationCount: 2,
-              lastViolationTime: "2024-01-15 14:00"
+              lastViolationTime: "2024-01-15T14:00:00"
             },
             {
               id: 6,
               userName: "刘强",
               userId: "567890",
-              violationTime: "2024-01-20 15:00",
+              violationTime: "2024-01-20T15:00:00",
               venue: "攀岩馆",
               timeSlot: "15:00-16:00",
               status: "confirmed",
               appealStatus: "pending",
-              appealTime: "2024-01-20 16:00",
+              appealTime: "2024-01-20T16:00:00",
               appealReason: "设备故障，无法正常使用",
               rejectReason: "",
               userViolationCount: 1,
@@ -458,47 +383,10 @@ export default {
         this.loading = false;
       }
     },
-
-    
-    // 综合状态相关方法
-    getCombinedStatusText(violation) {
-      if (violation.appealStatus === 'none') {
-        return '已确认违约';
-      } else if (violation.appealStatus === 'pending') {
-        return '申诉中';
-      } else if (violation.appealStatus === 'approved') {
-        return '申诉通过';
-      } else if (violation.appealStatus === 'rejected') {
-        return '申诉被拒';
-      }
-      return '未知';
-    },
-    getCombinedStatusType(violation) {
-      if (violation.appealStatus === 'none') {
-        return 'danger';
-      } else if (violation.appealStatus === 'pending') {
-        return 'warning';
-      } else if (violation.appealStatus === 'approved') {
-        return 'success';
-      } else if (violation.appealStatus === 'rejected') {
-        return 'danger';
-      }
-      return 'info';
-    },
     
     // 查看详情
-    async viewViolationDetail(violation) {
-      try {
-        const response = await getViolationDetail(violation.id);
-        if (response && response.data && response.data.code === 200) {
-          this.selectedViolation = response.data.data;
-        } else {
-          this.selectedViolation = violation;
-        }
-      } catch (error) {
-        console.error('获取违约详情失败:', error);
-        this.selectedViolation = violation;
-      }
+    viewViolationDetail(violation) {
+      this.selectedViolation = violation;
       this.detailDialogVisible = true;
     },
     
@@ -511,10 +399,54 @@ export default {
     handleCurrentChange(val) {
       this.currentPage = val;
       this.fetchViolationData();
+    },
+
+    // 筛选逻辑
+    applyFilters() {
+      this.currentPage = 1;
+      this.fetchViolationData();
+      ElMessage.success('筛选已应用');
+    },
+    resetFilters() {
+      this.searchKeyword = '';
+      this.dateRange = [];
+      this.currentPage = 1;
+      this.fetchViolationData();
+      ElMessage.success('筛选已重置');
+    },
+    
+    // 设置数据刷新监听器
+    setupDataRefreshListener() {
+      // 监听localStorage变化
+      window.addEventListener('storage', this.handleStorageChange);
+      
+      // 定期检查刷新标志
+      this.refreshCheckInterval = setInterval(() => {
+        const refreshFlag = localStorage.getItem('violationDataNeedsRefresh');
+        if (refreshFlag) {
+          // 清除标志并刷新数据
+          localStorage.removeItem('violationDataNeedsRefresh');
+          this.fetchViolationData();
+        }
+      }, 1000); // 每秒检查一次
+    },
+    
+    // 处理localStorage变化
+    handleStorageChange(event) {
+      if (event.key === 'violationDataNeedsRefresh') {
+        this.fetchViolationData();
+      }
     }
+  },
+  
+  // 组件销毁时清理监听器
+  beforeUnmount() {
+    if (this.refreshCheckInterval) {
+      clearInterval(this.refreshCheckInterval);
+    }
+    window.removeEventListener('storage', this.handleStorageChange);
   }
 };
 </script>
-
 
 <style src="../styles/violation-management.css"></style>

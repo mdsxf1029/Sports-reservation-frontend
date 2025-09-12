@@ -15,7 +15,7 @@
     </div>
 
     <!-- 正常二维码展示 -->
-    <div v-else-if="mode === 'qrcode'">
+    <div>
       <div class="qrcode-box">
         <qrcode-vue :value="displayDetail.qrcode_data" :size="180" level="H" />
       </div>
@@ -30,14 +30,6 @@
       <!-- 模拟扫码按钮 -->
       <div class="simulate-scan" style="margin-top:20px; text-align:center;">
         <el-button type="primary" @click="simulateCheckin">模拟扫码签到</el-button>
-      </div>
-    </div>
-
-    <!-- 扫码签到结果 -->
-    <div v-else-if="mode === 'checkin'">
-      <div class="checkin-result" style="text-align:center;">
-        <p v-if="checkinSuccess" style="color:green;font-size:18px;">✅ 签到成功！</p>
-        <p v-else style="color:red;font-size:18px;">❌ 签到失败，请联系工作人员</p>
       </div>
     </div>
   </el-dialog>
@@ -86,13 +78,17 @@ const simulateCheckin = async () => {
 
     checkinSuccess.value = res.data.success
 
-    if (checkinSuccess.value) {
+    if (res.data.success) {
       emit('checkin-success')
-    }
+      ElMessage.success('签到成功')
+    } 
   } catch (err) {
     console.error('签到失败', err)
+    ElMessage.error('签到失败')
     checkinSuccess.value = false
-  } 
+  } finally {
+    handleClose()
+  }
 }
 </script>
 

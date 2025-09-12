@@ -82,7 +82,7 @@
     </el-dialog>
   </div>
 </template>
-
+     
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { ArrowRight } from '@element-plus/icons-vue'
@@ -93,11 +93,11 @@ const announcements = ref([])
 const activeCategory = ref('all')
 import defaultImage from '@/assets/Backgrounds/Flower1.jpg';
 
-// 弹窗状态
+// 弹窗状态相关
 const dialogVisible = ref(false)
 const selectedNews = ref(null)
 
-// 分页相关
+// 分页相关参数
 const newsPagination = ref({
   page: 1,        // 当前页数
   pageSize: 10,   // 每页显示条数

@@ -141,13 +141,19 @@ export class ReservationService {
     const endTime = order.endTime || order.end_time || ''
     
     // 生成显示图标
+    //羽毛球、乒乓球、网球、健身、足球、田径、排球、篮球、拳操
     let icon = '📅'
     if (facilityName.includes('篮球')) icon = '🏀'
     else if (facilityName.includes('游泳')) icon = '🏊‍♂️'
     else if (facilityName.includes('网球')) icon = '🎾'
     else if (facilityName.includes('羽毛球')) icon = '🏸'
     else if (facilityName.includes('足球')) icon = '⚽'
-    
+    else if (facilityName.includes('乒乓球')) icon = '🏓'
+    else if (facilityName.includes('健身')) icon = '🏋️‍♂️'
+    else if (facilityName.includes('田径')) icon = '🏃‍♂️'
+    else if (facilityName.includes('排球')) icon = '🏐'
+    else if (facilityName.includes('拳操')) icon = '🥊'
+    else icon = '📅'
     const timeDisplay = formatTimeRange(beginTime, endTime)
     const content = `${icon} ${facilityName} - ${timeDisplay}`
     

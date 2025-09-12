@@ -85,7 +85,7 @@
             
             <el-select v-model="venueTypeFilter" placeholder="场地类型" clearable style="width: 140px; margin-right: 10px;">
               <el-option label="全部" value="" />
-              <el-option v-for="type in venueTypes" :key="type" :label="type" :value="type" />
+              <el-option v-for="type in venueTypeOptions" :key="type" :label="type" :value="type" />
             </el-select>
             
             <el-button type="primary" @click="applyFilters">
@@ -165,17 +165,17 @@
             </el-table-column>
           </el-table>
 
-          <el-pagination
-            v-if="totalVenues > 0"
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :page-sizes="[5, 10, 20, 50]"
-            :total="totalVenues"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-            class="pagination-container"
-          />
+          <div v-if="totalVenues > 0" class="pagination-container">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[5, 10, 20, 50]"
+              :total="totalVenues"
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
+          </div>
           
           <div v-if="tableData.length === 0 && !loading" class="no-data">
             <el-empty description="暂无匹配的场地数据" :image-size="200">
@@ -197,14 +197,12 @@
             <div class="detail-item"><span class="label">价格：</span><span class="value">¥ {{ selectedVenue.price }} / {{ selectedVenue.price_unit }}</span></div>
             <div class="detail-item"><span class="label">位置：</span><span class="value">{{ selectedVenue.location }}</span></div>
             <div class="detail-item"><span class="label">开放时间：</span><span class="value">{{ selectedVenue.openingHours }}</span></div>
-            <div class="detail-item"><span class="label">预约时间段：</span><span class="value">{{ selectedVenue.bookingHours }}</span></div>
             <div class="detail-item"><span class="label">最大容量：</span><span class="value">{{ selectedVenue.maxOccupancy }} 人</span></div>
             <div class="detail-item"><span class="label">状态：</span><span class="value"><el-tag :type="selectedVenue.status === '开放' ? 'success' : 'danger'">{{ selectedVenue.status }}</el-tag></span></div>
           </div>
         </div>
       </div>
       <template #footer>
-        <el-button @click="detailDialogVisible = false">关 闭</el-button>
         <el-button type="primary" @click="handleEdit(selectedVenue)">编 辑</el-button>
       </template>
     </el-dialog>
@@ -240,8 +238,7 @@
             </el-input>
         </el-form-item>
         <el-form-item label="位置"><el-input v-model="form.location" /></el-form-item>
-        <el-form-item label="开放时间"><el-input v-model="form.openingHours" placeholder="例如: 08:00-22:00" /></el-form-item>
-        <el-form-item label="预约时间段"><el-input v-model="form.bookingHours" placeholder="例如: 08:00-22:00" /></el-form-item>
+        <el-form-item label="开放时间"><el-input v-model="form.openingHours" placeholder="例如: 08:00-20:00" /></el-form-item>
         <el-form-item label="最大容量"><el-input v-model.number="form.maxOccupancy" type="number" /></el-form-item>
         <el-form-item label="状态">
           <el-select v-model="form.status" placeholder="请选择场地状态">
@@ -318,7 +315,7 @@ const form = ref({
   price: 0,
   location: '',
   openingHours: '',
-  bookingHours: '',
+  bookingHours: '8:00-22:00',
   maxOccupancy: 0,
   status: '开放',
   price_unit: '小时' // 默认单位
@@ -338,7 +335,7 @@ const resetForm = () => {
     price: 0,
     location: '',
     openingHours: '',
-    bookingHours: '',
+    bookingHours: '8:00-22:00',
     maxOccupancy: 0,
     status: '开放',
     price_unit: '小时'
@@ -546,10 +543,48 @@ const handleCurrentChange = (newPage) => {
   display: flex;
   gap: 6px;
 }
+/* 分页容器样式 */
 .pagination-container {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+  padding: 20px 0;
   margin-top: 20px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.pagination-container .el-pagination {
+  --el-pagination-font-size: 14px;
+  --el-pagination-bg-color: #fff;
+  --el-pagination-text-color: #606266;
+  --el-pagination-border-radius: 4px;
+  --el-pagination-button-disabled-color: #c0c4cc;
+  --el-pagination-button-disabled-bg-color: #fff;
+  --el-pagination-hover-color: #2062ea;
+}
+
+/* 修复分页按钮样式 */
+.pagination-container .el-pagination .el-pager li {
+  min-width: 30px;
+  height: 32px;
+  line-height: 30px;
+  margin: 0 2px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #606266;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.pagination-container .el-pagination .el-pager li:hover {
+  color: #2062ea;
+  border-color: #2062ea;
+}
+
+.pagination-container .el-pagination .el-pager li.is-active {
+  background-color: #2062ea;
+  border-color: #2062ea;
+  color: #fff;
 }
 .page-layout {
   min-height: 100vh;

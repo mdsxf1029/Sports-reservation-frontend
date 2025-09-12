@@ -79,7 +79,7 @@
             >
               <div class="venue-image">
                 <img 
-                  :src="venue.imageUrl || getDefaultVenueImage(venue.type)" 
+                  :src="venue.imageUrl" 
                   :alt="venue.name"
                   @error="handleImageError"
                 />
@@ -181,6 +181,8 @@ import FooterNavbar from '../components/FooterNavbar.vue'
 import BackToTop from '../components/BackToTop.vue'
 import axios from 'axios';
 import { pa } from 'element-plus/es/locales.mjs'
+// 导入默认图片
+import defaultImage from '@/assets/Backgrounds/Back1.jpg'
 
 export default {
   name: 'Home',
@@ -255,7 +257,7 @@ export default {
             price: venue.price || 0,
             location: venue.location || '未知位置',
             status: venue.status,
-            imageUrl: venue.pictureurl, // 使用后端提供的图片URL
+            imageUrl: venue.pictureurl || '@/assets/Backgrounds/Back1.jpg', // 使用后端提供的图片URL
             // 保留原始数据
             originalData: venue
           }))
@@ -284,83 +286,15 @@ export default {
       this.$router.push(`/venue/${venueId}`)
     },
 
-    // 获取默认场馆图片
-    getDefaultVenueImage(Type, Name = '') {
-      const type = (Type || '').toLowerCase()
-      const name = (Name || '').toLowerCase()
-      console.log('获取默认图片，类型:', type, '名称:', name)
-      // 篮球场馆
-      if (type.includes('篮球')) {
-        // 随机选择篮球场图片
-        const basketballImages = [
-          '/src/assets/pictures/basketballplace1.png',
-          '/src/assets/pictures/basketballplace2.png'
-        ]
-        return basketballImages[Math.floor(Math.random() * basketballImages.length)]
-      }
-      
-      // 羽毛球场馆
-      else if (type.includes('羽毛球')) {
-        const badmintonImages = [
-          '/src/assets/pictures/yumaoqiuplace1.png',
-          '/src/assets/pictures/yumaoqiuplace2.png'
-        ]
-        return badmintonImages[Math.floor(Math.random() * badmintonImages.length)]
-      }
-      
-      // 乒乓球场馆
-      else if (type.includes('乒乓')) {
-        const pingpongImages = [
-          '/src/assets/pictures/pingpangplace1.png',
-          '/src/assets/pictures/pingpangplace2.png'
-        ]
-        return pingpongImages[Math.floor(Math.random() * pingpongImages.length)]
-      }
-      
-      // 网球场馆
-      else if (type.includes('网球')) {
-        const tennisImages = [
-          '/src/assets/pictures/wangqiuplace1.png',
-          '/src/assets/pictures/wangqiuplace2.png'
-        ]
-        return tennisImages[Math.floor(Math.random() * tennisImages.length)]
-      }
-      
-      // 健身房
-      else if (type.includes('健身')) {
-        const gymImages = [
-          '/src/assets/pictures/gym1.png',
-          '/src/assets/pictures/gym2.png',
-          '/src/assets/pictures/gym3.png'
-        ]
-        return gymImages[Math.floor(Math.random() * gymImages.length)]
-      }
-
-      // 瑜伽馆
-      else if (type.includes('瑜伽')) {
-        const yogaImages = [
-          '/src/assets/pictures/yoga1.png',
-          '/src/assets/pictures/yoga2.png',
-          '/src/assets/pictures/yoga3.png'
-        ]
-        return yogaImages[Math.floor(Math.random() * yogaImages.length)]
-      }
-      
-      // 默认图片
-      else {
-        // 如果都不匹配，随机返回一个图片
-        const allImages = [
-          '/src/assets/pictures/basketballplace1.png',
-          '/src/assets/pictures/yumaoqiuplace1.png',
-          '/src/assets/pictures/gym2.png'
-        ]
-        return allImages[Math.floor(Math.random() * allImages.length)]
-      }
-    },
+    
 
     // 处理图片加载错误
     handleImageError(event) {
-      event.target.src = '@/assets/Backgrounds/Back1.jpg'
+      console.log('图片加载失败，使用默认图片')
+      // 使用导入的默认图片
+      event.target.src = defaultImage
+      // 防止无限循环：移除 error 事件监听器
+      event.target.onerror = null
     },
 
     // 加载最新新闻
