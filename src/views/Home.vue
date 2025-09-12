@@ -89,8 +89,7 @@
                 <p class="venue-type">{{ venue.type }}</p>
                 <p class="venue-price">￥{{ venue.price }}/小时</p>
                 <div class="venue-stats">
-                  <span><el-icon><Star /></el-icon> {{ venue.rating || '4.5' }}</span>
-                  <span><el-icon><User /></el-icon> {{ venue.bookings || 0 }}次预约</span>
+                  <span><el-icon><User /></el-icon> {{ venue.appointmentCount || 0 }}次预约</span>
                 </div>
               </div>
             </div>
@@ -245,8 +244,8 @@ export default {
           const openVenues = venuesData
             .filter(venue => venue.status === '开放') // 确保只显示开放场馆
             .sort((a, b) => {
-              // 按价格升序：显示最实惠的场馆
-              return (a.price || 0) - (b.price || 0)
+              // 按预约次数降序：显示最受欢迎的场馆
+              return (b.appointmentCount || 0) - (a.appointmentCount || 0)
             })
           
           // 取前3个场馆作为推荐场馆显示
@@ -258,6 +257,7 @@ export default {
             location: venue.location || '未知位置',
             status: venue.status,
             imageUrl: venue.pictureurl || '@/assets/Backgrounds/Back1.jpg', // 使用后端提供的图片URL
+            appointmentCount: venue.appointmentCount || 0, // 预约次数
             // 保留原始数据
             originalData: venue
           }))
