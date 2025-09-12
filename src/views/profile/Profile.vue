@@ -1032,7 +1032,7 @@ export default {
         // 准备申诉数据 - 直接使用内容作为字符串
         const appealReason = this.appealForm.content
 
-        console.log('提交申诉数据:', appealReason)
+        console.log('提交申诉原因:', appealReason)
 
         // 这里调用申诉API
         const res = await createOrderAppeal(this.userProfile.userId, this.selectedOrderForAppeal.appointmentId, appealReason)

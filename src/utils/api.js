@@ -241,13 +241,25 @@ export const cancelMyOrder = (userId, appointmentId) => {
 //申诉订单
 export const createOrderAppeal = (userId, appointmentId, appealReason) => {
   const token = localStorage.getItem('token');
-  const headers = {};
+  const headers = {
+    'Content-Type': 'application/json'
+  };
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  return instance.post(`/api/appointments/${appointmentId}/appeal`, { userId, appealReason }, { headers });
+  const data = {
+    UserId: parseInt(userId),
+    AppointmentId: parseInt(appointmentId),  // 新增
+    AppealReason: appealReason
+  };
+  const AppointmentId = parseInt(appointmentId); // 确保 AppointmentId 是整数
+  console.log('发送申诉请求数据:', data);
+
+  return instance.post(`/api/appointments/${AppointmentId}/appeal`, data, { 
+    headers 
+  });
 };
 
 
