@@ -157,7 +157,12 @@
 
                 // 2. 获取场馆状态
                 try {
-                    const statusRes = await axios.get('http://47.83.188.207:5101/api/venues/get')
+                    const statusRes = await axios.get('http://47.83.188.207:5101/api/venues/get', {
+                        params: {
+                            page: 1,
+                            pageSize: 9999
+                        }
+                    })
                     console.log('状态响应:', statusRes.data) // 调试日志
 
                     if (statusRes.data.code === 200) {
