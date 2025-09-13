@@ -163,6 +163,12 @@
                 </div>
               </template>
             </el-table-column>
+
+            <template #empty>
+              <el-empty description="暂无匹配的场地数据" :image-size="200">
+                <el-button type="primary" @click="handleCreate">添加第一个场地</el-button>
+              </el-empty>
+            </template>
           </el-table>
 
           <div v-if="totalVenues > 0" class="pagination-container">
@@ -175,12 +181,6 @@
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
             />
-          </div>
-          
-          <div v-if="tableData.length === 0 && !loading" class="no-data">
-            <el-empty description="暂无匹配的场地数据" :image-size="200">
-              <el-button type="primary" @click="handleCreate">添加第一个场地</el-button>
-            </el-empty>
           </div>
         </div>
       </div>

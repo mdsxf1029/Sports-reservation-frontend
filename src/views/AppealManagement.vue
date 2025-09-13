@@ -106,7 +106,7 @@
                 
                 <el-table ref="appealTable" :data="appeals" style="width: 100%" @selection-change="onSelectionChange">
                   <el-table-column type="selection" width="55" />
-                  <el-table-column prop="userName" label="用户名" width="120">
+                  <el-table-column prop="userName" label="用户名" width="180">
                     <template #default="scope">
                       <div class="appeal-user-info">
                         <el-avatar :size="32" :src="scope.row.userAvatar">
@@ -241,7 +241,7 @@
                 
                 <el-table ref="blacklistTable" :data="blacklistUsers" style="width: 100%" @selection-change="onSelectionUserChange">
                   <el-table-column type="selection" width="55" />
-                  <el-table-column prop="userName" label="用户名" width="120">
+                  <el-table-column prop="userName" label="用户名" width="180">
                     <template #default="scope">
                       <div class="appeal-user-info">
                         <el-avatar :size="32" :src="scope.row.userAvatar">

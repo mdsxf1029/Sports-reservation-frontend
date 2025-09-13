@@ -109,10 +109,6 @@
               </template>
             </el-table-column>
           </el-table>
-          
-          <div v-if="totalCount === 0" class="no-data">
-            暂无违约记录
-          </div>
         </div>
 
         <!-- 分页 -->

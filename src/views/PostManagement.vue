@@ -128,11 +128,12 @@
                   </div>
                 </template>
               </el-table-column>
+
+              <template #empty>
+                <el-empty description="暂无匹配的举报记录" :image-size="200">
+                </el-empty>
+              </template>
             </el-table>
-            
-            <div v-if="!reportsLoading && tableReports.length === 0" class="no-data">
-              <el-empty description="暂无匹配的举报记录" />
-            </div>
 
             <div class="pagination-container" v-if="reportTotal > 0">
               <el-pagination

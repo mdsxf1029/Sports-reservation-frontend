@@ -150,6 +150,12 @@
                 </el-button>
               </template>
             </el-table-column>
+
+            <template #empty>
+              <el-empty description="暂无新闻" :image-size="200">
+                <el-button type="primary" @click="handleCreate">新建新闻</el-button>
+              </el-empty>
+            </template>
           </el-table>
 
           <div v-if="totalCount > 0" class="pagination-container">
@@ -165,12 +171,6 @@
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
             />
-          </div>
-
-          <div v-if="allNews.length === 0" class="no-data">
-            <el-empty description="暂无新闻" :image-size="200">
-              <el-button type="primary" @click="handleCreate">新建新闻</el-button>
-            </el-empty>
           </div>
         </div>
       </div>
